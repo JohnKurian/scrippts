@@ -9,7 +9,8 @@ header {
     background-color: lightcoral;
 }
 .sidebar {
-    position: absolute;
+    position: fixed;
+    z-index: 100;
     top: 60px;
     left: -300px;
     height: 100%;
@@ -29,6 +30,8 @@ header {
 .sidebar.open {
     left: 0;
 }
+
+/*change left to 0 for home view*/
 .content.open {
     left: 300px;
 }
