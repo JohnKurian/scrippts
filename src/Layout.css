@@ -1,0 +1,37 @@
+header {
+    position: fixed;
+    z-index: 100;
+    width: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: lightcoral;
+}
+.sidebar {
+    position: absolute;
+    top: 60px;
+    left: -300px;
+    height: 100%;
+    width: 300px;
+    transition: left .3s ease-in-out;
+    background-color: yellow;
+}
+.content {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    height: 100%;
+    transition: left .3s ease-in-out;
+    background-color: lightgray;
+}
+.sidebar.open {
+    left: 0;
+}
+.content.open {
+    left: 300px;
+}
+
+
+

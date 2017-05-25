@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
-import './Node.css'
+import './Node.css';
+import './Layout.css';
 
 
 var firebase = require('firebase');
@@ -57,6 +58,67 @@ class Node extends Component {
     }
 }
 
+
+
+var Parent = React.createClass({
+    getInitialState: function(){
+        return {sidebarOpen: false};
+    },
+    handleViewSidebar: function(){
+        this.setState({sidebarOpen: !this.state.sidebarOpen});
+    },
+    render: function() {
+        return (
+            <div>
+                <Header onClick={this.handleViewSidebar} />
+                <SideBar isOpen={this.state.sidebarOpen} />
+                <Content isOpen={this.state.sidebarOpen} data={this.props.data}/>
+            </div>
+        );
+    }
+});
+
+var Header = React.createClass({
+    render: function() {
+        return (
+            <header>
+                <a href="javascript:;" onClick={this.props.onClick}>Click Me!</a>
+            </header>
+        );
+    }
+});
+var SideBar = React.createClass({
+    render: function() {
+        var sidebarClass = this.props.isOpen ? 'sidebar open' : 'sidebar';
+        return (
+            <div className={sidebarClass}>
+                <div>I slide into view</div>
+                <div>Me too!</div>
+                <div>Meee Threeeee!</div>
+            </div>
+        );
+    }
+});
+
+var Content = React.createClass({
+    render: function() {
+        var contentClass = this.props.isOpen ? 'content open' : 'content';
+        return (
+            <div className={contentClass}>
+
+                <div className="App">
+                    <div className="tree">
+                        <Node data={this.props.data}/>
+                    </div>
+                </div>
+
+
+            </div>
+        );
+    }
+});
+
+
 class App extends Component {
 
     constructor(props) {
@@ -81,15 +143,16 @@ class App extends Component {
 
         return (
 
-            <div className="App">
-                <div className="tree">
-                    <Node data={this.state.tree}/>
-                </div>
-            </div>
+            <Parent data={this.state.tree}/>
 
 
         );
     }
 }
+
+
+
+
+
 
 export default App;
