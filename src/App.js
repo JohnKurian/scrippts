@@ -69,7 +69,7 @@ var Parent = React.createClass({
     },
     render: function() {
         return (
-            <div className="Core">
+            <div>
                 <Header onClick={this.handleViewSidebar} />
                 <SideBar isOpen={this.state.sidebarOpen} />
                 <Content isOpen={this.state.sidebarOpen} data={this.props.data}/>
