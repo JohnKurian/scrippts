@@ -1,20 +1,6 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
-
-
-
-// import Textarea from 'react-textarea-autosize';
-
-import { Input } from 'antd/lib/input';
-
-import { Layout } from 'antd';
-const { Header, Footer, Sider, Content } = Layout;
-
-
-// https://www.npmjs.com/package/babel-plugin-import
-
-
+import './Node.css'
 
 
 var firebase = require('firebase');
@@ -28,6 +14,8 @@ var config = {
     storageBucket: "argument-staging.appspot.com",
 };
 firebase.initializeApp(config);
+
+
 
 
 class Node extends Component {
@@ -54,18 +42,9 @@ class Node extends Component {
                         function(node) {
                             return (
                                 <li>
-                                    {/*<Textarea/>*/}
-                                    {/*<Input*/}
-                                        {/*type="textarea"*/}
-                                        {/*autosize={true}*/}
-                                        {/*onFocus={function(node) {*/}
-                                            {/*console.log('yey:', this.refs)*/}
-                                            {/*}.bind(this)*/}
-                                        {/*}*/}
-                                        {/*onChange={this.onchange.bind(node.data, this)}*/}
-                                    {/*/>*/}
+                                    <textarea></textarea>
                                     {node.data}
-                                    {<Node data={node.children} ref={Math.random()}/>}
+                                    {<Node data={node.children}/>}
                                 </li>
                             )
 
@@ -102,23 +81,11 @@ class App extends Component {
 
         return (
 
-        <Layout>
-            <Sider>Sider</Sider>
-            <Layout>
-                <Header>Header</Header>
-                <Content>
-
-                    <div className="App">
-                        <div className="tree">
-                            <Node data={this.state.tree} ref={Math.random()}/>
-                        </div>
-                    </div>
-
-
-                </Content>
-                <Footer>Footer</Footer>
-            </Layout>
-        </Layout>
+            <div className="App">
+                <div className="tree">
+                    <Node data={this.state.tree}/>
+                </div>
+            </div>
 
 
         );
