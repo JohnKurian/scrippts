@@ -25,14 +25,14 @@
     position: absolute;
     top: 0;
     right: 50%;
-    border-top: 1px solid #3d40cc;
+    border-top: 2px solid #3d40cc;
     width: 50%;
     height: 1em;
 }
 .tree li::after {
     right: auto;
     left: 50%;
-    border-left: 1px solid #3d40cc;
+    border-left: 2px solid #3d40cc;
 }
 .tree li:only-child::after, .tree li:only-child::before {
     display: none;
@@ -44,7 +44,7 @@
     border: 0 none;
 }
 .tree li:last-child::before {
-    border-right: 1px solid #3d40cc;
+    border-right: 2px solid #3d40cc;
     border-radius: 0 5px 0 0;
 }
 .tree li:first-child::after {
@@ -56,13 +56,13 @@
     position: absolute;
     top: 0;
     left: 50%;
-    border-left: 1px solid #3d40cc;
+    border-left: 2px solid #3d40cc;
     width: 0;
     height: 1em;
 }
 
 .tree li a {
-    border: 1px solid #3d40cc;
+    border: 2px solid #3d40cc;
     padding: .5em .75em;
     text-decoration: none;
     display: inline-block;
@@ -77,6 +77,8 @@ textarea{
     border-radius:6px;
     box-shadow:2px 2px 8px rgba(0,0,0,.3);
     padding: 10px;
+    width: 275px;
+    height: 50px;
 
 }
 

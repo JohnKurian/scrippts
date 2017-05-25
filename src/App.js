@@ -22,10 +22,14 @@ firebase.initializeApp(config);
 class Node extends Component {
 
 
-    onchange = (data, value) => {
-       console.log(value.target.style.height)
-        console.log(value.target.style.width)
-        console.log(data, value)
+    onchange = (evt) => {
+        console.log('text area typed:', evt.target.style.height, evt.target.style.width)
+
+    }
+
+
+    onTextAreaClick(evt) {
+        console.log('text area clicked:', evt.target.style.height, evt.target.style.width)
     }
 
 
@@ -43,7 +47,7 @@ class Node extends Component {
                         function(node) {
                             return (
                                 <li>
-                                    <textarea></textarea>
+                                    <textarea onChange={this.onchange.bind(this)} onClick={this.onTextAreaClick.bind(this)}></textarea>
                                     {node.data}
                                     {<Node data={node.children}/>}
                                 </li>
