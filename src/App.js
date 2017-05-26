@@ -43,7 +43,27 @@ class Node extends Component {
     }
 
     onAddClick(node, evt) {
-        console.log('node:', node)
+        console.log('node:', node);
+
+        //create path string
+        let pathStr = Object.keys(node.path).join('/children/')
+
+
+        let tempRef = firebase.database().ref().child('test_1').child(pathStr).child('children').push();
+
+        //create path obj for the new child node
+        let pathObj = node.path;
+        pathObj[tempRef.key] = Date.now();
+
+        let obj = {
+            uid: tempRef.key,
+            text: '',
+            path: pathObj
+        };
+
+        //add child to parent
+        tempRef.set(obj);
+
     }
 
 
@@ -157,7 +177,7 @@ class App extends Component {
 
     componentWillMount() {
 
-        firebase.database().ref().child('test').on('value', function(snap) {
+        firebase.database().ref().child('test_1').on('value', function(snap) {
             this.setState({tree: snap.val()})
         }.bind(this));
 
