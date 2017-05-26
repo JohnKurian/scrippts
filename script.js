@@ -18,17 +18,24 @@ firebase.initializeApp(config);
 
 
 
-tree = {0: {data: "parent", children: [{data: "child1", children: {0: {data: "grandchild2"}}}, {data: "child2", children: {0: {data: "grandchild2"}}}]}};
+tree = {'sada': {data: "parent", children: {'ewrtrtert': {data: "child1", children: {'5fsdf': {data: "grandchild2"}}}, 'bxcbcvxnvcn': {data: "child2", children: {'hjhgjhgj': {data: "grandchild2"}}}}}};
 
-// firebase.database().ref('test/').update(tree);
-
-
+firebase.database().ref('test/').update(tree);
 
 
+// obj = {'345': 'a', '234': 'b'}
+//
+// Object.keys(obj).map(function(key, index) {
+//     console.log(key, index, obj[key])
+// });
+//
 
 
 
-firebase.database().ref().child('test').set(tree)
+
+// firebase.database().ref().child('test').orderByChild('uid').startAt(123).endAt(123).on("child_added", function(snapshot) {
+//     console.log(snapshot.val());
+// });
 
 // firebase.database().ref().child('test').once('value', function(snap) { console.log(snap.val()) });
 

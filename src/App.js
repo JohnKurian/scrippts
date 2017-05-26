@@ -4,16 +4,17 @@ import './Node.css';
 import './Layout.css';
 
 
-var firebase = require('firebase');
-
-
+var firebase = require("firebase");
 
 var config = {
-    apiKey: " AIzaSyD-YSGgW0aQIiiaeFuKCdTTONi-ViN5xzQ",
-    authDomain: "argument-staging.firebaseapp.com",
-    databaseURL: "https://argument-staging.firebaseio.com",
-    storageBucket: "argument-staging.appspot.com",
+    apiKey: "AIzaSyAg-UlKP9oonj4IMo5op6qEAOzFXHZloiY",
+    authDomain: "argument-app.firebaseapp.com",
+    databaseURL: "https://argument-app.firebaseio.com",
+    projectId: "argument-app",
+    storageBucket: "argument-app.appspot.com",
+    messagingSenderId: "626987124454"
 };
+
 firebase.initializeApp(config);
 
 
@@ -41,6 +42,10 @@ class Node extends Component {
         console.log('onBlur')
     }
 
+    onAddClick(node, evt) {
+        console.log('node:', node)
+    }
+
 
     render() {
 
@@ -52,10 +57,13 @@ class Node extends Component {
         return (
             <ul>
                 {
-                    this.props.data.map(
-                        function(node) {
-                            return (
-                                <li>
+
+                    Object.keys(this.props.data).map(function(key, index) {
+
+                        let node = this.props.data[key]
+
+                        return (
+                            <li>
                                     <textarea
                                         onFocus={this.onFocus.bind(this, node)}
                                         onBlur={this.onBlur.bind(this, node)}
@@ -63,14 +71,13 @@ class Node extends Component {
                                         onClick={this.onTextAreaClick.bind(this, node)}>
 
                                     </textarea>
-                                    {node.data}
-                                    {<Node data={node.children}/>}
-                                </li>
-                            )
+                                <button onClick={this.onAddClick.bind(this, node)} type="button">Add node</button>
+                                {<Node data={node.children}/>}
+                            </li>
+                        )
+                    }.bind(this))
 
-                        }.bind(this)
-
-                    )}
+                }
             </ul>
         )
 
