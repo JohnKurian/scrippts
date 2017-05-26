@@ -22,10 +22,8 @@ firebase.initializeApp(config);
 class Node extends Component {
 
 
-    onchange = (node, evt) => {
-        console.log('text area typed:', evt.target.style.height, evt.target.style.width)
+    onChange = (node, evt) => {
         console.log('value:', evt.target.value)
-        console.log('target:', (evt.target))
         console.log(node)
 
     }
@@ -33,6 +31,14 @@ class Node extends Component {
 
     onTextAreaClick(node, evt) {
         console.log('text area clicked:', evt.target.style.height, evt.target.style.width)
+    }
+
+    onFocus(node, evt) {
+        console.log('onFocus')
+    }
+
+    onBlur(node, evt) {
+        console.log('onBlur')
     }
 
 
@@ -50,7 +56,13 @@ class Node extends Component {
                         function(node) {
                             return (
                                 <li>
-                                    <textarea onChange={this.onchange.bind(this, node)} onClick={this.onTextAreaClick.bind(this, node)}></textarea>
+                                    <textarea
+                                        onFocus={this.onFocus.bind(this, node)}
+                                        onBlur={this.onBlur.bind(this, node)}
+                                        onChange={this.onChange.bind(this, node)}
+                                        onClick={this.onTextAreaClick.bind(this, node)}>
+
+                                    </textarea>
                                     {node.data}
                                     {<Node data={node.children}/>}
                                 </li>
