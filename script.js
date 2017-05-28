@@ -23,7 +23,7 @@ tree = {'sada': {data: "parent", children: {'ewrtrtert': {data: "child1", childr
 
 // Initial premise node creation ..................
 
-// let newRef = firebase.database().ref('test_1/').push();
+// let newRef = firebase.database().ref('test_2/').push();
 //
 // let pathObj = {};
 // pathObj[newRef.key] = Date.now();
@@ -31,7 +31,7 @@ tree = {'sada': {data: "parent", children: {'ewrtrtert': {data: "child1", childr
 // let obj = {
 //     uid: newRef.key,
 //     text: 'this is the premise',
-//     path: pathObj
+//     // path: pathObj
 // };
 //
 // newRef.set(obj);
@@ -92,5 +92,86 @@ pathStr = '';
 // })
 //
 // console.log("the string", pathStr)
+
+
+
+
+// firebase.database().ref().child('test_1').once('value', function(snap) {
+//     let tree = snap.val()[Object.keys(snap.val())[0]];
+//     console.log(tree)
+// });
+
+// var flat = {
+//     'a': {
+//         text: 'parent',
+//         children: {
+//             b: true,
+//             c: true
+//         }
+//     },
+//
+//     'b': {
+//         text: 'child',
+//         children: {
+//             d: true
+//         }
+//     },
+//
+//     'c': {
+//         text: 'child'
+//     },
+//
+//     'd': {
+//         text: 'child d'
+//     }
+//
+//
+// }
+//
+// var tree = {};
+//
+// function convertFlatObjectToTree(flat) {
+//     Object.keys(flat).map(function (key, index) {
+//         var nodeKey = key;
+//         var node = flat[key];
+//
+//         tree[key] = node;
+//
+//         var children = node['children'];
+//
+//         if(children!=undefined) {
+//             Object.keys(children).map(function (childNodeKey, index) {
+//
+//                 if (children[childNodeKey] != undefined) {
+//                     tree[nodeKey]['children'][childNodeKey] = flat[childNodeKey];
+//                 }
+//
+//             });
+//         }
+//
+//     });
+//
+//     return tree;
+//
+// }
+//
+//
+//
+// var newTree = convertFlatObjectToTree(flat)
+// console.log(newTree);
+//
+//
+//
+// firebase.database().ref().child('test_2').once('value', function(snap) {
+//    console.log(Object.keys(snap.val()).length)
+// });
+//
+
+
+
+
+
+
+
 
 

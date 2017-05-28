@@ -43,26 +43,20 @@ class Node extends Component {
     }
 
     onAddClick(node, evt) {
-        console.log('node:', node);
 
-        //create path string
-        let pathStr = Object.keys(node.path).join('/children/')
-
-
-        let tempRef = firebase.database().ref().child('test_1').child(pathStr).child('children').push();
-
-        //create path obj for the new child node
-        let pathObj = node.path;
-        pathObj[tempRef.key] = Date.now();
-
+        //attach child node to flat object
+        let tempRef = firebase.database().ref().child('test_2').push();
         let obj = {
             uid: tempRef.key,
-            text: '',
-            path: pathObj
+            text: ''
         };
 
-        //add child to parent
+        //add child to parent's node children
         tempRef.set(obj);
+
+        let childObj = {};
+        childObj[tempRef.key] = true;
+        firebase.database().ref().child('test_2').child(node['uid']).child('children').update(childObj)
 
     }
 
@@ -170,15 +164,45 @@ class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tree: []
+            tree: [],
+            premiseNode: "-KlDFleO6_xjnLx88ou1"
         };
     }
+
+    convertFlatObjectToTree(flat) {
+        var tree = {};
+        Object.keys(flat).map(function (key, index) {
+            var nodeKey = key;
+            var node = flat[key];
+
+            tree[key] = node;
+
+            var children = node['children'];
+
+            if(children!=undefined) {
+                Object.keys(children).map(function (childNodeKey, index) {
+
+                    if (children[childNodeKey] != undefined) {
+                        tree[nodeKey]['children'][childNodeKey] = flat[childNodeKey];
+                    }
+
+                });
+            }
+
+        });
+
+    return tree;
+
+}
 
 
     componentWillMount() {
 
-        firebase.database().ref().child('test_1').on('value', function(snap) {
-            this.setState({tree: snap.val()})
+        firebase.database().ref().child('test_2').on('value', function(snap) {
+            var tree = {};
+            tree[this.state.premiseNode] = this.convertFlatObjectToTree(snap.val())[this.state.premiseNode];
+            console.log(tree);
+            this.setState({tree: tree })
         }.bind(this));
 
     }
