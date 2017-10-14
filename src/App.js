@@ -56,18 +56,24 @@ class Node extends Component {
     onAddClick(node, evt) {
 
         //attach child node to flat object
-        let tempRef = firebase.database().ref().child('test_2').push();
-        let obj = {
-            uid: tempRef.key,
-            text: ''
-        };
 
-        //add child to parent's node children
-        tempRef.set(obj);
+        db.collection("scripts").doc("8ZM4uG9LsQVkx1BHUHcf").collection('nodes').add({
+            text: '',
+            createdTime: Date.now(),
+            updatedTime: Date.now()
+        })
+            .then(function(nodeRef) {
+                console.log("Document written with ID: ", nodeRef.id);
+                db.collection("scripts").doc("8ZM4uG9LsQVkx1BHUHcf").collection('nodes').doc(nodeRef.id).update({uid: nodeRef.id});
 
-        let childObj = {};
-        childObj[tempRef.key] = true;
-        firebase.database().ref().child('test_2').child(node['uid']).child('children').update(childObj)
+                let childObj = {};
+                childObj['children.' + nodeRef.id] = true;
+                db.collection("scripts").doc("8ZM4uG9LsQVkx1BHUHcf").collection('nodes').doc(node['uid']).update(childObj);
+
+            })
+            .catch(function(error) {
+                console.error("Error adding document: ", error);
+            });
 
     }
 
@@ -165,7 +171,6 @@ class SideBar extends Component{
                     text: ''
                 })
                     .then(function (nodeRef) {
-                        console.log('this:', this)
                         db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id})
                         db.collection('scripts').doc(scriptRef.id).collection('nodes').doc(nodeRef.id).update({
                             uid: nodeRef.id,
@@ -237,6 +242,8 @@ var Editor = React.createClass({
 
 class App extends Component {
 
+    //kF73wCXA4p6OhAY74ouW
+
     constructor(props) {
         super(props);
         this.state = {
@@ -257,8 +264,8 @@ class App extends Component {
 
 
 
-    //TODO: start algorithm from parent node
     convertFlatObjectToTree(flat) {
+        console.log('flat:', flat)
         var tree = {};
         Object.keys(flat).map(function (key, index) {
             var nodeKey = key;
@@ -279,10 +286,9 @@ class App extends Component {
             }
 
         });
-
-    return tree;
-
-}
+        console.log('tree:', tree);
+        return tree;
+    }
 
 
     componentWillMount() {
@@ -301,6 +307,24 @@ class App extends Component {
                     uid: user.uid
                 };
                 this.setState({user: userObj})
+
+
+                db.collection("scripts").doc("8ZM4uG9LsQVkx1BHUHcf").collection('nodes')
+                    .onSnapshot(function(querySnapshot) {
+                        var cities = [];
+                        var tempTree = {};
+                        querySnapshot.forEach(function(doc) {
+                            tempTree[doc.data().uid] = doc.data()
+                        });
+                        console.log('script', tempTree);
+
+                        var tree = {};
+                        tree['kF73wCXA4p6OhAY74ouW'] = this.convertFlatObjectToTree(tempTree)['kF73wCXA4p6OhAY74ouW'];
+                        console.log(tree);
+                        this.setState({tree: tree })
+                    }.bind(this));
+
+
                 // ...
             } else {
                 console.log("onauth-change: user isn't signed in.");
@@ -309,13 +333,6 @@ class App extends Component {
                 // User is signed out.
                 // ...
             }
-        }.bind(this));
-
-        firebase.database().ref().child('test_2').on('value', function(snap) {
-            var tree = {};
-            tree[this.state.premiseNode] = this.convertFlatObjectToTree(snap.val())[this.state.premiseNode];
-            console.log(tree);
-            this.setState({tree: tree })
         }.bind(this));
 
     }
