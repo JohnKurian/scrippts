@@ -122,7 +122,7 @@ var Parent = React.createClass({
         return (
             <div>
                 <Header onClick={this.handleViewSidebar} />
-                <SideBar isOpen={this.state.sidebarOpen} />
+                <SideBar isOpen={this.state.sidebarOpen} user={this.props.user}/>
                 <Editor isOpen={this.state.sidebarOpen} data={this.props.data}/>
             </div>
         );
@@ -146,7 +146,58 @@ var Header = React.createClass({
 class SideBar extends Component{
 
     createNewScript() {
+        console.log('writing to scripts collection...');
+        console.log(this)
 
+        db.collection("scripts").add({
+            creator: this.props.user.uid,
+            createdTime: Date.now(),
+            updatedTime: Date.now(),
+            type: 'argument',
+            collaborators: [this.props.user.uid]
+        })
+            .then(function(scriptRef) {
+                console.log("Document written with ID: ", scriptRef.id);
+
+                db.collection('scripts').doc(scriptRef.id).set({uid: scriptRef.id}, {merge: true})
+
+                db.collection('scripts').doc(scriptRef.id).collection('nodes').add({
+                    text: ''
+                })
+                    .then(function (nodeRef) {
+                        console.log('this:', this)
+                        db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id})
+                        db.collection('scripts').doc(scriptRef.id).collection('nodes').doc(nodeRef.id).update({
+                            uid: nodeRef.id,
+                            text: '',
+                            createdTime: Date.now(),
+                            updatedTime: Date.now()
+                        });
+
+                        //get the creator id of the script
+                        db.collection("scripts").doc(scriptRef.id).get().then(function(script) {
+                            if (script.exists) {
+                                console.log("script data:", script.data());
+                                db.collection('users').doc(script.data().creator).collection('scripts').doc(scriptRef.id).set({
+                                    creator: true,
+                                    collaborator: true,
+                                    forked: false
+                                })
+
+                            } else {
+                                console.log("No such script object");
+                            }
+                        }).catch(function(error) {
+                            console.log("Error getting document:", error);
+                        });
+
+
+                    })
+
+            })
+            .catch(function(error) {
+                console.error("Error adding document: ", error);
+            });
     }
 
     goToHome() {
@@ -241,18 +292,19 @@ class App extends Component {
             if (user) {
                 console.log('onauth-change-user:', user)
                 // User is signed in.
-                var displayName = user.displayName;
-                var email = user.email;
-                var emailVerified = user.emailVerified;
-                var photoURL = user.photoURL;
-                var isAnonymous = user.isAnonymous;
-                var uid = user.uid;
-                var providerData = user.providerData;
-                this.setState({user: user})
+                let userObj = {
+                    displayName: user.displayName,
+                    email: user.email,
+                    emailVerified: user.emailVerified,
+                    photoURL: user.photoURL,
+                    isAnonymous: user.isAnonymous,
+                    uid: user.uid
+                };
+                this.setState({user: userObj})
                 // ...
             } else {
-                console.log("onauth-change: user isn't signed in.")
-                console.log(user)
+                console.log("onauth-change: user isn't signed in.");
+                console.log(user);
                 this.setState({user: null})
                 // User is signed out.
                 // ...
@@ -431,7 +483,7 @@ class App extends Component {
 
                 return (
                     <Router>
-                        <Parent data={this.state.tree}/>
+                        <Parent data={this.state.tree} user={this.state.user}/>
                     </Router>
                 );
             }
