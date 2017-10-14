@@ -3,8 +3,16 @@ import './App.css';
 import './Node.css';
 import './Layout.css';
 
+import {
+    BrowserRouter as Router,
+    Route,
+    Link
+} from 'react-router-dom'
+
 
 var firebase = require("firebase");
+require("firebase/firestore");
+
 
 var config = {
     apiKey: "AIzaSyAg-UlKP9oonj4IMo5op6qEAOzFXHZloiY",
@@ -17,6 +25,7 @@ var config = {
 
 firebase.initializeApp(config);
 
+var db = firebase.firestore();
 export const auth = firebase.auth
 
 
@@ -114,7 +123,7 @@ var Parent = React.createClass({
             <div>
                 <Header onClick={this.handleViewSidebar} />
                 <SideBar isOpen={this.state.sidebarOpen} />
-                <Content isOpen={this.state.sidebarOpen} data={this.props.data}/>
+                <Editor isOpen={this.state.sidebarOpen} data={this.props.data}/>
             </div>
         );
     }
@@ -127,32 +136,42 @@ var Header = React.createClass({
     render: function() {
         return (
             <header>
-                <a href="javascript:;" onClick={this.props.onClick}>Click Me!</a>
+                <a href="javascript:;" onClick={this.props.onClick}>Toggle</a>
                 <input id="logout" type="button" value="logout" onClick={this.logout.bind(this)} />
             </header>
         );
     }
 });
-var SideBar = React.createClass({
-    render: function() {
+
+class SideBar extends Component{
+
+    createNewScript() {
+
+    }
+
+    goToHome() {
+
+    }
+
+    render() {
         var sidebarClass = this.props.isOpen ? 'sidebar open' : 'sidebar';
         return (
             <div className={sidebarClass}>
-                <div>I slide into view</div>
-                <div>Me too!</div>
-                <div>Meee Threeeee!</div>
+                <li><Link to="/">Home</Link></li>
+                <input id="newScript" type="button" value="Create new script" onClick={this.createNewScript.bind(this)} />
+                <input id="home" type="button" value="Home" onClick={this.goToHome.bind(this)} />
             </div>
         );
     }
-});
+}
 
-var Content = React.createClass({
+var Editor = React.createClass({
     render: function() {
         var contentClass = this.props.isOpen ? 'content open' : 'content';
         return (
             <div className={contentClass}>
 
-                <div className="App">
+                <div className="EditorContainer">
                     <div className="tree">
                         <Node data={this.props.data}/>
                     </div>
@@ -187,7 +206,7 @@ class App extends Component {
 
 
 
-
+    //TODO: start algorithm from parent node
     convertFlatObjectToTree(flat) {
         var tree = {};
         Object.keys(flat).map(function (key, index) {
@@ -291,12 +310,35 @@ class App extends Component {
 
     signup(email, password) {
 
-        const result = auth().createUserWithEmailAndPassword(email, password).catch(function(error) {
+        const result = auth().createUserWithEmailAndPassword(email, password)
+            .then(function(user){
+                console.log('uid',user);
+
+                console.log('writing to users collection...');
+                db.collection("users").doc(user.uid).set({
+                    uid: user.uid,
+                    email: user.email,
+                    emailVerified: user.emailVerified,
+                    photoURL: user.photoURL,
+                    isAnonymous: user.isAnonymous,
+                    displayName: user.displayName,
+                    phoneNumber: user.phoneNumber,
+                    // providerData: user.providerData
+                })
+                    .then(function() {
+                        console.log("user added to database");
+                    })
+                    .catch(function(error) {
+                        console.error("Error adding document: ", error);
+                    });
+
+            })
+            .catch(function(error) {
             // Handle Errors here.
             var errorCode = error.code;
             var errorMessage = error.message;
             // ...
-            console.log('signup-error', error)
+            console.log('signup-error', error);
             this.setState({signupError: errorMessage})
         }.bind(this));
 
@@ -388,7 +430,9 @@ class App extends Component {
             else {
 
                 return (
-                    <Parent data={this.state.tree}/>
+                    <Router>
+                        <Parent data={this.state.tree}/>
+                    </Router>
                 );
             }
         }

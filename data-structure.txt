@@ -1,0 +1,43 @@
+User obj:
+uid
+scripts: {
+	script_uid: {
+	    type: 'argument',
+		creator: true,
+		collaborator: true,
+		forked: false,
+		parent_node_uid
+		nodes: {
+			node_uid: {
+				parent: true
+			}
+		}
+	}
+}
+
+
+
+
+Node obj:
+uid
+parent
+children
+creator
+collaborators: {
+	user_uid: true
+}
+acl: {
+	private_read: true,
+	public_read: true,
+	private_write: true,
+	public_write: false
+}
+
+
+Example queries:
+Fetch all the trees of the owner
+
+
+
+
+
