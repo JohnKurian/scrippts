@@ -6,7 +6,8 @@ import './Layout.css';
 import {
     BrowserRouter as Router,
     Route,
-    Link
+    Link,
+    Switch
 } from 'react-router-dom'
 
 
@@ -57,23 +58,23 @@ class Node extends Component {
 
         //attach child node to flat object
 
-        db.collection("scripts").doc("8ZM4uG9LsQVkx1BHUHcf").collection('nodes').add({
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').add({
             text: '',
             createdTime: Date.now(),
             updatedTime: Date.now()
         })
             .then(function(nodeRef) {
-                console.log("Document written with ID: ", nodeRef.id);
-                db.collection("scripts").doc("8ZM4uG9LsQVkx1BHUHcf").collection('nodes').doc(nodeRef.id).update({uid: nodeRef.id});
+                console.log("node written with ID: ", nodeRef.id);
+                db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(nodeRef.id).update({uid: nodeRef.id});
 
                 let childObj = {};
                 childObj['children.' + nodeRef.id] = true;
-                db.collection("scripts").doc("8ZM4uG9LsQVkx1BHUHcf").collection('nodes').doc(node['uid']).update(childObj);
+                db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update(childObj);
 
-            })
+            }.bind(this))
             .catch(function(error) {
-                console.error("Error adding document: ", error);
-            });
+                console.error("Error adding node: ", error);
+            }.bind(this));
 
     }
 
@@ -103,7 +104,7 @@ class Node extends Component {
 
                                     </textarea>
                                 <button onClick={this.onAddClick.bind(this, node)} type="button">Add node</button>
-                                {<Node data={node.children}/>}
+                                {<Node data={node.children} scriptId={this.props.scriptId}/>}
                             </li>
                         )
                     }.bind(this))
@@ -115,6 +116,28 @@ class Node extends Component {
     }
 }
 
+class Home extends Component {
+
+    render() {
+
+        const SCRIPT_ROUTE = (scriptId) => `/s/${scriptId}/`;
+
+        return (
+            <div style={{marginLeft: '350px', marginTop: '100px'}}>
+                {
+                    this.props.scriptIds.map(function(id) {
+                        return (
+                            <div>
+                                <Link to={SCRIPT_ROUTE(id)} params={{scriptId: id}}>{id}</Link>
+                                <br/>
+                            </div>
+                        )
+                    })
+                }
+            </div>
+        )
+    }
+}
 
 
 var Parent = React.createClass({
@@ -129,7 +152,15 @@ var Parent = React.createClass({
             <div>
                 <Header onClick={this.handleViewSidebar} />
                 <SideBar isOpen={this.state.sidebarOpen} user={this.props.user}/>
-                <Editor isOpen={this.state.sidebarOpen} data={this.props.data}/>
+
+                <Switch>
+                    <Route exact path="/s/:scriptId" render={(props) => (
+                        <Editor
+                            {...props}
+                            isOpen={this.state.sidebarOpen}/>
+                    )} />
+                    <Route exact path="/" render={(props) => ( <Home {...props} scriptIds={this.props.scriptIds}/> )}/>
+                </Switch>
             </div>
         );
     }
@@ -186,7 +217,8 @@ class SideBar extends Component{
                                 db.collection('users').doc(script.data().creator).collection('scripts').doc(scriptRef.id).set({
                                     creator: true,
                                     collaborator: true,
-                                    forked: false
+                                    forked: false,
+                                    uid: scriptRef.id
                                 })
 
                             } else {
@@ -213,7 +245,7 @@ class SideBar extends Component{
         var sidebarClass = this.props.isOpen ? 'sidebar open' : 'sidebar';
         return (
             <div className={sidebarClass}>
-                <li><Link to="/">Home</Link></li>
+                <div><Link to="/" params={{s: 1}} >Home</Link></div>
                 <input id="newScript" type="button" value="Create new script" onClick={this.createNewScript.bind(this)} />
                 <input id="home" type="button" value="Home" onClick={this.goToHome.bind(this)} />
             </div>
@@ -221,48 +253,15 @@ class SideBar extends Component{
     }
 }
 
-var Editor = React.createClass({
-    render: function() {
-        var contentClass = this.props.isOpen ? 'content open' : 'content';
-        return (
-            <div className={contentClass}>
-
-                <div className="EditorContainer">
-                    <div className="tree">
-                        <Node data={this.props.data}/>
-                    </div>
-                </div>
-
-
-            </div>
-        );
-    }
-});
-
-
-class App extends Component {
-
-    //kF73wCXA4p6OhAY74ouW
+class Editor extends Component{
 
     constructor(props) {
         super(props);
         this.state = {
-            tree: [],
-            premiseNode: "-KlDFleO6_xjnLx88ou1",
-            user: null,
-            loginEmail: '',
-            loginPassword: '',
-            signupEmail: '',
-            signupPassword: '',
-            loginError: '',
-            signupError: '',
-            deleteAccountError: '',
-            isAuthChecked: false
+            tree: {},
+            premiseNode: ""
         };
     }
-
-
-
 
     convertFlatObjectToTree(flat) {
         console.log('flat:', flat)
@@ -292,6 +291,79 @@ class App extends Component {
 
 
     componentWillMount() {
+        console.log('editor this:', this.props.match.params.scriptId)
+
+        db.collection("scripts").doc(this.props.match.params.scriptId).collection('nodes')
+            .onSnapshot(function(querySnapshot) {
+                var tempTree = {};
+                querySnapshot.forEach(function(doc) {
+                    tempTree[doc.data().uid] = doc.data()
+                });
+                console.log('script', tempTree);
+
+                db.collection('scripts').doc(this.props.match.params.scriptId).get().then(function(doc) {
+                    if (doc.exists) {
+                        console.log("script data:", doc.data());
+                        this.setState({premiseNode: doc.data().parentNodeId})
+
+                        var tree = {};
+                        tree[this.state.premiseNode] = this.convertFlatObjectToTree(tempTree)[this.state.premiseNode];
+                        console.log('inside editor')
+                        console.log(tree);
+                        this.setState({tree: tree })
+
+                    } else {
+                        console.log("No such script");
+                    }
+                }.bind(this)).catch(function(error) {
+                    console.log("Error getting script:", error);
+                }.bind(this));
+
+
+
+            }.bind(this));
+    }
+
+
+    render() {
+        var contentClass = this.props.isOpen ? 'content open' : 'content';
+        return (
+            <div className={contentClass}>
+
+                <div className="EditorContainer">
+                    <div className="tree">
+                        <Node data={this.state.tree} scriptId={this.props.match.params.scriptId}/>
+                    </div>
+                </div>
+
+
+            </div>
+        );
+    }
+};
+
+
+class App extends Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            user: null,
+            loginEmail: '',
+            loginPassword: '',
+            signupEmail: '',
+            signupPassword: '',
+            loginError: '',
+            signupError: '',
+            deleteAccountError: '',
+            isAuthChecked: false,
+            scriptIds: []
+        };
+    }
+
+
+
+    componentWillMount() {
 
         firebase.auth().onAuthStateChanged(function(user) {
             this.setState({isAuthChecked: true});
@@ -306,23 +378,22 @@ class App extends Component {
                     isAnonymous: user.isAnonymous,
                     uid: user.uid
                 };
+
+                db.collection("users").doc(user.uid).collection('scripts')
+                    .onSnapshot(function(querySnapshot) {
+                        console.log(querySnapshot);
+                        let scriptIds = [];
+                        querySnapshot.forEach(function(doc) {
+                            console.log('user:');
+                            console.log(doc.data());
+                            scriptIds.push(doc.data().uid)
+                        });
+                        this.setState({scriptIds: scriptIds})
+
+                    }.bind(this));
+
                 this.setState({user: userObj})
 
-
-                db.collection("scripts").doc("8ZM4uG9LsQVkx1BHUHcf").collection('nodes')
-                    .onSnapshot(function(querySnapshot) {
-                        var cities = [];
-                        var tempTree = {};
-                        querySnapshot.forEach(function(doc) {
-                            tempTree[doc.data().uid] = doc.data()
-                        });
-                        console.log('script', tempTree);
-
-                        var tree = {};
-                        tree['kF73wCXA4p6OhAY74ouW'] = this.convertFlatObjectToTree(tempTree)['kF73wCXA4p6OhAY74ouW'];
-                        console.log(tree);
-                        this.setState({tree: tree })
-                    }.bind(this));
 
 
                 // ...
@@ -500,7 +571,7 @@ class App extends Component {
 
                 return (
                     <Router>
-                        <Parent data={this.state.tree} user={this.state.user}/>
+                        <Parent user={this.state.user} scriptIds={this.state.scriptIds}/>
                     </Router>
                 );
             }
