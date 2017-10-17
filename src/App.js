@@ -30,7 +30,18 @@ var db = firebase.firestore();
 export const auth = firebase.auth
 
 
+class Loader extends Component {
 
+    render() {
+        return (
+            <div>
+                <svg className="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+                    <circle className="path" fill="none" strokeWidth="6" strokeLinecap="round" cx="33" cy="33" r="30"></circle>
+                </svg>
+            </div>
+        )
+    }
+}
 
 class Node extends Component {
 
@@ -400,7 +411,7 @@ class App extends Component {
             } else {
                 console.log("onauth-change: user isn't signed in.");
                 console.log(user);
-                this.setState({user: null})
+                this.setState({user: null, scriptIds: []})
                 // User is signed out.
                 // ...
             }
@@ -578,7 +589,7 @@ class App extends Component {
         }
         else {
             return (
-              <div>Loading...</div>
+              <Loader/>
             );
         }
     }
