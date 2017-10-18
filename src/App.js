@@ -175,17 +175,23 @@ class Home extends Component {
 }
 
 
-var Parent = React.createClass({
-    getInitialState: function(){
-        return {sidebarOpen: false};
-    },
-    handleViewSidebar: function(){
+class Parent extends Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            sidebarOpen: false
+        };
+    }
+
+    handleViewSidebar(){
         this.setState({sidebarOpen: !this.state.sidebarOpen});
-    },
-    render: function() {
+    }
+
+    render() {
         return (
             <div>
-                <Header onClick={this.handleViewSidebar} />
+                <Header onClick={this.handleViewSidebar.bind(this)} />
                 <SideBar isOpen={this.state.sidebarOpen} user={this.props.user}/>
 
                 <Switch>
@@ -199,13 +205,15 @@ var Parent = React.createClass({
             </div>
         );
     }
-});
+}
 
-var Header = React.createClass({
+class Header extends Component{
+
     logout() {
         auth().signOut()
-    },
-    render: function() {
+    }
+
+    render() {
         return (
             <header>
                 <a href="javascript:;" onClick={this.props.onClick}>Toggle</a>
@@ -213,7 +221,7 @@ var Header = React.createClass({
             </header>
         );
     }
-});
+}
 
 class SideBar extends Component{
 
