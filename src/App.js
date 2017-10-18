@@ -45,10 +45,19 @@ class Loader extends Component {
 
 class Node extends Component {
 
+    constructor(props) {
+        super(props);
+        this.state = {
+            text: ''
+        };
+    }
+
+
 
     onChange = (node, evt) => {
         console.log('value:', evt.target.value)
         console.log(node)
+        this.setState({text: evt.target.value})
 
     }
 
@@ -90,6 +99,19 @@ class Node extends Component {
     }
 
 
+    onSaveClick(node) {
+
+        //attach child node to flat object
+
+        console.log('inside onSave')
+        console.log(node['uid'], this.state.text)
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
+            text: this.state.text,
+            updatedTime: Date.now()
+        })
+
+    }
+
     render() {
 
         if(this.props.data==undefined) {
@@ -111,10 +133,12 @@ class Node extends Component {
                                         onFocus={this.onFocus.bind(this, node)}
                                         onBlur={this.onBlur.bind(this, node)}
                                         onChange={this.onChange.bind(this, node)}
-                                        onClick={this.onTextAreaClick.bind(this, node)}>
-
+                                        onClick={this.onTextAreaClick.bind(this, node)}
+                                        defaultValue={node.text}>
                                     </textarea>
+
                                 <button onClick={this.onAddClick.bind(this, node)} type="button">Add node</button>
+                                <button onClick={this.onSaveClick.bind(this, node)} type="button">Save</button>
                                 {<Node data={node.children} scriptId={this.props.scriptId}/>}
                             </li>
                         )
