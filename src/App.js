@@ -103,8 +103,6 @@ class Node extends Component {
 
         //attach child node to flat object
 
-        console.log('inside onSave')
-        console.log(node['uid'], this.state.text)
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
             text: this.state.text,
             updatedTime: Date.now()
@@ -128,7 +126,7 @@ class Node extends Component {
                         let node = this.props.data[key]
 
                         return (
-                            <li>
+                            <li key={node.uid}>
                                     <textarea
                                         onFocus={this.onFocus.bind(this, node)}
                                         onBlur={this.onBlur.bind(this, node)}
@@ -227,7 +225,6 @@ class SideBar extends Component{
 
     createNewScript() {
         console.log('writing to scripts collection...');
-        console.log(this)
 
         db.collection("scripts").add({
             creator: this.props.user.uid,
@@ -288,7 +285,7 @@ class SideBar extends Component{
         var sidebarClass = this.props.isOpen ? 'sidebar open' : 'sidebar';
         return (
             <div className={sidebarClass}>
-                <div><Link to="/" params={{s: 1}} >Home</Link></div>
+                <div><Link to="/">Home</Link></div>
                 <input id="newScript" type="button" value="Create new script" onClick={this.createNewScript.bind(this)} />
                 <input id="home" type="button" value="Home" onClick={this.goToHome.bind(this)} />
             </div>
@@ -307,7 +304,6 @@ class Editor extends Component{
     }
 
     convertFlatObjectToTree(flat) {
-        console.log('flat:', flat)
         var tree = {};
         Object.keys(flat).map(function (key, index) {
             var nodeKey = key;
@@ -328,13 +324,12 @@ class Editor extends Component{
             }
 
         });
-        console.log('tree:', tree);
+
         return tree;
     }
 
 
     componentWillMount() {
-        console.log('editor this:', this.props.match.params.scriptId)
 
         db.collection("scripts").doc(this.props.match.params.scriptId).collection('nodes')
             .onSnapshot(function(querySnapshot) {
@@ -342,17 +337,13 @@ class Editor extends Component{
                 querySnapshot.forEach(function(doc) {
                     tempTree[doc.data().uid] = doc.data()
                 });
-                console.log('script', tempTree);
 
                 db.collection('scripts').doc(this.props.match.params.scriptId).get().then(function(doc) {
                     if (doc.exists) {
-                        console.log("script data:", doc.data());
-                        this.setState({premiseNode: doc.data().parentNodeId})
+                        this.setState({premiseNode: doc.data().parentNodeId});
 
                         var tree = {};
                         tree[this.state.premiseNode] = this.convertFlatObjectToTree(tempTree)[this.state.premiseNode];
-                        console.log('inside editor')
-                        console.log(tree);
                         this.setState({tree: tree })
 
                     } else {
@@ -411,7 +402,6 @@ class App extends Component {
         firebase.auth().onAuthStateChanged(function(user) {
             this.setState({isAuthChecked: true});
             if (user) {
-                console.log('onauth-change-user:', user)
                 // User is signed in.
                 let userObj = {
                     displayName: user.displayName,
@@ -424,11 +414,8 @@ class App extends Component {
 
                 db.collection("users").doc(user.uid).collection('scripts')
                     .onSnapshot(function(querySnapshot) {
-                        console.log(querySnapshot);
                         let scriptIds = [];
                         querySnapshot.forEach(function(doc) {
-                            console.log('user:');
-                            console.log(doc.data());
                             scriptIds.push(doc.data().uid)
                         });
                         this.setState({scriptIds: scriptIds})
