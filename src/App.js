@@ -7,7 +7,8 @@ import {
     BrowserRouter as Router,
     Route,
     Link,
-    Switch
+    Switch,
+    withRouter
 } from 'react-router-dom'
 
 
@@ -205,17 +206,22 @@ class Parent extends Component {
     }
 }
 
-class Header extends Component{
+const LogoutButton = withRouter(({ history }) => (
+        <input id="logout" type="button" value="logout" onClick={() => {
+            auth().signOut();
+            history.push('/');
+        }} />
+    )
+);
 
-    logout() {
-        auth().signOut()
-    }
+
+class Header extends Component{
 
     render() {
         return (
             <header>
                 <a href="javascript:;" onClick={this.props.onClick}>Toggle</a>
-                <input id="logout" type="button" value="logout" onClick={this.logout.bind(this)} />
+                <LogoutButton/>
             </header>
         );
     }
