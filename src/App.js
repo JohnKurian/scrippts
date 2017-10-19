@@ -75,11 +75,21 @@ class Node extends Component {
         console.log('onBlur')
     }
 
-    onAddClick(node, evt) {
+    onAddClick(node, contentionType, evt) {
 
         //attach child node to flat object
 
+        let relativeToParent = {
+            'because': 1,
+            'and': 1,
+            'however': 0,
+            'but': -1
+        };
+
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').add({
+            parentUid: node.uid,
+            contentionType: contentionType,
+            relativeToParent: relativeToParent[contentionType],
             text: '',
             createdTime: Date.now(),
             updatedTime: Date.now()
@@ -113,9 +123,19 @@ class Node extends Component {
 
     render() {
 
-        if(this.props.data==undefined) {
+        if(this.props.data===undefined) {
             return null;
         }
+
+        let colorMap = {
+            '1': 'green',
+            '-1': 'red',
+            '0': 'yellow'
+        };
+
+
+        let color = '';
+
 
 
         return (
@@ -124,21 +144,33 @@ class Node extends Component {
 
                     Object.keys(this.props.data).map(function(key, index) {
 
-                        let node = this.props.data[key]
+                        let node = this.props.data[key];
+
+                        let currentNodeValue = 0;
+                        if(this.props.premiseRelativeValue!==null||this.props.premiseRelativeValue!==undefined) {
+                            currentNodeValue = this.props.premiseRelativeValue * node['relativeToParent'];
+                            color = colorMap[currentNodeValue]
+                        }
 
                         return (
                             <li key={node.uid}>
+                                <div style={{padding: '10px'}}>
                                     <textarea
+                                        style={{background: color}}
                                         onFocus={this.onFocus.bind(this, node)}
                                         onBlur={this.onBlur.bind(this, node)}
                                         onChange={this.onChange.bind(this, node)}
                                         onClick={this.onTextAreaClick.bind(this, node)}
                                         defaultValue={node.text}>
                                     </textarea>
+                                </div>
 
-                                <button onClick={this.onAddClick.bind(this, node)} type="button">Add node</button>
+                                <button onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
+                                <button onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
+                                <button onClick={this.onAddClick.bind(this, node, "and")} type="button">and</button>
+                                <button onClick={this.onAddClick.bind(this, node, "however")} type="button">however</button>
                                 <button onClick={this.onSaveClick.bind(this, node)} type="button">Save</button>
-                                {<Node data={node.children} scriptId={this.props.scriptId}/>}
+                                {<Node data={node.children} scriptId={this.props.scriptId} premiseRelativeValue={currentNodeValue}/>}
                             </li>
                         )
                     }.bind(this))
@@ -161,7 +193,7 @@ class Home extends Component {
                 {
                     this.props.scriptIds.map(function(id) {
                         return (
-                            <div>
+                            <div key={id}>
                                 <Link to={SCRIPT_ROUTE(id)} params={{scriptId: id}}>{id}</Link>
                                 <br/>
                             </div>
@@ -250,6 +282,8 @@ class SideBar extends Component{
                     .then(function (nodeRef) {
                         db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id})
                         db.collection('scripts').doc(scriptRef.id).collection('nodes').doc(nodeRef.id).update({
+                            parentUid: null,
+                            relativeToParent: 1,
                             uid: nodeRef.id,
                             text: '',
                             createdTime: Date.now(),
@@ -305,7 +339,8 @@ class Editor extends Component{
         super(props);
         this.state = {
             tree: {},
-            premiseNode: ""
+            premiseNode: "",
+            premiseRelativeValue: 1
         };
     }
 
@@ -319,10 +354,10 @@ class Editor extends Component{
 
             var children = node['children'];
 
-            if(children!=undefined) {
+            if(children!== undefined) {
                 Object.keys(children).map(function (childNodeKey, index) {
 
-                    if (children[childNodeKey] != undefined) {
+                    if (children[childNodeKey] !== undefined) {
                         tree[nodeKey]['children'][childNodeKey] = flat[childNodeKey];
                     }
 
@@ -350,6 +385,7 @@ class Editor extends Component{
 
                         var tree = {};
                         tree[this.state.premiseNode] = this.convertFlatObjectToTree(tempTree)[this.state.premiseNode];
+                        this.setState({premiseRelativeValue: tree[this.state.premiseNode]['relativeToParent']});
                         this.setState({tree: tree })
 
                     } else {
@@ -372,7 +408,7 @@ class Editor extends Component{
 
                 <div className="EditorContainer">
                     <div className="tree">
-                        <Node data={this.state.tree} scriptId={this.props.match.params.scriptId}/>
+                        <Node data={this.state.tree} scriptId={this.props.match.params.scriptId} premiseRelativeValue={this.state.premiseRelativeValue}/>
                     </div>
                 </div>
 
@@ -477,7 +513,7 @@ class App extends Component {
             // Handle Errors here.
             var errorCode = error.code;
             var errorMessage = error.message;
-            console.log('auth-error:', error)
+            console.log('auth-error:', error, errorCode);
             this.setState({loginError: errorMessage})
             // ...
         }.bind(this));
@@ -514,7 +550,7 @@ class App extends Component {
             var errorCode = error.code;
             var errorMessage = error.message;
             // ...
-            console.log('signup-error', error);
+            console.log('signup-error', error, errorCode);
             this.setState({signupError: errorMessage})
         }.bind(this));
 
@@ -539,7 +575,7 @@ class App extends Component {
                 var errorCode = error.code;
                 var errorMessage = error.message;
                 this.setState({deleteAccountError: errorMessage})
-                console.log('user-deletion-error:', error)
+                console.log('user-deletion-error:', error, errorCode)
             }.bind(this));
         }
     }
