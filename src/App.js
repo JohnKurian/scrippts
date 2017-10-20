@@ -149,7 +149,10 @@ class Node extends Component {
                         let currentNodeValue = 0;
                         if(this.props.premiseRelativeValue!==null||this.props.premiseRelativeValue!==undefined) {
                             currentNodeValue = this.props.premiseRelativeValue * node['relativeToParent'];
-                            color = colorMap[currentNodeValue]
+                            color = colorMap[currentNodeValue];
+                            if(currentNodeValue===0) {
+                             currentNodeValue = -1;
+                            }
                         }
 
                         return (
@@ -274,13 +277,15 @@ class SideBar extends Component{
             .then(function(scriptRef) {
                 console.log("Document written with ID: ", scriptRef.id);
 
-                db.collection('scripts').doc(scriptRef.id).set({uid: scriptRef.id}, {merge: true})
+                db.collection('scripts').doc(scriptRef.id).update({uid: scriptRef.id});
 
                 db.collection('scripts').doc(scriptRef.id).collection('nodes').add({
                     text: ''
                 })
                     .then(function (nodeRef) {
-                        db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id})
+
+                        db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id});
+
                         db.collection('scripts').doc(scriptRef.id).collection('nodes').doc(nodeRef.id).update({
                             parentUid: null,
                             relativeToParent: 1,
@@ -288,30 +293,21 @@ class SideBar extends Component{
                             text: '',
                             createdTime: Date.now(),
                             updatedTime: Date.now()
+                        }).then(function (nodeRef) {
+                            console.log('script addition finished 2')
                         });
 
-                        //get the creator id of the script
-                        db.collection("scripts").doc(scriptRef.id).get().then(function(script) {
-                            if (script.exists) {
-                                console.log("script data:", script.data());
-                                db.collection('users').doc(script.data().creator).collection('scripts').doc(scriptRef.id).set({
-                                    creator: true,
-                                    collaborator: true,
-                                    forked: false,
-                                    uid: scriptRef.id
-                                })
-
-                            } else {
-                                console.log("No such script object");
-                            }
-                        }).catch(function(error) {
-                            console.log("Error getting document:", error);
+                        db.collection('users').doc(this.props.user.uid).collection('scripts').doc(scriptRef.id).set({
+                            creator: true,
+                            collaborator: true,
+                            forked: false,
+                            uid: scriptRef.id
                         });
 
 
-                    })
+                    }.bind(this))
 
-            })
+            }.bind(this))
             .catch(function(error) {
                 console.error("Error adding document: ", error);
             });
@@ -372,32 +368,41 @@ class Editor extends Component{
 
     componentWillMount() {
 
-        db.collection("scripts").doc(this.props.match.params.scriptId).collection('nodes')
-            .onSnapshot(function(querySnapshot) {
-                var tempTree = {};
-                querySnapshot.forEach(function(doc) {
-                    tempTree[doc.data().uid] = doc.data()
-                });
+        function fetchTree() {
 
-                db.collection('scripts').doc(this.props.match.params.scriptId).get().then(function(doc) {
-                    if (doc.exists) {
-                        this.setState({premiseNode: doc.data().parentNodeId});
+            return db.collection("scripts").doc(this.props.match.params.scriptId).collection('nodes')
+                .onSnapshot(function (querySnapshot) {
+                    var tempTree = {};
+                    querySnapshot.forEach(function (doc) {
+                        tempTree[doc.data().uid] = doc.data()
+                    });
 
-                        var tree = {};
-                        tree[this.state.premiseNode] = this.convertFlatObjectToTree(tempTree)[this.state.premiseNode];
-                        this.setState({premiseRelativeValue: tree[this.state.premiseNode]['relativeToParent']});
-                        this.setState({tree: tree })
+                    db.collection('scripts').doc(this.props.match.params.scriptId).get().then(function (doc) {
+                        if (doc.exists) {
+                            this.setState({premiseNode: doc.data().parentNodeId});
 
-                    } else {
-                        console.log("No such script");
-                    }
-                }.bind(this)).catch(function(error) {
-                    console.log("Error getting script:", error);
+                            var tree = {};
+                            tree[this.state.premiseNode] = this.convertFlatObjectToTree(tempTree)[this.state.premiseNode];
+                            this.setState({premiseRelativeValue: tree[this.state.premiseNode]['relativeToParent']});
+                            this.setState({tree: tree})
+
+                        } else {
+                            console.log("No such script");
+                        }
+                    }.bind(this)).catch(function (error) {
+                        console.log("Error getting script:", error);
+                    }.bind(this));
+
+
+                }.bind(this), function (error) {
+                    console.log('script-fetch-onSnapshot error:', error);
+                    console.log('attempting to fetch again...');
+                    fetchTree.call(this);
                 }.bind(this));
 
+        }
 
-
-            }.bind(this));
+        fetchTree.call(this);
     }
 
 
@@ -462,7 +467,9 @@ class App extends Component {
                         });
                         this.setState({scriptIds: scriptIds})
 
-                    }.bind(this));
+                    }.bind(this), function(error) {
+                        console.log('user-fetch-scriptId-error', error);
+                    });
 
                 this.setState({user: userObj})
 

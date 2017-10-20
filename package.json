@@ -6,6 +6,7 @@
     "antd": "^2.10.2",
     "draft-js": "^0.10.1",
     "firebase": "^4.5.0",
+    "promise-polyfill": "6.0.2",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "react-router": "^4.2.0",
