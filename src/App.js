@@ -397,7 +397,9 @@ class Editor extends Component{
                 }.bind(this), function (error) {
                     console.log('script-fetch-onSnapshot error:', error);
                     console.log('attempting to fetch again...');
-                    fetchTree.call(this);
+                    if(this.props.history.location.pathname!=='/') {
+                        fetchTree.call(this);
+                    }
                 }.bind(this));
 
         }
