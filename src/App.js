@@ -275,6 +275,7 @@ class SideBar extends Component{
 
         db.collection("scripts").add({
             creator: this.props.user.uid,
+            scope: 'private',
             createdTime: Date.now(),
             updatedTime: Date.now(),
             type: 'argument',
@@ -424,7 +425,8 @@ class Editor extends Component{
         this.props.disableSidebar();
         window.addEventListener('wheel', this.handleScroll);
 
-        function fetchTree() {
+        function fetchTree(retryCount) {
+            retryCount += 1;
 
             return db.collection("scripts").doc(this.props.match.params.scriptId).collection('nodes')
                 .onSnapshot(function (querySnapshot) {
@@ -453,14 +455,34 @@ class Editor extends Component{
                 }.bind(this), function (error) {
                     console.log('script-fetch-onSnapshot error:', error);
                     console.log('attempting to fetch again...');
-                    if(this.props.history.location.pathname!=='/') {
-                        fetchTree.call(this);
+                    if(retryCount<20) {
+                        setTimeout(function () {
+                            if (this.props.history.location.pathname !== '/') {
+                                fetchTree.call(this, retryCount);
+                            }
+                        }.bind(this), 200);
                     }
+                    else {
+                        console.log('seems like you dont have permission. Please refresh the page and try again later');
+                    }
+
                 }.bind(this));
 
         }
 
-        fetchTree.call(this);
+        fetchTree.call(this, 0);
+    }
+
+    changeScope(evt) {
+        console.log(evt.target.value);
+        if(evt.target.value === 'private') {
+            db.collection("scripts").doc(this.props.match.params.scriptId).update({scope: 'public'});
+            evt.target.value = 'public';
+        }
+        else {
+            db.collection("scripts").doc(this.props.match.params.scriptId).update({scope: 'private'});
+            evt.target.value = 'private';
+        }
     }
 
 
@@ -470,6 +492,7 @@ class Editor extends Component{
             <div className={contentClass}>
 
                 <div className="EditorContainer">
+                    <input id="acl" type="button" value="private" onClick={this.changeScope.bind(this)} />
                     <div className="tree" id="tree">
                         <Node data={this.state.tree} scriptId={this.props.match.params.scriptId} premiseRelativeValue={this.state.premiseRelativeValue}/>
                     </div>
