@@ -79,6 +79,11 @@ class Node extends Component {
 
         //attach child node to flat object
 
+        if(node['contentionType']==='however' && contentionType==='however') {
+            console.log("can't cascade two howevers");
+            return;
+        }
+
         let relativeToParent = {
             'because': 1,
             'and': 1,
