@@ -223,6 +223,10 @@ class Parent extends Component {
         this.setState({sidebarOpen: !this.state.sidebarOpen});
     }
 
+    disableSidebar(){
+        this.setState({sidebarOpen: false});
+    }
+
     render() {
         return (
             <div>
@@ -233,6 +237,7 @@ class Parent extends Component {
                     <Route exact path="/s/:scriptId" render={(props) => (
                         <Editor
                             {...props}
+                            disableSidebar={this.disableSidebar.bind(this)}
                             isOpen={this.state.sidebarOpen}/>
                     )} />
                     <Route exact path="/" render={(props) => ( <Home {...props} scriptIds={this.props.scriptIds}/> )}/>
@@ -416,6 +421,7 @@ class Editor extends Component{
 
     componentWillMount() {
 
+        this.props.disableSidebar();
         window.addEventListener('wheel', this.handleScroll);
 
         function fetchTree() {
@@ -459,7 +465,7 @@ class Editor extends Component{
 
 
     render() {
-        var contentClass = this.props.isOpen ? 'content open' : 'content';
+        let contentClass = this.props.isOpen ? 'content open' : 'content';
         return (
             <div className={contentClass}>
 
@@ -473,8 +479,7 @@ class Editor extends Component{
             </div>
         );
     }
-};
-
+}
 
 class App extends Component {
 
@@ -570,8 +575,8 @@ class App extends Component {
     async login(email, password) {
         const result = await auth().signInWithEmailAndPassword(email, password).catch(function(error) {
             // Handle Errors here.
-            var errorCode = error.code;
-            var errorMessage = error.message;
+            let errorCode = error.code;
+            let errorMessage = error.message;
             console.log('auth-error:', error, errorCode);
             this.setState({loginError: errorMessage})
             // ...
@@ -606,8 +611,8 @@ class App extends Component {
             })
             .catch(function(error) {
             // Handle Errors here.
-            var errorCode = error.code;
-            var errorMessage = error.message;
+            let errorCode = error.code;
+            let errorMessage = error.message;
             // ...
             console.log('signup-error', error, errorCode);
             this.setState({signupError: errorMessage})
@@ -623,16 +628,16 @@ class App extends Component {
     }
 
     deleteAccount() {
-        var user = firebase.auth().currentUser;
+        let user = firebase.auth().currentUser;
 
-        if(user!=null) {
+        if(user!==null) {
             user.delete().then(function () {
                 // User deleted.
                 console.log('user deleted')
             }.bind(this)).catch(function (error) {
                 // An error happened.
-                var errorCode = error.code;
-                var errorMessage = error.message;
+                let errorCode = error.code;
+                let errorMessage = error.message;
                 this.setState({deleteAccountError: errorMessage})
                 console.log('user-deletion-error:', error, errorCode)
             }.bind(this));
@@ -644,7 +649,7 @@ class App extends Component {
 
     render() {
         if(this.state.isAuthChecked) {
-            if (this.state.user == null) {
+            if (this.state.user === null) {
                 return (
                     <div>
                         Login
