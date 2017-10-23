@@ -159,6 +159,7 @@ class Node extends Component {
                             <li key={node.uid}>
                                 <div style={{padding: '10px'}}>
                                     <textarea
+                                        id={node.uid}
                                         style={{background: color}}
                                         onFocus={this.onFocus.bind(this, node)}
                                         onBlur={this.onBlur.bind(this, node)}
@@ -336,8 +337,11 @@ class Editor extends Component{
         this.state = {
             tree: {},
             premiseNode: "",
-            premiseRelativeValue: 1
+            premiseRelativeValue: 1,
+            centerLock: true
         };
+
+        this.handleScroll = this.handleScroll.bind(this);
     }
 
     convertFlatObjectToTree(flat) {
@@ -366,7 +370,53 @@ class Editor extends Component{
     }
 
 
+    handleScroll(event) {
+        this.setState({'centerLock': false});
+        window.removeEventListener('wheel', this.handleScroll);
+    };
+
+
+    componentDidMount() {
+
+
+        if(this.state.centerLock) {
+
+            if(document.getElementById(this.state.premiseNode)!==null) {
+                let el = document.getElementById(this.state.premiseNode);
+
+                let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                let leftOffset = el.getBoundingClientRect()['x'];
+                let elementWidth = el.getBoundingClientRect()['width'];
+
+                let calculatedScroll = leftOffset + Math.max(viewportWidth/2) + Math.max(elementWidth/2);
+
+                window.scrollTo(calculatedScroll, 0);
+            }
+        }
+
+    }
+
+    componentDidUpdate() {
+        if(this.state.centerLock) {
+
+            if(document.getElementById(this.state.premiseNode)!==null) {
+                let el = document.getElementById(this.state.premiseNode);
+
+                let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                let leftOffset = el.getBoundingClientRect()['x'];
+                let elementWidth = el.getBoundingClientRect()['width'];
+
+                let calculatedLeftScroll = leftOffset - Math.max(viewportWidth/2) + Math.max(elementWidth/2);
+
+                window.scrollTo(calculatedLeftScroll, 0);
+            }
+        }
+    }
+
+
     componentWillMount() {
+
+        window.addEventListener('wheel', this.handleScroll);
 
         function fetchTree() {
 
@@ -414,7 +464,7 @@ class Editor extends Component{
             <div className={contentClass}>
 
                 <div className="EditorContainer">
-                    <div className="tree">
+                    <div className="tree" id="tree">
                         <Node data={this.state.tree} scriptId={this.props.match.params.scriptId} premiseRelativeValue={this.state.premiseRelativeValue}/>
                     </div>
                 </div>
