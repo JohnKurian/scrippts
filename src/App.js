@@ -37,7 +37,7 @@ class Loader extends Component {
         return (
             <div>
                 <svg className="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
-                    <circle className="path" fill="none" strokeWidth="6" strokeLinecap="round" cx="33" cy="33" r="30"></circle>
+                    <circle className="path" fill="none" strokeWidth="6" strokeLinecap="round" cx="33" cy="33" r="30"/>
                 </svg>
             </div>
         )
@@ -155,8 +155,11 @@ class Node extends Component {
                         if(this.props.premiseRelativeValue!==null||this.props.premiseRelativeValue!==undefined) {
                             currentNodeValue = this.props.premiseRelativeValue * node['relativeToParent'];
                             color = colorMap[currentNodeValue];
-                            if(currentNodeValue===0) {
+                            if(currentNodeValue===0 && this.props.premiseRelativeValue===1) {
                              currentNodeValue = -1;
+                            }
+                            else if(currentNodeValue===0 && this.props.premiseRelativeValue===-1) {
+                                currentNodeValue = 1;
                             }
                         }
 
@@ -290,6 +293,10 @@ class SideBar extends Component{
                 console.log("Document written with ID: ", scriptRef.id);
 
                 db.collection('scripts').doc(scriptRef.id).update({uid: scriptRef.id});
+
+                let permissionObj = {};
+                permissionObj['permission'] = 'write';
+                db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj);
 
                 db.collection('scripts').doc(scriptRef.id).collection('nodes').add({
                     text: ''
@@ -490,6 +497,14 @@ class Editor extends Component{
         }
     }
 
+    share(evt) {
+        let permissionObj = {};
+        permissionObj['permission'] = 'read-only';
+        db.collection('scripts').doc(this.props.match.params.scriptId).collection('collaborators').doc('aDJHHYlK1xMBr7np8zEDM534yG53').set(permissionObj);
+        // db.collection('scripts').doc(this.props.match.params.scriptId).collection('collaborators').doc('write').update(userObj);
+
+    }
+
 
     render() {
         let contentClass = this.props.isOpen ? 'content open' : 'content';
@@ -498,6 +513,7 @@ class Editor extends Component{
 
                 <div className="EditorContainer">
                     <input id="acl" type="button" value="private" onClick={this.changeScope.bind(this)} />
+                    <input id="acl" type="button" value="share" onClick={this.share.bind(this)} />
                     <div className="tree" id="tree">
                         <Node data={this.state.tree} scriptId={this.props.match.params.scriptId} premiseRelativeValue={this.state.premiseRelativeValue}/>
                     </div>
