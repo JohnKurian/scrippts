@@ -3,6 +3,8 @@ import './App.css';
 import './Node.css';
 import './Layout.css';
 
+import axios from 'axios';
+
 import {
     BrowserRouter as Router,
     Route,
@@ -11,9 +13,22 @@ import {
     withRouter
 } from 'react-router-dom'
 
+import Modal from 'react-modal';
+
 
 var firebase = require("firebase");
 require("firebase/firestore");
+
+const customStyles = {
+    content : {
+        top                   : '50%',
+        left                  : '50%',
+        right                 : 'auto',
+        bottom                : 'auto',
+        marginRight           : '-50%',
+        transform             : 'translate(-50%, -50%)'
+    }
+};
 
 
 var config = {
@@ -133,9 +148,9 @@ class Node extends Component {
         }
 
         let colorMap = {
-            '1': 'green',
-            '-1': 'red',
-            '0': 'yellow'
+            '1': '#c8e6c9',
+            '-1': '#ffcdd2',
+            '0': '#ffecb3'
         };
 
 
@@ -360,6 +375,10 @@ class Editor extends Component{
         };
 
         this.handleScroll = this.handleScroll.bind(this);
+
+        this.openModal = this.openModal.bind(this);
+        this.afterOpenModal = this.afterOpenModal.bind(this);
+        this.closeModal = this.closeModal.bind(this);
     }
 
     convertFlatObjectToTree(flat) {
@@ -500,18 +519,94 @@ class Editor extends Component{
     share(evt) {
         let permissionObj = {};
         permissionObj['permission'] = 'read-only';
+
+
+        //send authenticated request with read/write query with email
+        //send email to firebase cloud function and check if value, if so, set the uid in the script/collaborator/write-or-readonly
+        //add to users/scripts/
+        //response: if no email, say invalid, if success, say success
+
+        // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/share';
+        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/share';
+
+        let id = '222@222.com';
+        let type = 'email';
+        let accessLevel = 'read-only';
+        let params = "id=" + id + "&" + "type=" + type + "&" + "scriptId=" + this.props.match.params.scriptId + "&" + "accessLevel=" + accessLevel;
+
+        firebase.auth().currentUser.getToken().then(function(token) {
+            console.log('Sending request to', helloUserUrl + "?" + params, 'with ID token in Authorization header.');
+            var req = new XMLHttpRequest();
+            req.onload = function() {
+                console.log('onload;', req.responseText);
+            }.bind(this);
+            req.onerror = function() {
+                console.log('onerror;', 'error');
+            }.bind(this);
+            req.open('GET', helloUserUrl + "?" + params, true);
+            req.setRequestHeader('Authorization', 'Bearer ' + token);
+            req.send();
+        }.bind(this));
+
+
+
+
+
         db.collection('scripts').doc(this.props.match.params.scriptId).collection('collaborators').doc('aDJHHYlK1xMBr7np8zEDM534yG53').set(permissionObj);
         // db.collection('scripts').doc(this.props.match.params.scriptId).collection('collaborators').doc('write').update(userObj);
 
     }
 
+    openModal() {
+        this.setState({modalIsOpen: true});
+    }
+
+    afterOpenModal() {
+        // references are now sync'd and can be accessed.
+        this.subtitle.style.color = '#f00';
+    }
+
+    closeModal() {
+        this.setState({modalIsOpen: false});
+    }
+
+    onShareFormSubmit() {
+        
+    }
+
+
+
+
+
 
     render() {
         let contentClass = this.props.isOpen ? 'content open' : 'content';
         return (
+            <div>
+                <Modal
+                    isOpen={this.state.modalIsOpen}
+                    onAfterOpen={this.afterOpenModal}
+                    onRequestClose={this.closeModal}
+                    style={customStyles}
+                    contentLabel="Example Modal"
+                >
+
+                    <h2 ref={subtitle => this.subtitle = subtitle}>Hello</h2>
+                    <button onClick={this.closeModal}>close</button>
+                    <div>I am a modal</div>
+                    <form onSubmit={this.onShareFormSubmit.bind(this)}>
+                        <input />
+                        <button>tab navigation</button>
+                        <button>stays</button>
+                        <button>inside</button>
+                        <button>the modal</button>
+                    </form>
+                </Modal>
+
             <div className={contentClass}>
 
                 <div className="EditorContainer">
+                    <button onClick={this.openModal}>Open Modal</button>
                     <input id="acl" type="button" value="private" onClick={this.changeScope.bind(this)} />
                     <input id="acl" type="button" value="share" onClick={this.share.bind(this)} />
                     <div className="tree" id="tree">
@@ -520,6 +615,7 @@ class Editor extends Component{
                 </div>
 
 
+            </div>
             </div>
         );
     }

@@ -23,3 +23,5 @@ yarn-error.log*
 .idea
 /firebase-debug.log
 package-lock.json
+/functions/node_modules/
+/functions/firebase-debug.log
