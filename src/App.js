@@ -183,6 +183,7 @@ class Node extends Component {
                                 <div style={{padding: '10px'}}>
                                     <textarea
                                         id={node.uid}
+                                        key={node.text}
                                         style={{background: color}}
                                         onFocus={this.onFocus.bind(this, node)}
                                         onBlur={this.onBlur.bind(this, node)}
@@ -552,7 +553,7 @@ class Editor extends Component{
 
 
 
-        db.collection('scripts').doc(this.props.match.params.scriptId).collection('collaborators').doc('aDJHHYlK1xMBr7np8zEDM534yG53').set(permissionObj);
+        // db.collection('scripts').doc(this.props.match.params.scriptId).collection('collaborators').doc('aDJHHYlK1xMBr7np8zEDM534yG53').set(permissionObj);
         // db.collection('scripts').doc(this.props.match.params.scriptId).collection('collaborators').doc('write').update(userObj);
 
     }

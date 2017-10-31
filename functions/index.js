@@ -59,8 +59,54 @@ app.use(cors);
 app.use(cookieParser);
 app.use(validateFirebaseIdToken);
 app.get('/share', (req, res) => {
-    console.log('query:', req.query);
-    res.send(`Hello ${req.user.name}`);
+
+    //fetch user uid
+
+    admin.firestore().collection('users').where('email', '==', req.query['id'])
+        .get()
+        .then(function(querySnapshot) {
+            querySnapshot.forEach(function(doc) {
+                console.log(doc.id, " => ", doc.data());
+
+                let uid = doc.data()['uid'];
+
+                //add to scripts/collaborators
+                let collabObj = {};
+                collabObj['permission'] = req.query['accessLevel'];
+                admin.firestore().collection('scripts').doc(req.query['scriptId']).collection('collaborators').doc(uid).set(collabObj)
+                    .then(writeResult => {
+                        // Send back a message that we've succesfully written the message
+
+                        //add to users/scripts
+
+                        let userScriptObj = {
+                            'collaborator': true,
+                            'creator': false,
+                            'forked': false,
+                            'uid': req.query['scriptId']
+                        };
+
+                        admin.firestore().collection('users').doc(uid).collection('scripts').doc(req.query['scriptId']).set(userScriptObj)
+                            .then(writeResult => {
+
+                                console.log('write:', writeResult.id);
+
+                                console.log('query:', req.query);
+                                res.send(`Hello ${req.user.name}`);
+
+                            });
+
+                    });
+
+            });
+        })
+        .catch(function(error) {
+            console.log("Error getting documents: ", error);
+        });
+
+
+
+
 });
 
 // This HTTPS endpoint can only be accessed by your Firebase Users.
