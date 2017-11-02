@@ -3,7 +3,6 @@ import './App.css';
 import './Node.css';
 import './Layout.css';
 
-import axios from 'axios';
 
 import {
     BrowserRouter as Router,
@@ -180,24 +179,31 @@ class Node extends Component {
 
                         return (
                             <li key={node.uid}>
-                                <div style={{padding: '10px'}}>
-                                    <textarea
-                                        id={node.uid}
-                                        key={node.text}
-                                        style={{background: color}}
-                                        onFocus={this.onFocus.bind(this, node)}
-                                        onBlur={this.onBlur.bind(this, node)}
-                                        onChange={this.onChange.bind(this, node)}
-                                        onClick={this.onTextAreaClick.bind(this, node)}
-                                        defaultValue={node.text}>
-                                    </textarea>
+                                <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+                                    <div style={{
+                                        background: 'white',
+                                        padding: '10px',
+                                        borderRadius: '6px',
+                                        boxShadow: '2px 2px 8px rgba(0,0,0,.3)'
+                                    }}>
+                                        <textarea
+                                            id={node.uid}
+                                            key={node.text}
+                                            style={{background: color}}
+                                            onFocus={this.onFocus.bind(this, node)}
+                                            onBlur={this.onBlur.bind(this, node)}
+                                            onChange={this.onChange.bind(this, node)}
+                                            onClick={this.onTextAreaClick.bind(this, node)}
+                                            defaultValue={node.text}>
+                                        </textarea>
+                                        <div>
+                                            <button onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
+                                            <button onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
+                                            <button onClick={this.onAddClick.bind(this, node, "however")} type="button">however</button>
+                                            <button onClick={this.onSaveClick.bind(this, node)} type="button">Save</button>
+                                        </div>
+                                    </div>
                                 </div>
-
-                                <button onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
-                                <button onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
-                                <button onClick={this.onAddClick.bind(this, node, "and")} type="button">and</button>
-                                <button onClick={this.onAddClick.bind(this, node, "however")} type="button">however</button>
-                                <button onClick={this.onSaveClick.bind(this, node)} type="button">Save</button>
                                 {<Node data={node.children} scriptId={this.props.scriptId} premiseRelativeValue={currentNodeValue}/>}
                             </li>
                         )
@@ -860,10 +866,6 @@ class App extends Component {
         }
     }
 }
-
-
-
-
 
 
 export default App;
