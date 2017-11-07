@@ -14,6 +14,7 @@ import {
 
 import Modal from 'react-modal';
 
+import ReactTooltip from 'react-tooltip'
 
 var firebase = require("firebase");
 require("firebase/firestore");
@@ -70,8 +71,8 @@ class Node extends Component {
 
 
     onChange = (node, evt) => {
-        console.log('value:', evt.target.value)
-        console.log(node)
+        // console.log('value:', evt.target.value)
+        // console.log(node)
         this.setState({text: evt.target.value})
 
     }
@@ -132,7 +133,7 @@ class Node extends Component {
     onSaveClick(node) {
 
         //attach child node to flat object
-
+        console.log('im in here')
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
             text: this.state.text,
             updatedTime: Date.now()
@@ -147,13 +148,26 @@ class Node extends Component {
         }
 
         let colorMap = {
-            '1': '#c8e6c9',
-            '-1': '#ffcdd2',
-            '0': '#ffecb3'
+            '1': '#e8f5e9',
+            '-1': '#ffebee',
+            '0': '#fff8e1'
+        };
+
+        let labelMap = {
+            '1': 'because',
+            '-1': 'but',
+            '0': 'however'
+        };
+
+        let labelColorMap = {
+            '1': '#66BB6A',
+            '-1': '#EF5350',
+            '0': '#FFCA28'
         };
 
 
         let color = '';
+        let labelColor = '';
 
 
 
@@ -166,9 +180,13 @@ class Node extends Component {
                         let node = this.props.data[key];
 
                         let currentNodeValue = 0;
+                        let nodeHeader = null;
                         if(this.props.premiseRelativeValue!==null||this.props.premiseRelativeValue!==undefined) {
+
                             currentNodeValue = this.props.premiseRelativeValue * node['relativeToParent'];
                             color = colorMap[currentNodeValue];
+                            labelColor = labelColorMap[currentNodeValue];
+
                             if(currentNodeValue===0 && this.props.premiseRelativeValue===1) {
                              currentNodeValue = -1;
                             }
@@ -176,6 +194,13 @@ class Node extends Component {
                                 currentNodeValue = 1;
                             }
                         }
+
+                        if(node.uid!==this.props.parentNodeId) {
+                            nodeHeader = (
+                                    <p style={{color: labelColor, margin: 0}}>{labelMap[node.relativeToParent]}</p>
+                            );
+                        }
+
 
                         return (
                             <li key={node.uid}>
@@ -186,6 +211,19 @@ class Node extends Component {
                                         borderRadius: '6px',
                                         boxShadow: '2px 2px 8px rgba(0,0,0,.3)'
                                     }}>
+                                        <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+                                            <div style={{flex: 1}}>
+                                            {nodeHeader}
+                                            </div>
+                                            <div style={{flex: 0}}>
+                                            <i data-tip data-for='save' onClick={this.onSaveClick.bind(this, node)} className="material-icons" style={{cursor: 'pointer', color: '#9e9e9e' }}>save</i>
+                                            </div>
+                                                <ReactTooltip id='save' effect='solid'>
+                                                <span>Save changes</span>
+                                            </ReactTooltip>
+
+                                        </div>
+
                                         <textarea
                                             id={node.uid}
                                             key={node.text}
@@ -196,15 +234,17 @@ class Node extends Component {
                                             onClick={this.onTextAreaClick.bind(this, node)}
                                             defaultValue={node.text}>
                                         </textarea>
-                                        <div>
-                                            <button onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
-                                            <button onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
-                                            <button onClick={this.onAddClick.bind(this, node, "however")} type="button">however</button>
-                                            <button onClick={this.onSaveClick.bind(this, node)} type="button">Save</button>
+                                        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+
+                                            <i data-tip='custom show' data-event='click focus' onClick={()=>{console.log('im in here')}} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
+                                            <ReactTooltip globalEventOff='click' place="bottom" />
+
+                                            <button style={{  background: '#ef5350', cursor: 'pointer', borderColor: '#ef5350', color: '#fff', borderRadius: '10px', outline: '0'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
+                                            <button style={{  background: '#66bb6a', cursor: 'pointer', borderColor: '#66bb6a', color: '#fff', borderRadius: '10px', outline: '0'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
                                         </div>
                                     </div>
                                 </div>
-                                {<Node data={node.children} scriptId={this.props.scriptId} premiseRelativeValue={currentNodeValue}/>}
+                                {<Node data={node.children} parentNodeId={this.props.parentNodeId} scriptId={this.props.scriptId} premiseRelativeValue={currentNodeValue}/>}
                             </li>
                         )
                     }.bind(this))
@@ -617,7 +657,7 @@ class Editor extends Component{
                     <input id="acl" type="button" value="private" onClick={this.changeScope.bind(this)} />
                     <input id="acl" type="button" value="share" onClick={this.share.bind(this)} />
                     <div className="tree" id="tree">
-                        <Node data={this.state.tree} scriptId={this.props.match.params.scriptId} premiseRelativeValue={this.state.premiseRelativeValue}/>
+                        <Node data={this.state.tree} parentNodeId={Object.keys(this.state.tree)[0]} scriptId={this.props.match.params.scriptId} premiseRelativeValue={this.state.premiseRelativeValue}/>
                     </div>
                 </div>
 
