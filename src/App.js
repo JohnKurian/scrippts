@@ -207,6 +207,7 @@ class Node extends Component {
                         return (
                             <li key={node.uid}>
                                 <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+                                    {/*<div className="circle"></div>*/}
                                     <div style={{
                                         background: 'white',
                                         padding: '10px',
@@ -343,6 +344,21 @@ class Header extends Component{
     //add toggle button
     //move logout to sidebar
 
+    constructor(props) {
+        super(props);
+        this.state = {
+            tree: {},
+            premiseNode: "",
+            premiseRelativeValue: 1,
+            centerLock: true,
+            modalIsOpen: false
+        };
+
+        this.openModal = this.openModal.bind(this);
+        this.afterOpenModal = this.afterOpenModal.bind(this);
+        this.closeModal = this.closeModal.bind(this);
+    }
+
     onFocus(node) {
 
     }
@@ -359,22 +375,91 @@ class Header extends Component{
 
     }
 
+    openModal() {
+        this.setState({modalIsOpen: true});
+    }
+
+    afterOpenModal() {
+        // references are now sync'd and can be accessed.
+        this.subtitle.style.color = '#f00';
+    }
+
+    closeModal() {
+        this.setState({modalIsOpen: false});
+    }
+
+
+    onShareFormSubmit() {
+        this.share();
+    }
+
+    share(evt) {
+        let permissionObj = {};
+        permissionObj['permission'] = 'read-only';
+
+        // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/share';
+        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/share';
+
+        let id = '222@222.com';
+        let type = 'email';
+        let accessLevel = 'read-only';
+        let params = "id=" + id + "&" + "type=" + type + "&" + "scriptId=" + this.props.match.params.scriptId + "&" + "accessLevel=" + accessLevel;
+
+        firebase.auth().currentUser.getToken().then(function(token) {
+            console.log('Sending request to', helloUserUrl + "?" + params, 'with ID token in Authorization header.');
+            var req = new XMLHttpRequest();
+            req.onload = function() {
+                console.log('onload;', req.responseText);
+            }.bind(this);
+            req.onerror = function() {
+                console.log('onerror;', 'error');
+            }.bind(this);
+            req.open('GET', helloUserUrl + "?" + params, true);
+            req.setRequestHeader('Authorization', 'Bearer ' + token);
+            req.send();
+        }.bind(this));
+
+
+    }
+
     render() {
         return (
             <header style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                <div>
+                <div style={{marginLeft: '24px'}}>
                     <a href="javascript:;" onClick={this.props.onClick}>
                         <i className="material-icons" style={{textDecoration: 'none', color: 'black', fontSize: '34px'}}>menu</i>
                     </a>
                 </div>
-                <div>
+                <div style={{flex: 1}}>
+
+                </div>
+                <div style={{flex: 2}}>
                     <form>
                         <input type="text" name="name" />
                     </form>
 
                 </div>
-                <div>
+                <div style={{marginRight: '32px'}}>
+                    <Modal
+                        isOpen={this.state.modalIsOpen}
+                        onAfterOpen={this.afterOpenModal}
+                        onRequestClose={this.closeModal}
+                        style={customStyles}
+                        contentLabel="Example Modal"
+                    >
 
+                        <h2 ref={subtitle => this.subtitle = subtitle}>Share</h2>
+                        <button onClick={this.closeModal}>close</button>
+                        <div>I am a modal</div>
+                        <form onSubmit={this.onShareFormSubmit.bind(this)}>
+                            <input />
+                            <button>tab navigation</button>
+                            <button>stays</button>
+                            <button>inside</button>
+                            <button>the modal</button>
+                        </form>
+                    </Modal>
+                    <button onClick={this.openModal}>Share</button>
                 </div>
             </header>
         );
@@ -466,10 +551,6 @@ class Editor extends Component{
         };
 
         this.handleScroll = this.handleScroll.bind(this);
-
-        this.openModal = this.openModal.bind(this);
-        this.afterOpenModal = this.afterOpenModal.bind(this);
-        this.closeModal = this.closeModal.bind(this);
     }
 
     convertFlatObjectToTree(flat) {
@@ -607,99 +688,14 @@ class Editor extends Component{
         }
     }
 
-    share(evt) {
-        let permissionObj = {};
-        permissionObj['permission'] = 'read-only';
-
-
-        //send authenticated request with read/write query with email
-        //send email to firebase cloud function and check if value, if so, set the uid in the script/collaborator/write-or-readonly
-        //add to users/scripts/
-        //response: if no email, say invalid, if success, say success
-
-        // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/share';
-        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/share';
-
-        let id = '222@222.com';
-        let type = 'email';
-        let accessLevel = 'read-only';
-        let params = "id=" + id + "&" + "type=" + type + "&" + "scriptId=" + this.props.match.params.scriptId + "&" + "accessLevel=" + accessLevel;
-
-        firebase.auth().currentUser.getToken().then(function(token) {
-            console.log('Sending request to', helloUserUrl + "?" + params, 'with ID token in Authorization header.');
-            var req = new XMLHttpRequest();
-            req.onload = function() {
-                console.log('onload;', req.responseText);
-            }.bind(this);
-            req.onerror = function() {
-                console.log('onerror;', 'error');
-            }.bind(this);
-            req.open('GET', helloUserUrl + "?" + params, true);
-            req.setRequestHeader('Authorization', 'Bearer ' + token);
-            req.send();
-        }.bind(this));
-
-
-
-
-
-        // db.collection('scripts').doc(this.props.match.params.scriptId).collection('collaborators').doc('aDJHHYlK1xMBr7np8zEDM534yG53').set(permissionObj);
-        // db.collection('scripts').doc(this.props.match.params.scriptId).collection('collaborators').doc('write').update(userObj);
-
-    }
-
-    openModal() {
-        this.setState({modalIsOpen: true});
-    }
-
-    afterOpenModal() {
-        // references are now sync'd and can be accessed.
-        this.subtitle.style.color = '#f00';
-    }
-
-    closeModal() {
-        this.setState({modalIsOpen: false});
-    }
-
-    onShareFormSubmit() {
-        
-    }
-
-
-
-
-
 
     render() {
         let contentClass = this.props.isOpen ? 'content open' : 'content';
         return (
             <div>
-                <Modal
-                    isOpen={this.state.modalIsOpen}
-                    onAfterOpen={this.afterOpenModal}
-                    onRequestClose={this.closeModal}
-                    style={customStyles}
-                    contentLabel="Example Modal"
-                >
-
-                    <h2 ref={subtitle => this.subtitle = subtitle}>Hello</h2>
-                    <button onClick={this.closeModal}>close</button>
-                    <div>I am a modal</div>
-                    <form onSubmit={this.onShareFormSubmit.bind(this)}>
-                        <input />
-                        <button>tab navigation</button>
-                        <button>stays</button>
-                        <button>inside</button>
-                        <button>the modal</button>
-                    </form>
-                </Modal>
-
             <div className={contentClass}>
 
                 <div className="EditorContainer">
-                    <button onClick={this.openModal}>Open Modal</button>
-                    <input id="acl" type="button" value="private" onClick={this.changeScope.bind(this)} />
-                    <input id="acl" type="button" value="share" onClick={this.share.bind(this)} />
                     <div className="tree" id="tree">
                         <Node data={this.state.tree} parentNodeId={Object.keys(this.state.tree)[0]} scriptId={this.props.match.params.scriptId} premiseRelativeValue={this.state.premiseRelativeValue}/>
                     </div>
