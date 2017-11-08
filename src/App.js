@@ -3,6 +3,8 @@ import './App.css';
 import './Node.css';
 import './Layout.css';
 
+import { Grid, Row, Col } from 'react-flexbox-grid';
+
 
 import {
     BrowserRouter as Router,
@@ -263,17 +265,25 @@ class Home extends Component {
         const SCRIPT_ROUTE = (scriptId) => `/s/${scriptId}/`;
 
         return (
-            <div style={{marginLeft: '350px', marginTop: '100px'}}>
-                {
-                    this.props.scriptIds.map(function(id) {
-                        return (
-                            <div key={id}>
-                                <Link to={SCRIPT_ROUTE(id)} params={{scriptId: id}}>{id}</Link>
-                                <br/>
-                            </div>
-                        )
-                    })
-                }
+            <div>
+                <div style={{marginTop: '100px', paddingLeft: '100px', paddingRight: '100px'}}>
+                    <Grid fluid>
+                        <Row start="xs">
+                        {
+                            this.props.scriptIds.map(function(id) {
+                                return (
+                                    <Col xs={2}>
+                                        <div key={id}>
+                                            <Link to={SCRIPT_ROUTE(id)} params={{scriptId: id}}>{id}</Link>
+                                            <br/>
+                                        </div>
+                                    </Col>
+                                )
+                            })
+                        }
+                        </Row>
+                    </Grid>
+                </div>
             </div>
         )
     }
@@ -328,11 +338,44 @@ const LogoutButton = withRouter(({ history }) => (
 
 class Header extends Component{
 
+    //add share modal here
+    //add single line text-area
+    //add toggle button
+    //move logout to sidebar
+
+    onFocus(node) {
+
+    }
+
+    onBlur(node) {
+
+    }
+
+    onChange(node) {
+
+    }
+
+    onTextAreaClick(node) {
+
+    }
+
     render() {
         return (
-            <header>
-                <a href="javascript:;" onClick={this.props.onClick}>Toggle</a>
-                <LogoutButton/>
+            <header style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <div>
+                    <a href="javascript:;" onClick={this.props.onClick}>
+                        <i className="material-icons" style={{textDecoration: 'none', color: 'black', fontSize: '34px'}}>menu</i>
+                    </a>
+                </div>
+                <div>
+                    <form>
+                        <input type="text" name="name" />
+                    </form>
+
+                </div>
+                <div>
+
+                </div>
             </header>
         );
     }
@@ -405,6 +448,7 @@ class SideBar extends Component{
                 <div><Link to="/">Home</Link></div>
                 <input id="newScript" type="button" value="Create new script" onClick={this.createNewScript.bind(this)} />
                 <input id="home" type="button" value="Home" onClick={this.goToHome.bind(this)} />
+                <LogoutButton/>
             </div>
         );
     }
