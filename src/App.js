@@ -3,7 +3,12 @@ import './App.css';
 import './Node.css';
 import './Layout.css';
 
+import argumentLogo from './icons8-flow-chart.png';
+
 import { Grid, Row, Col } from 'react-flexbox-grid';
+
+import { applyMiddleware, createStore } from 'redux';
+import logger from 'redux-logger';
 
 
 import {
@@ -45,7 +50,43 @@ var config = {
 firebase.initializeApp(config);
 
 var db = firebase.firestore();
-export const auth = firebase.auth
+export const auth = firebase.auth;
+
+
+function mainReducer(state = {activeScriptId: null, value: null}, action) {
+    switch (action.type) {
+        case 'INCREMENT':
+            return {...state, value: action.value};
+        case 'DECREMENT':
+            return {...state, value: action.value};
+        case 'SET_ACTIVE_SCRIPT_ID':
+            return {...state, activeScriptId: action.activeScriptId};
+        default:
+            return state
+    }
+}
+
+
+// Create a Redux store holding the state of your app.
+// Its API is { subscribe, dispatch, getState }.
+let store = createStore(mainReducer, applyMiddleware(logger));
+
+// You can use subscribe() to update the UI in response to state changes.
+// Normally you'd use a view binding library (e.g. React Redux) rather than subscribe() directly.
+// However it can also be handy to persist the current state in the localStorage.
+
+store.subscribe(() =>
+    console.log(store.getState())
+)
+
+// The only way to mutate the internal state is to dispatch an action.
+// The actions can be serialized, logged or stored and later replayed.
+store.dispatch({ type: 'INCREMENT', value: 'hey' });
+// 1
+store.dispatch({ type: 'INCREMENT', value: 'ho' });
+// 2
+store.dispatch({ type: 'DECREMENT', value: 'hi' });
+// 1
 
 
 class Loader extends Component {
@@ -273,11 +314,14 @@ class Home extends Component {
                         {
                             this.props.scriptIds.map(function(id) {
                                 return (
-                                    <Col xs={2}>
-                                        <div key={id}>
-                                            <Link to={SCRIPT_ROUTE(id)} params={{scriptId: id}}>{id}</Link>
+                                    <Col xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
+                                        <Link to={SCRIPT_ROUTE(id)} params={{scriptId: id}}>
+                                        <div style={{display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={id}>
+                                            <img style={{width: 80, height: 80}} src={argumentLogo}></img>
+                                            {id}
                                             <br/>
                                         </div>
+                                        </Link>
                                     </Col>
                                 )
                             })
@@ -339,10 +383,6 @@ const LogoutButton = withRouter(({ history }) => (
 
 class Header extends Component{
 
-    //add share modal here
-    //add single line text-area
-    //add toggle button
-    //move logout to sidebar
 
     constructor(props) {
         super(props);
@@ -351,12 +391,21 @@ class Header extends Component{
             premiseNode: "",
             premiseRelativeValue: 1,
             centerLock: true,
-            modalIsOpen: false
+            modalIsOpen: false,
+            activeScriptId: null
         };
 
         this.openModal = this.openModal.bind(this);
         this.afterOpenModal = this.afterOpenModal.bind(this);
         this.closeModal = this.closeModal.bind(this);
+    }
+
+    componentDidMount() {
+        store.subscribe(() => {
+                console.log('inside header:', store.getState());
+                this.setState({activeScriptId: store.getState().activeScriptId})
+            }
+        )
     }
 
     onFocus(node) {
@@ -423,23 +472,19 @@ class Header extends Component{
     }
 
     render() {
-        return (
-            <header style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                <div style={{marginLeft: '24px'}}>
-                    <a href="javascript:;" onClick={this.props.onClick}>
-                        <i className="material-icons" style={{textDecoration: 'none', color: 'black', fontSize: '34px'}}>menu</i>
-                    </a>
-                </div>
-                <div style={{flex: 1}}>
+        console.log('this.props', this.props);
 
-                </div>
-                <div style={{flex: 2}}>
+        let headerSubSection = (
+            <div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
+
+                <div style={{display: 'flex', flex: 1,  alignItems: 'center', justifyContent: 'center'}}>
                     <form>
                         <input type="text" name="name" />
                     </form>
 
                 </div>
-                <div style={{marginRight: '32px'}}>
+
+                <div style={{flex: 0, marginRight: '32px'}}>
                     <Modal
                         isOpen={this.state.modalIsOpen}
                         onAfterOpen={this.afterOpenModal}
@@ -461,6 +506,25 @@ class Header extends Component{
                     </Modal>
                     <button onClick={this.openModal}>Share</button>
                 </div>
+
+            </div>
+        );
+
+        if(store.getState().activeScriptId===null) {
+            headerSubSection = (
+                <div style={{flex: 1}}>
+
+                </div>
+            );
+        }
+        return (
+            <header style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <div style={{marginLeft: '24px'}}>
+                    <a href="javascript:;" onClick={this.props.onClick}>
+                        <i className="material-icons" style={{textDecoration: 'none', color: 'black', fontSize: '34px'}}>menu</i>
+                    </a>
+                </div>
+                {headerSubSection}
             </header>
         );
     }
@@ -526,11 +590,15 @@ class SideBar extends Component{
 
     }
 
+    onHomeClick() {
+        store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
+    }
+
     render() {
         var sidebarClass = this.props.isOpen ? 'sidebar open' : 'sidebar';
         return (
-            <div className={sidebarClass}>
-                <div><Link to="/">Home</Link></div>
+            <div className={sidebarClass} style={{display: 'flex', flexDirection: 'column'}}>
+                <div><Link to="/" onClick={this.onHomeClick.bind(this)}>Home</Link></div>
                 <input id="newScript" type="button" value="Create new script" onClick={this.createNewScript.bind(this)} />
                 <input id="home" type="button" value="Home" onClick={this.goToHome.bind(this)} />
                 <LogoutButton/>
@@ -640,6 +708,9 @@ class Editor extends Component{
 
                     db.collection('scripts').doc(this.props.match.params.scriptId).get().then(function (doc) {
                         if (doc.exists) {
+
+                            store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: this.props.match.params.scriptId});
+
                             this.setState({premiseNode: doc.data().parentNodeId});
 
                             var tree = {};
