@@ -2,17 +2,17 @@ import React, { Component } from 'react';
 import './App.css';
 import './Node.css';
 import './Layout.css';
+import createBrowserHistory from 'history/createBrowserHistory'
 
-import argumentLogo from './icons8-flow-chart.png';
+import argumentLogo from './argument_icon.png';
 
 import { Grid, Row, Col } from 'react-flexbox-grid';
 
 import { applyMiddleware, createStore } from 'redux';
 import logger from 'redux-logger';
 
-
 import {
-    BrowserRouter as Router,
+    BrowserRouter,
     Route,
     Link,
     Switch,
@@ -46,6 +46,8 @@ var config = {
     storageBucket: "argument-app.appspot.com",
     messagingSenderId: "626987124454"
 };
+
+const history = createBrowserHistory();
 
 firebase.initializeApp(config);
 
@@ -356,7 +358,8 @@ class Parent extends Component {
         return (
             <div>
                 <Header onClick={this.handleViewSidebar.bind(this)} />
-                <SideBar isOpen={this.state.sidebarOpen} user={this.props.user}/>
+
+                <Route render={(props) => ( <SideBar {...props} isOpen={this.state.sidebarOpen} user={this.props.user}/>)}/>
 
                 <Switch>
                     <Route exact path="/s/:scriptId" render={(props) => (
@@ -478,10 +481,7 @@ class Header extends Component{
             <div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
 
                 <div style={{display: 'flex', flex: 1,  alignItems: 'center', justifyContent: 'center'}}>
-                    <form>
-                        <input type="text" name="name" />
-                    </form>
-
+                    <span contentEditable="true" style={{padding: '5px', maxWidth: '500px', fontSize: '18px', overflow: 'hidden', whiteSpace: 'nowrap'}}>sdfsd</span>
                 </div>
 
                 <div style={{flex: 0, marginRight: '32px'}}>
@@ -521,7 +521,7 @@ class Header extends Component{
             <header style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                 <div style={{marginLeft: '24px'}}>
                     <a href="javascript:;" onClick={this.props.onClick}>
-                        <i className="material-icons" style={{textDecoration: 'none', color: 'black', fontSize: '34px'}}>menu</i>
+                        <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '34px'}}>menu</i>
                     </a>
                 </div>
                 {headerSubSection}
@@ -531,6 +531,14 @@ class Header extends Component{
 }
 
 class SideBar extends Component{
+
+    constructor(props, context) {
+        super(props, context);
+    }
+
+    componentDidMount() {
+
+    }
 
     createNewScript() {
         console.log('writing to scripts collection...');
@@ -577,6 +585,9 @@ class SideBar extends Component{
                             uid: scriptRef.id
                         });
 
+                        this.props.history.push('/s/' + scriptRef.id);
+                        window.location.reload();
+
 
                     }.bind(this))
 
@@ -586,9 +597,6 @@ class SideBar extends Component{
             });
     }
 
-    goToHome() {
-
-    }
 
     onHomeClick() {
         store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
@@ -598,10 +606,16 @@ class SideBar extends Component{
         var sidebarClass = this.props.isOpen ? 'sidebar open' : 'sidebar';
         return (
             <div className={sidebarClass} style={{display: 'flex', flexDirection: 'column'}}>
-                <div><Link to="/" onClick={this.onHomeClick.bind(this)}>Home</Link></div>
-                <input id="newScript" type="button" value="Create new script" onClick={this.createNewScript.bind(this)} />
-                <input id="home" type="button" value="Home" onClick={this.goToHome.bind(this)} />
-                <LogoutButton/>
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px'}}>
+                    <input id="newScript" type="button" value="Create new script" onClick={this.createNewScript.bind(this)} />
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px'}}>
+                    <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px'}}>home</i>
+                    <Link to="/" onClick={this.onHomeClick.bind(this)}>Home</Link>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px'}}>
+                    <LogoutButton/>
+                </div>
             </div>
         );
     }
@@ -1004,9 +1018,9 @@ class App extends Component {
             else {
 
                 return (
-                    <Router>
+                    <BrowserRouter>
                         <Parent user={this.state.user} scriptIds={this.state.scriptIds}/>
-                    </Router>
+                    </BrowserRouter>
                 );
             }
         }
