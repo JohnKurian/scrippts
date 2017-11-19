@@ -109,8 +109,16 @@ class Node extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            text: ''
+            text: '',
+            showTools: false,
+            value: 0,
+            textAreaHeight: '50px',
+            textAreaWidth: '275px'
         };
+    }
+
+    componentWillMount(props) {
+        this.timer = null;
     }
 
 
@@ -120,19 +128,43 @@ class Node extends Component {
         // console.log(node)
         this.setState({text: evt.target.value})
 
+        clearTimeout(this.timer);
+
+        this.setState({ value: 100 });
+
+        this.timer = setTimeout(this.triggerChange.bind(this, node), 1000);
+
+
+    }
+
+
+    triggerChange(node) {
+
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
+            text: this.state.text,
+            updatedTime: Date.now()
+        })
     }
 
 
     onTextAreaClick(node, evt) {
-        console.log('text area clicked:', evt.target.style.height, evt.target.style.width)
+        console.log('text area clicked:', evt.target.style.height, evt.target.style.width);
+
+
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
+            textAreaWidth: evt.target.style.width,
+            textAreaHeight: evt.target.style.height
+        })
     }
 
     onFocus(node, evt) {
         console.log('onFocus')
+        this.setState({showTools: true})
     }
 
     onBlur(node, evt) {
         console.log('onBlur')
+        this.setState({showTools: true})
     }
 
     onAddClick(node, contentionType, evt) {
@@ -226,6 +258,8 @@ class Node extends Component {
 
                         let currentNodeValue = 0;
                         let nodeHeader = null;
+                        let saveButton = null;
+
                         if(this.props.premiseRelativeValue!==null||this.props.premiseRelativeValue!==undefined) {
 
                             currentNodeValue = this.props.premiseRelativeValue * node['relativeToParent'];
@@ -246,6 +280,24 @@ class Node extends Component {
                             );
                         }
 
+                        if(this.state.showTools) {
+                            saveButton = (
+                            <div style={{flex: 0}}>
+                                <i data-tip data-for='save' onClick={this.onSaveClick.bind(this, node)} className="material-icons" style={{cursor: 'pointer', color: '#9e9e9e' }}>save</i>
+                            <ReactTooltip id='save' effect='solid'>
+                                <span>Save changes</span>
+                            </ReactTooltip>
+                            </div>
+                            );
+                        }
+
+                        let width = this.state.textAreaWidth;
+                        let height = this.state.textAreaHeight;
+                        if(node['textAreaHeight']!==null && node['textAreaHeight']!==undefined ) {
+                            height = node['textAreaHeight'];
+                            width = node['textAreaWidth'];
+                        }
+
 
                         return (
                             <li key={node.uid}>
@@ -261,19 +313,14 @@ class Node extends Component {
                                             <div style={{flex: 1}}>
                                             {nodeHeader}
                                             </div>
-                                            <div style={{flex: 0}}>
-                                            <i data-tip data-for='save' onClick={this.onSaveClick.bind(this, node)} className="material-icons" style={{cursor: 'pointer', color: '#9e9e9e' }}>save</i>
-                                            </div>
-                                                <ReactTooltip id='save' effect='solid'>
-                                                <span>Save changes</span>
-                                            </ReactTooltip>
+                                            {/*{saveButton}*/}
 
                                         </div>
 
                                         <textarea
                                             id={node.uid}
                                             key={node.text}
-                                            style={{background: color}}
+                                            style={{background: color, width: width, height: height}}
                                             onFocus={this.onFocus.bind(this, node)}
                                             onBlur={this.onBlur.bind(this, node)}
                                             onChange={this.onChange.bind(this, node)}
