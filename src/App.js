@@ -113,7 +113,9 @@ class Node extends Component {
             showTools: false,
             value: 0,
             textAreaHeight: '50px',
-            textAreaWidth: '275px'
+            textAreaWidth: '275px',
+            activeNode: null,
+            hoveredNode: null
         };
     }
 
@@ -157,14 +159,24 @@ class Node extends Component {
         })
     }
 
+    onNodeHoveredIn(node, evt) {
+        this.setState({hoveredNode: node.uid})
+    }
+
+    onNodeHoveredOut(node, evt) {
+        this.setState({hoveredNode: null})
+    }
+
+
+
     onFocus(node, evt) {
         console.log('onFocus')
-        this.setState({showTools: true})
+        this.setState({showTools: true, activeNode: node.uid});
     }
 
     onBlur(node, evt) {
         console.log('onBlur')
-        this.setState({showTools: true})
+        this.setState({showTools: true,  activeNode: null})
     }
 
     onAddClick(node, contentionType, evt) {
@@ -298,6 +310,21 @@ class Node extends Component {
                             width = node['textAreaWidth'];
                         }
 
+                        let footer = null;
+
+                        if(this.state.activeNode === node.uid || this.state.hoveredNode === node.uid) {
+                            footer = (
+                                <div onMouseOver={this.onNodeHoveredIn.bind(this, node)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+
+                                    <i data-tip='custom show' data-event='click focus' onClick={()=>{console.log('im in here')}} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
+                                    <ReactTooltip globalEventOff='click' place="bottom" />
+
+                                    <button onMouseOver={this.onNodeHoveredIn.bind(this, node)} onMouseOut={this.onNodeHoveredOut.bind(this, node)} style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
+                                    <button onMouseOver={this.onNodeHoveredIn.bind(this, node)} onMouseOut={this.onNodeHoveredOut.bind(this, node)} style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
+                                </div>
+                            );
+                        }
+
 
                         return (
                             <li key={node.uid}>
@@ -325,16 +352,12 @@ class Node extends Component {
                                             onBlur={this.onBlur.bind(this, node)}
                                             onChange={this.onChange.bind(this, node)}
                                             onClick={this.onTextAreaClick.bind(this, node)}
+                                            autoFocus={true}
                                             defaultValue={node.text}>
                                         </textarea>
-                                        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
 
-                                            <i data-tip='custom show' data-event='click focus' onClick={()=>{console.log('im in here')}} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
-                                            <ReactTooltip globalEventOff='click' place="bottom" />
+                                        {footer}
 
-                                            <button style={{  background: '#ef5350', cursor: 'pointer', borderColor: '#ef5350', color: '#fff', borderRadius: '10px', outline: '0'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
-                                            <button style={{  background: '#66bb6a', cursor: 'pointer', borderColor: '#66bb6a', color: '#fff', borderRadius: '10px', outline: '0'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
-                                        </div>
                                     </div>
                                 </div>
                                 {<Node data={node.children} parentNodeId={this.props.parentNodeId} scriptId={this.props.scriptId} premiseRelativeValue={currentNodeValue}/>}
