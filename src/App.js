@@ -334,7 +334,8 @@ class Node extends Component {
                                         background: 'white',
                                         padding: '10px',
                                         borderRadius: '6px',
-                                        boxShadow: '2px 2px 8px rgba(0,0,0,.3)'
+                                        boxShadow: '2px 2px 8px rgba(0,0,0,.3)',
+                                        zIndex: '100'
                                     }}>
                                         <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
                                             <div style={{flex: 1}}>
@@ -675,7 +676,7 @@ class SideBar extends Component{
     render() {
         var sidebarClass = this.props.isOpen ? 'sidebar open' : 'sidebar';
         return (
-            <div className={sidebarClass} style={{display: 'flex', flexDirection: 'column'}}>
+            <div className={sidebarClass} style={{display: 'flex', flexDirection: 'column', zIndex: 500}}>
                 <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px'}}>
                     <input id="newScript" type="button" value="Create new script" onClick={this.createNewScript.bind(this)} />
                 </div>
