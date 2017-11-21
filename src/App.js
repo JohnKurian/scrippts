@@ -57,11 +57,10 @@ export const auth = firebase.auth;
 
 function mainReducer(state = {activeScriptId: null, value: null}, action) {
     switch (action.type) {
-        case 'INCREMENT':
-            return {...state, value: action.value};
-        case 'DECREMENT':
-            return {...state, value: action.value};
+
         case 'SET_ACTIVE_SCRIPT_ID':
+            return {...state, activeScriptId: action.activeScriptId};
+        case 'SET_TITLE':
             return {...state, activeScriptId: action.activeScriptId};
         default:
             return state
@@ -80,15 +79,6 @@ let store = createStore(mainReducer, applyMiddleware(logger));
 store.subscribe(() =>
     console.log(store.getState())
 )
-
-// The only way to mutate the internal state is to dispatch an action.
-// The actions can be serialized, logged or stored and later replayed.
-store.dispatch({ type: 'INCREMENT', value: 'hey' });
-// 1
-store.dispatch({ type: 'INCREMENT', value: 'ho' });
-// 2
-store.dispatch({ type: 'DECREMENT', value: 'hi' });
-// 1
 
 
 class Loader extends Component {
@@ -375,9 +365,41 @@ class Node extends Component {
 
 class Home extends Component {
 
+    constructor(props) {
+        super(props);
+        this.state = {
+
+        };
+    }
+
+    componentDidMount() {
+        store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
+
+    }
+
+
     render() {
 
         const SCRIPT_ROUTE = (scriptId) => `/s/${scriptId}/`;
+
+        let scriptHeaderFragment = (<div></div>);
+        if(this.props.scriptHeaders!==undefined) {
+            scriptHeaderFragment = (this.props.scriptHeaders.map(function(scriptHeader) {
+                // console.log("here", this.props.scriptHeaders.toString());
+                return (
+                    <Col xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
+                        <Link to={SCRIPT_ROUTE(scriptHeader.uid)} params={{scriptId: scriptHeader.uid}}>
+                            <div style={{display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={scriptHeader.uid}>
+                                <img style={{width: 80, height: 80}} src={argumentLogo}></img>
+                                {/*{this.props.scriptHeaders[id]['uid']}*/}
+                                {scriptHeader.uid}
+                                <br/>
+                            </div>
+                        </Link>
+                    </Col>
+                )
+            }.bind(this)))
+        }
 
         return (
             <div>
@@ -385,19 +407,7 @@ class Home extends Component {
                     <Grid fluid>
                         <Row start="xs">
                         {
-                            this.props.scriptIds.map(function(id) {
-                                return (
-                                    <Col xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
-                                        <Link to={SCRIPT_ROUTE(id)} params={{scriptId: id}}>
-                                        <div style={{display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={id}>
-                                            <img style={{width: 80, height: 80}} src={argumentLogo}></img>
-                                            {id}
-                                            <br/>
-                                        </div>
-                                        </Link>
-                                    </Col>
-                                )
-                            })
+                            scriptHeaderFragment
                         }
                         </Row>
                     </Grid>
@@ -439,7 +449,7 @@ class Parent extends Component {
                             disableSidebar={this.disableSidebar.bind(this)}
                             isOpen={this.state.sidebarOpen}/>
                     )} />
-                    <Route exact path="/" render={(props) => ( <Home {...props} scriptIds={this.props.scriptIds}/> )}/>
+                    <Route exact path="/" render={(props) => ( <Home {...props} scriptIds={this.props.scriptIds} scriptHeaders={this.props.scriptHeaders}/> )}/>
                 </Switch>
             </div>
         );
@@ -477,7 +487,7 @@ class Header extends Component{
     componentDidMount() {
         store.subscribe(() => {
                 console.log('inside header:', store.getState());
-                this.setState({activeScriptId: store.getState().activeScriptId})
+                this.setState({activeScriptId: store.getState().activeScriptId, title: store.getState().title})
             }
         )
     }
@@ -545,14 +555,26 @@ class Header extends Component{
 
     }
 
+    onTitleHitEnter(evt) {
+        var keycode = evt.charCode || evt.keyCode;
+        if (keycode  === 13) { //Enter key's keycode
+            console.log('im in here')
+            evt.preventDefault();
+        }
+    }
+
+    onTitleChange(evt) {
+        console.log('on title change', evt.target.value);
+        db.collection('scripts').doc(this.state.activeScriptId).update({title: evt.target.value});
+    }
+
     render() {
-        console.log('this.props', this.props);
 
         let headerSubSection = (
             <div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
 
                 <div style={{display: 'flex', flex: 1,  alignItems: 'center', justifyContent: 'center'}}>
-                    <span contentEditable="true" style={{padding: '5px', maxWidth: '500px', fontSize: '18px', overflow: 'hidden', whiteSpace: 'nowrap'}}>sdfsd</span>
+                    <span onChange={this.onTitleChange.bind(this)} onKeyPress={this.onTitleHitEnter.bind(this)} contentEditable="true" style={{padding: '5px', maxWidth: '500px', fontSize: '18px', overflow: 'hidden', whiteSpace: 'nowrap'}}>sdfsd</span>
                 </div>
 
                 <div style={{flex: 0, marginRight: '32px'}}>
@@ -620,6 +642,7 @@ class SideBar extends Component{
             createdTime: Date.now(),
             updatedTime: Date.now(),
             type: 'argument',
+            title: 'Untitled',
             collaborators: [this.props.user.uid]
         })
             .then(function(scriptRef) {
@@ -653,7 +676,8 @@ class SideBar extends Component{
                             creator: true,
                             collaborator: true,
                             forked: false,
-                            uid: scriptRef.id
+                            uid: scriptRef.id,
+                            title: 'Untitled'
                         });
 
                         this.props.history.push('/s/' + scriptRef.id);
@@ -795,6 +819,7 @@ class Editor extends Component{
                         if (doc.exists) {
 
                             store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: this.props.match.params.scriptId});
+                            store.dispatch({type: 'SET_TITLE', title: doc.data().title});
 
                             this.setState({premiseNode: doc.data().parentNodeId});
 
@@ -905,7 +930,23 @@ class App extends Component {
                         querySnapshot.forEach(function(doc) {
                             scriptIds.push(doc.data().uid)
                         });
-                        this.setState({scriptIds: scriptIds})
+                        this.setState({scriptIds: scriptIds});
+
+                        scriptIds.map(function(id) {
+
+                            db.collection('scripts').doc(id).get().then(function (doc) {
+                                if(this.state['scriptHeaders']===undefined || this.state['scriptHeaders']===null) {
+                                    let scriptHeaderArray = [doc.data()];
+                                    this.setState({scriptHeaders: scriptHeaderArray});
+                                }
+                                else {
+                                    let scriptHeaderArray = this.state['scriptHeaders'];
+                                    scriptHeaderArray.push(doc.data());
+                                    this.setState({scriptHeaders: scriptHeaderArray});
+                                }
+                            }.bind(this))
+
+                        }.bind(this))
 
                     }.bind(this), function(error) {
                         console.log('user-fetch-scriptId-error', error);
@@ -1090,7 +1131,7 @@ class App extends Component {
 
                 return (
                     <BrowserRouter>
-                        <Parent user={this.state.user} scriptIds={this.state.scriptIds}/>
+                        <Parent user={this.state.user} scriptIds={this.state.scriptIds} scriptHeaders={this.state.scriptHeaders}/>
                     </BrowserRouter>
                 );
             }
