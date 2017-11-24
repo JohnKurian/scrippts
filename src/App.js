@@ -6,6 +6,8 @@ import createBrowserHistory from 'history/createBrowserHistory'
 
 import argumentLogo from './argument_icon.png';
 
+import ReactDOM from 'react-dom';
+
 import { Grid, Row, Col } from 'react-flexbox-grid';
 
 import { applyMiddleware, createStore } from 'redux';
@@ -70,7 +72,7 @@ function mainReducer(state = {activeScriptId: null, value: null}, action) {
         case 'SET_ACTIVE_SCRIPT_ID':
             return {...state, activeScriptId: action.activeScriptId};
         case 'SET_TITLE':
-            return {...state, activeScriptId: action.activeScriptId};
+            return {...state, title: action.title};
         default:
             return state
     }
@@ -485,7 +487,8 @@ class Header extends Component{
             premiseRelativeValue: 1,
             centerLock: true,
             modalIsOpen: false,
-            activeScriptId: null
+            activeScriptId: null,
+            title: ''
         };
 
         this.openModal = this.openModal.bind(this);
@@ -495,8 +498,8 @@ class Header extends Component{
 
     componentDidMount() {
         store.subscribe(() => {
-                console.log('inside header:', store.getState());
-                this.setState({activeScriptId: store.getState().activeScriptId, title: store.getState().title})
+            console.log('inside header:', store.getState());
+            this.setState({activeScriptId: store.getState().activeScriptId, title: store.getState().title})
             }
         )
     }
@@ -573,8 +576,18 @@ class Header extends Component{
     }
 
     onTitleChange(evt) {
-        console.log('on title change', evt.target.value);
-        db.collection('scripts').doc(this.state.activeScriptId).update({title: evt.target.value});
+        let domNode = ReactDOM.findDOMNode(this.refs.title);
+        console.log(domNode)
+        console.log(domNode.innerText);
+
+        if(domNode.innerText.length>0) {
+            this.setState({title: domNode.innerText});
+            db.collection('scripts').doc(this.state.activeScriptId).update({title: domNode.innerText});
+        }
+        else {
+            this.setState({title: 'Untitled'});
+            db.collection('scripts').doc(this.state.activeScriptId).update({title: 'Untitled'});
+        }
     }
 
     render() {
@@ -583,7 +596,7 @@ class Header extends Component{
             <div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
 
                 <div style={{display: 'flex', flex: 1,  alignItems: 'center', justifyContent: 'center'}}>
-                    <span onChange={this.onTitleChange.bind(this)} onKeyPress={this.onTitleHitEnter.bind(this)} contentEditable="true" style={{padding: '5px', maxWidth: '500px', fontSize: '18px', overflow: 'hidden', whiteSpace: 'nowrap'}}>sdfsd</span>
+                    <span ref="title" onBlur={this.onTitleChange.bind(this)} onKeyPress={this.onTitleHitEnter.bind(this)} contentEditable="true" style={{padding: '5px', minWidth: '50px', maxWidth: '500px', fontSize: '18px', overflow: 'hidden', whiteSpace: 'nowrap'}}>{this.state.title}</span>
                 </div>
 
                 <div style={{flex: 0, marginRight: '32px'}}>
