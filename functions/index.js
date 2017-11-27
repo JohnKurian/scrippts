@@ -65,14 +65,23 @@ app.get('/share', (req, res) => {
     admin.firestore().collection('users').where('email', '==', req.query['id'])
         .get()
         .then(function(querySnapshot) {
+            if(querySnapshot._docs().length===0) {
+                res.send({code: 0, msg: 'error: user email not found'})
+                return;
+            }
             querySnapshot.forEach(function(doc) {
                 console.log(doc.id, " => ", doc.data());
 
                 let uid = doc.data()['uid'];
+                let email = doc.data()['email'];
 
                 //add to scripts/collaborators
                 let collabObj = {};
                 collabObj['permission'] = req.query['accessLevel'];
+                collabObj['uid'] = uid;
+                collabObj['email'] = email;
+                collabObj['isOwner'] = false;
+
                 admin.firestore().collection('scripts').doc(req.query['scriptId']).collection('collaborators').doc(uid).set(collabObj)
                     .then(writeResult => {
                         // Send back a message that we've succesfully written the message
@@ -92,7 +101,7 @@ app.get('/share', (req, res) => {
                                 console.log('write:', writeResult.id);
 
                                 console.log('query:', req.query);
-                                res.send(`Hello ${req.user.name}`);
+                                res.send({code: 1, msg: 'collaborator'});
 
                             });
 
@@ -102,6 +111,7 @@ app.get('/share', (req, res) => {
         })
         .catch(function(error) {
             console.log("Error getting documents: ", error);
+            res.send({code: 2, msg: 'error: cannot find document'})
         });
 
 

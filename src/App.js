@@ -5,10 +5,12 @@ import './Layout.css';
 import createBrowserHistory from 'history/createBrowserHistory'
 
 import argumentLogo from './argument_icon.png';
+import shareIcon from './share_icon.png';
 
 import ReactDOM from 'react-dom';
 
 import { Grid, Row, Col } from 'react-flexbox-grid';
+import Dropdown from 'react-dropdown';
 
 import { applyMiddleware, createStore } from 'redux';
 import logger from 'redux-logger';
@@ -30,7 +32,7 @@ require("firebase/firestore");
 
 const customStyles = {
     content : {
-        top                   : '50%',
+        top                   : '33%',
         left                  : '50%',
         right                 : 'auto',
         bottom                : 'auto',
@@ -488,7 +490,10 @@ class Header extends Component{
             centerLock: true,
             modalIsOpen: false,
             activeScriptId: null,
-            title: ''
+            title: '',
+            collaborators: [],
+            shareEmailField: '',
+            permissionValue: 'read-only'
         };
 
         this.openModal = this.openModal.bind(this);
@@ -500,6 +505,18 @@ class Header extends Component{
         store.subscribe(() => {
             console.log('inside header:', store.getState());
             this.setState({activeScriptId: store.getState().activeScriptId, title: store.getState().title})
+
+            if(store.getState().activeScriptId!==null && store.getState().activeScriptId!==undefined) {
+                db.collection('scripts').doc(store.getState().activeScriptId).collection('collaborators').get()
+                    .then(function (querySnapshot) {
+                        querySnapshot.forEach(function (doc) {
+                            console.log(doc.id, " => ", doc.data());
+                            let collaborators = this.state.collaborators;
+                            collaborators[doc.id] = doc.data();
+                            this.setState({collaborators: collaborators})
+                        }.bind(this));
+                    }.bind(this))
+                }
             }
         )
     }
@@ -526,7 +543,7 @@ class Header extends Component{
 
     afterOpenModal() {
         // references are now sync'd and can be accessed.
-        this.subtitle.style.color = '#f00';
+        this.subtitle.style.color = 'black';
     }
 
     closeModal() {
@@ -534,21 +551,29 @@ class Header extends Component{
     }
 
 
-    onShareFormSubmit() {
-        this.share();
+    onShareFormSubmit(evt) {
+        evt.preventDefault();
+        this.share(this.state.shareEmailField, this.state.permissionValue, this.state.activeScriptId);
     }
 
-    share(evt) {
+    handleShareModalEmailInputChange(event) {
+        this.setState({shareEmailField: event.target.value});
+    }
+
+    handlePermissionChange(event) {
+        this.setState({permissionValue: event.target.value});
+    }
+
+    share(email, permission, activeScriptId) {
         let permissionObj = {};
-        permissionObj['permission'] = 'read-only';
+        permissionObj['permission'] = permission;
 
         // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/share';
         let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/share';
 
-        let id = '222@222.com';
+        let id = email;
         let type = 'email';
-        let accessLevel = 'read-only';
-        let params = "id=" + id + "&" + "type=" + type + "&" + "scriptId=" + this.props.match.params.scriptId + "&" + "accessLevel=" + accessLevel;
+        let params = "id=" + id + "&" + "type=" + type + "&" + "scriptId=" + activeScriptId + "&" + "accessLevel=" + permission;
 
         firebase.auth().currentUser.getToken().then(function(token) {
             console.log('Sending request to', helloUserUrl + "?" + params, 'with ID token in Authorization header.');
@@ -570,7 +595,7 @@ class Header extends Component{
     onTitleHitEnter(evt) {
         var keycode = evt.charCode || evt.keyCode;
         if (keycode  === 13) { //Enter key's keycode
-            console.log('im in here')
+            console.log('im in here');
             evt.preventDefault();
         }
     }
@@ -591,6 +616,13 @@ class Header extends Component{
     }
 
     render() {
+        const collaborators = (Object.keys(this.state.collaborators).map(function(key) {
+           return (
+               <div>
+                   {this.state.collaborators[key]['email']}
+               </div>
+           );
+        }.bind(this)));
 
         let headerSubSection = (
             <div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
@@ -607,19 +639,33 @@ class Header extends Component{
                         style={customStyles}
                         contentLabel="Example Modal"
                     >
+                        <div style={{display: 'flex', flex: 1, flexDirection: 'row'}}>
+                            <h4 ref={subtitle => this.subtitle = subtitle} style={{flex: 1, margin: 0, color: 'black'}}>Share settings</h4>
+                            <a href="javascript:;" onClick={this.closeModal}>
+                                <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>close</i>
+                            </a>
+                        </div>
 
-                        <h2 ref={subtitle => this.subtitle = subtitle}>Share</h2>
-                        <button onClick={this.closeModal}>close</button>
-                        <div>I am a modal</div>
+                        <div>
+                            {collaborators}
+                        </div>
+
+                        <div>Add a collaborator</div>
                         <form onSubmit={this.onShareFormSubmit.bind(this)}>
-                            <input />
-                            <button>tab navigation</button>
-                            <button>stays</button>
-                            <button>inside</button>
-                            <button>the modal</button>
+                            <input type="text" value={this.state.shareEmailField} onChange={this.handleShareModalEmailInputChange.bind(this)} />
+                            <select name="permission" value={this.state.permissionValue} onChange={this.handlePermissionChange.bind(this)}>
+                                <option value="read-only">can view</option>
+                                <option value="write">can edit</option>
+                            </select>
+                            <button>add</button>
+
                         </form>
+
                     </Modal>
-                    <button onClick={this.openModal}>Share</button>
+                    <div onClick={this.openModal} style={{padding: '8px', borderRadius: '2px', borderColor: '#0d47a1', display: 'flex', flex: 1, background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row'}}>
+                        <img style={{flex: 1, width: 12, height: 12}} src={shareIcon}></img>
+                        <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '12px'}}>Share</div>
+                    </div>
                 </div>
 
             </div>
@@ -636,7 +682,7 @@ class Header extends Component{
             <header style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                 <div style={{marginLeft: '24px'}}>
                     <a href="javascript:;" onClick={this.props.onClick}>
-                        <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '34px'}}>menu</i>
+                        <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '28px'}}>menu</i>
                     </a>
                 </div>
                 {headerSubSection}
@@ -674,6 +720,10 @@ class SideBar extends Component{
 
                 let permissionObj = {};
                 permissionObj['permission'] = 'write';
+                permissionObj['uid'] = this.props.user.uid;
+                permissionObj['email'] =  this.props.user.email;
+                permissionObj['isOwner'] = true;
+
                 db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj);
 
                 db.collection('scripts').doc(scriptRef.id).collection('nodes').add({
