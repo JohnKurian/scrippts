@@ -390,6 +390,70 @@ class Home extends Component {
 
     }
 
+    createNewScript() {
+        console.log('writing to scripts collection...');
+
+        db.collection("scripts").add({
+            creator: this.props.user.uid,
+            scope: 'private',
+            createdTime: Date.now(),
+            updatedTime: Date.now(),
+            type: 'argument',
+            title: 'Untitled',
+            collaborators: [this.props.user.uid]
+        })
+            .then(function(scriptRef) {
+                console.log("Document written with ID: ", scriptRef.id);
+
+                db.collection('scripts').doc(scriptRef.id).update({uid: scriptRef.id});
+
+                let permissionObj = {};
+                permissionObj['permission'] = 'write';
+                permissionObj['uid'] = this.props.user.uid;
+                permissionObj['email'] =  this.props.user.email;
+                permissionObj['isOwner'] = true;
+
+                db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj);
+
+                db.collection('scripts').doc(scriptRef.id).collection('nodes').add({
+                    text: ''
+                })
+                    .then(function (nodeRef) {
+
+                        db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id});
+
+                        db.collection('scripts').doc(scriptRef.id).collection('nodes').doc(nodeRef.id).update({
+                            parentUid: null,
+                            relativeToParent: 1,
+                            uid: nodeRef.id,
+                            text: '',
+                            createdTime: Date.now(),
+                            updatedTime: Date.now()
+                        }).then(function (nodeRef) {
+                            console.log('script addition finished 2')
+                        });
+
+                        db.collection('users').doc(this.props.user.uid).collection('scripts').doc(scriptRef.id).set({
+                            creator: true,
+                            collaborator: true,
+                            forked: false,
+                            uid: scriptRef.id,
+                            title: 'Untitled'
+                        });
+
+                        this.props.history.push('/s/' + scriptRef.id);
+                        window.location.reload();
+
+
+                    }.bind(this))
+
+            }.bind(this))
+            .catch(function(error) {
+                console.error("Error adding document: ", error);
+            });
+    }
+
+
     deleteScript(userId, scriptId, evt) {
         evt.preventDefault();
         console.log('im in here');
@@ -414,8 +478,33 @@ class Home extends Component {
         const SCRIPT_ROUTE = (scriptId) => `/s/${scriptId}/`;
 
         let scriptHeaderFragment = (<div></div>);
+
+        let initFragment = (
+            <Col xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
+                {/*<Link activeStyle={{}} to={SCRIPT_ROUTE(this.props.scriptHeaders[key].uid)} style={{textDecoration: 'none'}} params={{scriptId: this.props.scriptHeaders[key].uid}}>*/}
+                    <div onClick={this.createNewScript.bind(this)} style={{cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={123}>
+                        <i className="material-icons" style={{textDecoration: 'none', color: '#1976d2', fontSize: '100px'}}>note_add</i>
+                        create
+                        {/*{this.props.scriptHeaders[id]['uid']}*/}
+                        {/*{this.props.scriptHeaders[key].title}*/}
+                        {/*<a href="javascript:;" onClick={this.deleteScript.bind(this, this.props.user.uid, this.props.scriptHeaders[key].uid)}>*/}
+                            {/*<i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>delete_forever</i>*/}
+                        {/*</a>*/}
+                        <br/>
+                    </div>
+                {/*</Link>*/}
+            </Col>
+        );
+
+
+
         if(this.props.scriptHeaders!==undefined) {
-            scriptHeaderFragment = (Object.keys(this.props.scriptHeaders).map(function(key, scriptHeader) {
+
+            if(Object.keys(this.props.scriptHeaders).length>0) {
+                initFragment = null;
+            }
+
+            scriptHeaderFragment = (Object.keys(this.props.scriptHeaders).map(function(key) {
                 // console.log("here", this.props.scriptHeaders.toString());
                 return (
                     <Col xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
@@ -433,6 +522,7 @@ class Home extends Component {
                     </Col>
                 )
             }.bind(this)))
+
         }
 
         return (
@@ -440,9 +530,7 @@ class Home extends Component {
                 <div style={{marginTop: '100px', paddingLeft: '100px', paddingRight: '100px'}}>
                     <Grid fluid>
                         <Row start="xs">
-                        {
-                            scriptHeaderFragment
-                        }
+                            {initFragment}{scriptHeaderFragment}
                         </Row>
                     </Grid>
                 </div>
@@ -514,7 +602,8 @@ class Header extends Component{
             title: '',
             collaborators: [],
             shareEmailField: '',
-            permissionValue: 'read-only'
+            permissionValue: 'read-only',
+            shareModalMessage: ''
         };
 
         this.openModal = this.openModal.bind(this);
@@ -568,17 +657,30 @@ class Header extends Component{
     }
 
     closeModal() {
-        this.setState({modalIsOpen: false});
+        this.setState({modalIsOpen: false, shareModalMessage: '', shareEmailField: ''});
+    }
+
+    validateEmail(email) {
+        var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(email);
     }
 
 
     onShareFormSubmit(evt) {
         evt.preventDefault();
-        this.share(this.state.shareEmailField, this.state.permissionValue, this.state.activeScriptId);
+        if(this.validateEmail(this.state.shareEmailField)) {
+            this.share(this.state.shareEmailField, this.state.permissionValue, this.state.activeScriptId);
+        }
+        else {
+            this.setState({shareModalMessage: 'invalid email id format'})
+        }
     }
 
     handleShareModalEmailInputChange(event) {
         this.setState({shareEmailField: event.target.value});
+        if(event.target.value.length===0 || this.validateEmail(event.target.value)) {
+            this.setState({shareModalMessage: ''});
+        }
     }
 
     handlePermissionChange(event) {
@@ -647,6 +749,11 @@ class Header extends Component{
            );
         }.bind(this)));
 
+        let shareModalMessage = (<br/>);
+        if(this.state.shareModalMessage.length>0) {
+            shareModalMessage = this.state.shareModalMessage;
+        }
+
         let headerSubSection = (
             <div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
 
@@ -683,6 +790,7 @@ class Header extends Component{
                             <button>add</button>
 
                         </form>
+                        <div>{shareModalMessage}</div>
 
                     </Modal>
                     <div onClick={this.openModal} style={{padding: '8px', borderRadius: '2px', borderColor: '#0d47a1', display: 'flex', flex: 1, background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row'}}>
