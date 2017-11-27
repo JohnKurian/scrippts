@@ -337,7 +337,7 @@ class Node extends Component {
                                         background: 'white',
                                         padding: '10px',
                                         borderRadius: '6px',
-                                        boxShadow: '2px 2px 8px rgba(0,0,0,.3)',
+                                        boxShadow: '1px 1px 4px rgba(0,0,0,.3)',
                                         zIndex: '100'
                                     }}>
                                         <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
@@ -550,7 +550,7 @@ class Parent extends Component {
     }
 
     handleViewSidebar(){
-        this.setState({sidebarOpen: !this.state.sidebarOpen});
+        this.setState({sidebarOpen: true});
     }
 
     disableSidebar(){
@@ -826,11 +826,46 @@ class SideBar extends Component{
 
     constructor(props, context) {
         super(props, context);
+
+        this.state = {
+            isOpen: false
+        };
+
+        this.setWrapperRef = this.setWrapperRef.bind(this);
+        this.handleClickOutside = this.handleClickOutside.bind(this);
     }
 
     componentDidMount() {
-
+        document.addEventListener('mousedown', this.handleClickOutside);
     }
+
+    componentWillUnmount() {
+        document.removeEventListener('mousedown', this.handleClickOutside);
+    }
+
+    /**
+     * Set the wrapper ref
+     */
+    setWrapperRef(node) {
+        this.wrapperRef = node;
+    }
+
+    /**
+     * Alert if clicked on outside of element
+     */
+    handleClickOutside(event) {
+        if (this.wrapperRef && !this.wrapperRef.contains(event.target) && this.props.isOpen) {
+            console.log('im in here')
+            this.setState({isOpen: false});
+        }
+    }
+
+    componentWillReceiveProps(props) {
+        this.setState({isOpen: props.isOpen});
+    }
+
+
+
 
     createNewScript() {
         console.log('writing to scripts collection...');
@@ -901,9 +936,9 @@ class SideBar extends Component{
     }
 
     render() {
-        var sidebarClass = this.props.isOpen ? 'sidebar open' : 'sidebar';
+        var sidebarClass = this.state.isOpen ? 'sidebar open' : 'sidebar';
         return (
-            <div className={sidebarClass} style={{display: 'flex', flexDirection: 'column', zIndex: 500}}>
+            <div ref={this.setWrapperRef} className={sidebarClass} style={{display: 'flex', flexDirection: 'column', zIndex: 5000}}>
                 <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px'}}>
                     <input id="newScript" type="button" value="Create new script" onClick={this.createNewScript.bind(this)} />
                 </div>
