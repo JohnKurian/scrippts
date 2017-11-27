@@ -390,6 +390,24 @@ class Home extends Component {
 
     }
 
+    deleteScript(userId, scriptId, evt) {
+        evt.preventDefault();
+        console.log('im in here');
+        db.collection("scripts").doc(scriptId).delete().then(function() {
+            console.log("Document successfully deleted from /scripts");
+
+            db.collection("users").doc(userId).collection('scripts').doc(scriptId).delete().then(function() {
+                console.log("Document successfully deleted from /users/scripts");
+            }).catch(function(error) {
+                console.error("Error removing document from /users/scripts: ", error);
+            });
+
+
+        }).catch(function(error) {
+            console.error("Error removing document from /scripts: ", error);
+        });
+    }
+
 
     render() {
 
@@ -397,15 +415,18 @@ class Home extends Component {
 
         let scriptHeaderFragment = (<div></div>);
         if(this.props.scriptHeaders!==undefined) {
-            scriptHeaderFragment = (this.props.scriptHeaders.map(function(scriptHeader) {
+            scriptHeaderFragment = (Object.keys(this.props.scriptHeaders).map(function(key, scriptHeader) {
                 // console.log("here", this.props.scriptHeaders.toString());
                 return (
                     <Col xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
-                        <Link to={SCRIPT_ROUTE(scriptHeader.uid)} params={{scriptId: scriptHeader.uid}}>
-                            <div style={{display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={scriptHeader.uid}>
+                        <Link activeStyle={{}} to={SCRIPT_ROUTE(this.props.scriptHeaders[key].uid)} style={{textDecoration: 'none'}} params={{scriptId: this.props.scriptHeaders[key].uid}}>
+                            <div style={{display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={this.props.scriptHeaders[key].uid}>
                                 <img style={{width: 80, height: 80}} src={argumentLogo}></img>
                                 {/*{this.props.scriptHeaders[id]['uid']}*/}
-                                {scriptHeader.uid}
+                                {this.props.scriptHeaders[key].title}
+                                <a href="javascript:;" onClick={this.deleteScript.bind(this, this.props.user.uid, this.props.scriptHeaders[key].uid)}>
+                                    <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>delete_forever</i>
+                                </a>
                                 <br/>
                             </div>
                         </Link>
@@ -451,7 +472,7 @@ class Parent extends Component {
     render() {
         return (
             <div>
-                <Header onClick={this.handleViewSidebar.bind(this)} />
+                <Header user={this.props.user} onClick={this.handleViewSidebar.bind(this)} />
 
                 <Route render={(props) => ( <SideBar {...props} isOpen={this.state.sidebarOpen} user={this.props.user}/>)}/>
 
@@ -462,7 +483,7 @@ class Parent extends Component {
                             disableSidebar={this.disableSidebar.bind(this)}
                             isOpen={this.state.sidebarOpen}/>
                     )} />
-                    <Route exact path="/" render={(props) => ( <Home {...props} scriptIds={this.props.scriptIds} scriptHeaders={this.props.scriptHeaders}/> )}/>
+                    <Route exact path="/" render={(props) => ( <Home {...props} user={this.props.user} scriptIds={this.props.scriptIds} scriptHeaders={this.props.scriptHeaders}/> )}/>
                 </Switch>
             </div>
         );
@@ -608,10 +629,12 @@ class Header extends Component{
         if(domNode.innerText.length>0) {
             this.setState({title: domNode.innerText});
             db.collection('scripts').doc(this.state.activeScriptId).update({title: domNode.innerText});
+            db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.state.activeScriptId).update({title: domNode.innerText});
         }
         else {
             this.setState({title: 'Untitled'});
             db.collection('scripts').doc(this.state.activeScriptId).update({title: 'Untitled'});
+            db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.state.activeScriptId).update({title: 'Untitled'});
         }
     }
 
@@ -998,23 +1021,43 @@ class App extends Component {
 
                 db.collection("users").doc(user.uid).collection('scripts')
                     .onSnapshot(function(querySnapshot) {
+                        console.log('onsnapshot triggered');
                         let scriptIds = [];
                         querySnapshot.forEach(function(doc) {
                             scriptIds.push(doc.data().uid)
                         });
+
+
+                        //deleting script headers
+                        if(scriptIds.length < this.state.scriptIds.length) {
+                            console.log('inside delete')
+                            Array.prototype.diff = function(a) {
+                                return this.filter(function(i) {return a.indexOf(i) < 0;});
+                            };
+                            let scriptHeaders = this.state.scriptHeaders;
+                            let scriptHeadersToDelete = this.state.scriptIds.diff(scriptIds);
+                            scriptHeadersToDelete.forEach(function (scriptId) {
+                                delete scriptHeaders[scriptId];
+                            })
+                            this.setState({scriptHeaders: scriptHeaders})
+
+                        }
+
                         this.setState({scriptIds: scriptIds});
 
                         scriptIds.map(function(id) {
 
                             db.collection('scripts').doc(id).get().then(function (doc) {
-                                if(this.state['scriptHeaders']===undefined || this.state['scriptHeaders']===null) {
-                                    let scriptHeaderArray = [doc.data()];
-                                    this.setState({scriptHeaders: scriptHeaderArray});
+                                console.log('inside here')
+                                if(this.state['scriptHeaderObj']===undefined || this.state['scriptHeaderObj']===null) {
+                                    let scriptHeaderObj = Object.assign({}, this.state.scriptHeaders, {[id]: doc.data() });
+                                    scriptHeaderObj[id] = doc.data();
+                                    this.setState({scriptHeaders: scriptHeaderObj});
                                 }
                                 else {
-                                    let scriptHeaderArray = this.state['scriptHeaders'];
-                                    scriptHeaderArray.push(doc.data());
-                                    this.setState({scriptHeaders: scriptHeaderArray});
+                                    let scriptHeaderObj = Object.assign({}, this.state.scriptHeaders, {[id]: doc.data() });
+                                    scriptHeaderObj[id] = doc.data();
+                                    this.setState({scriptHeaders: scriptHeaderObj});
                                 }
                             }.bind(this))
 
