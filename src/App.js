@@ -472,6 +472,42 @@ class Home extends Component {
         });
     }
 
+    timeSince(date) {
+
+        var seconds = Math.floor((new Date() - date) / 1000);
+
+        var interval = Math.floor(seconds / 31536000);
+
+        if (interval > 1) {
+            return interval + " years";
+        }
+        interval = Math.floor(seconds / 2592000);
+        if (interval > 1) {
+            return interval + " months";
+        }
+        interval = Math.floor(seconds / 86400);
+        if (interval > 1) {
+            return interval + " days";
+        }
+        interval = Math.floor(seconds / 3600);
+        if (interval > 1) {
+            return interval + " hours";
+        }
+        interval = Math.floor(seconds / 60);
+        if (interval > 1) {
+            return interval + " minutes";
+        }
+        return Math.floor(seconds) + " seconds";
+    }
+
+    onMouseEnterScript() {
+
+    }
+
+    onMouseLeaveScript() {
+
+    }
+
 
     render() {
 
@@ -510,13 +546,32 @@ class Home extends Component {
                     <Col xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
                         <Link activeStyle={{}} to={SCRIPT_ROUTE(this.props.scriptHeaders[key].uid)} style={{textDecoration: 'none'}} params={{scriptId: this.props.scriptHeaders[key].uid}}>
                             <div style={{display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={this.props.scriptHeaders[key].uid}>
-                                <img style={{width: 80, height: 80}} src={argumentLogo}></img>
+                                <div style={{display: 'flex', flex: 3,width: '100%', alignItems: 'center', justifyContent: 'center'}}>
+                                    <div>
+                                    <img style={{width: 80, height: 80}} src={argumentLogo}></img>
+                                    </div>
+                                </div>
                                 {/*{this.props.scriptHeaders[id]['uid']}*/}
-                                {this.props.scriptHeaders[key].title}
-                                <a href="javascript:;" onClick={this.deleteScript.bind(this, this.props.user.uid, this.props.scriptHeaders[key].uid)}>
-                                    <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>delete_forever</i>
-                                </a>
-                                <br/>
+
+                                <div style={{display: 'flex', flex: 1, flexDirection: 'row', width: '100%'}}>
+                                    <div style={{display: 'flex', flexDirection: 'column', flex: 5, marginLeft: '15px'}}>
+                                        <div style={{marginBottom: '4px'}}>
+                                        {this.props.scriptHeaders[key].title}
+                                        </div>
+                                        <div style={{display: 'flex', flexDirection: 'row'}}>
+                                            <img style={{width: 20, height: 20, marginRight: '3px'}} src={argumentLogo}></img>
+                                            <div style={{fontSize: '12px'}}>
+                                                updated {this.timeSince(this.props.scriptHeaders[key].updatedTime)} ago
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{flex: 1, alignSelf: 'center'}}>
+                                        <a href="javascript:;" onClick={this.deleteScript.bind(this, this.props.user.uid, this.props.scriptHeaders[key].uid)}>
+                                            <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>delete_forever</i>
+                                        </a>
+                                    </div>
+                                    <br/>
+                                </div>
                             </div>
                         </Link>
                     </Col>
