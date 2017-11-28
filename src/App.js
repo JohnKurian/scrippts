@@ -118,7 +118,8 @@ class Node extends Component {
             textAreaHeight: '50px',
             textAreaWidth: '275px',
             activeNode: null,
-            hoveredNode: null
+            hoveredNode: null,
+            selectedNode: null
         };
     }
 
@@ -174,12 +175,12 @@ class Node extends Component {
 
     onFocus(node, evt) {
         console.log('onFocus')
-        this.setState({showTools: true, activeNode: node.uid});
+        this.setState({showTools: true, selectedNode: node.uid});
     }
 
     onBlur(node, evt) {
         console.log('onBlur')
-        this.setState({showTools: true,  activeNode: null})
+        this.setState({showTools: true,  selectedNode: null})
     }
 
     onAddClick(node, contentionType, evt) {
@@ -231,6 +232,14 @@ class Node extends Component {
             updatedTime: Date.now()
         })
 
+    }
+
+    onNodeEnter(node, evt) {
+        this.setState({hoveredNode: node.uid});
+    }
+
+    onNodeLeave(node, evt) {
+        this.setState({hoveredNode: null});
     }
 
     render() {
@@ -313,17 +322,21 @@ class Node extends Component {
                             width = node['textAreaWidth'];
                         }
 
-                        let footer = null;
+                        let footer = (
+                            <div style={{height: '24px'}}>
+                            </div>
+                        );
 
-                        if(this.state.activeNode === node.uid || this.state.hoveredNode === node.uid) {
+                        console.log('hovered:', this.state.hoveredNode, 'selected:', this.state.selectedNode);
+                        if(this.state.hoveredNode === node.uid) {
                             footer = (
-                                <div onMouseOver={this.onNodeHoveredIn.bind(this, node)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                <div onMouseEnter={this.onNodeHoveredIn.bind(this, node)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
 
                                     <i data-tip='custom show' data-event='click focus' onClick={()=>{console.log('im in here')}} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
                                     <ReactTooltip globalEventOff='click' place="bottom" />
 
-                                    <button onMouseOver={this.onNodeHoveredIn.bind(this, node)} onMouseOut={this.onNodeHoveredOut.bind(this, node)} style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
-                                    <button onMouseOver={this.onNodeHoveredIn.bind(this, node)} onMouseOut={this.onNodeHoveredOut.bind(this, node)} style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
+                                    <button style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
+                                    <button style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
                                 </div>
                             );
                         }
@@ -333,9 +346,12 @@ class Node extends Component {
                             <li key={node.uid}>
                                 <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
                                     {/*<div className="circle"></div>*/}
-                                    <div style={{
+                                    <div onMouseEnter={this.onNodeEnter.bind(this, node)} onMouseLeave={this.onNodeLeave.bind(this, node)} style={{
                                         background: 'white',
-                                        padding: '10px',
+                                        paddingLeft: '10px',
+                                        paddingRight: '10px',
+                                        paddingTop: '10px',
+                                        paddingBottom: '3px',
                                         borderRadius: '6px',
                                         boxShadow: '1px 1px 4px rgba(0,0,0,.3)',
                                         zIndex: '100'
@@ -883,7 +899,8 @@ class SideBar extends Component{
         super(props, context);
 
         this.state = {
-            isOpen: false
+            isOpen: false,
+            isInternalLinkClicked: false
         };
 
         this.setWrapperRef = this.setWrapperRef.bind(this);
@@ -987,6 +1004,7 @@ class SideBar extends Component{
 
 
     onHomeClick() {
+        this.setState({isOpen: false, isInternalLinkClicked: true});
         store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
     }
 
