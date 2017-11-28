@@ -1,31 +1,24 @@
-import React, { Component } from 'react';
-import './App.css';
-import './Node.css';
-import './Layout.css';
-import createBrowserHistory from 'history/createBrowserHistory'
+import React, {Component} from "react";
+import "./App.css";
+import "./Node.css";
+import "./Layout.css";
+import createBrowserHistory from "history/createBrowserHistory";
 
-import argumentLogo from './argument_icon.png';
-import shareIcon from './share_icon.png';
+import argumentLogo from "./argument_icon.png";
+import shareIcon from "./share_icon.png";
 
-import ReactDOM from 'react-dom';
+import ReactDOM from "react-dom";
 
-import { Grid, Row, Col } from 'react-flexbox-grid';
-import Dropdown from 'react-dropdown';
+import {Col, Grid, Row} from "react-flexbox-grid";
 
-import { applyMiddleware, createStore } from 'redux';
-import logger from 'redux-logger';
+import {applyMiddleware, createStore} from "redux";
+import logger from "redux-logger";
 
-import {
-    BrowserRouter,
-    Route,
-    Link,
-    Switch,
-    withRouter
-} from 'react-router-dom'
+import {BrowserRouter, Link, Route, Switch, withRouter} from "react-router-dom";
 
-import Modal from 'react-modal';
+import Modal from "react-modal";
 
-import ReactTooltip from 'react-tooltip'
+import ReactTooltip from "react-tooltip";
 
 var firebase = require("firebase");
 require("firebase/firestore");
@@ -633,7 +626,7 @@ class Parent extends Component {
             <div>
                 <Header user={this.props.user} onClick={this.handleViewSidebar.bind(this)} />
 
-                <Route render={(props) => ( <SideBar {...props} isOpen={this.state.sidebarOpen} user={this.props.user}/>)}/>
+                <Route render={(props) => ( <SideBar {...props} isOpen={this.state.sidebarOpen} disableSidebar={this.disableSidebar.bind(this)} user={this.props.user}/>)}/>
 
                 <Switch>
                     <Route exact path="/s/:scriptId" render={(props) => (
@@ -927,7 +920,6 @@ class SideBar extends Component{
      */
     handleClickOutside(event) {
         if (this.wrapperRef && !this.wrapperRef.contains(event.target) && this.props.isOpen) {
-            console.log('im in here')
             this.setState({isOpen: false});
         }
     }
@@ -1004,7 +996,7 @@ class SideBar extends Component{
 
 
     onHomeClick() {
-        this.setState({isOpen: false, isInternalLinkClicked: true});
+        this.props.disableSidebar();
         store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
     }
 
