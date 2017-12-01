@@ -5,6 +5,8 @@ import "./Layout.css";
 import createBrowserHistory from "history/createBrowserHistory";
 
 import argumentLogo from "./argument_icon.png";
+import scripptLogo from './scrippt_logo_40px.png';
+
 import shareIcon from "./share_icon.png";
 
 import ReactDOM from "react-dom";
@@ -564,12 +566,12 @@ class Home extends Component {
 
                                 <div style={{display: 'flex', flex: 1, flexDirection: 'row', width: '100%'}}>
                                     <div style={{display: 'flex', flexDirection: 'column', flex: 5, marginLeft: '15px'}}>
-                                        <div style={{marginBottom: '4px'}}>
+                                        <div style={{marginBottom: '4px', fontWeight: '600', color: '#373737'}}>
                                         {this.props.scriptHeaders[key].title}
                                         </div>
                                         <div style={{display: 'flex', flexDirection: 'row'}}>
                                             <img style={{width: 20, height: 20, marginRight: '3px'}} src={argumentLogo}></img>
-                                            <div style={{fontSize: '12px'}}>
+                                            <div style={{fontSize: '11px', fontWeight: '300', color: '#373737'}}>
                                                 updated {this.timeSince(this.props.scriptHeaders[key].updatedTime)} ago
                                             </div>
                                         </div>
@@ -643,10 +645,14 @@ class Parent extends Component {
 }
 
 const LogoutButton = withRouter(({ history }) => (
-        <input id="logout" type="button" value="logout" onClick={() => {
+
+    <div style={{display: 'flex', paddingLeft: '50px', height: '40px', alignItems: 'center'}}>
+        <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '32px'}}>power_settings_new</i>
+        <Link to="/" style={{ color: '#555555', textDecoration: 'none', fontSize: '17px', paddingLeft: '5px' }} onClick={() => {
             auth().signOut();
             history.push('/');
-        }} />
+        }}>Logout</Link>
+    </div>
     )
 );
 
@@ -857,7 +863,7 @@ class Header extends Component{
                         <div>{shareModalMessage}</div>
 
                     </Modal>
-                    <div onClick={this.openModal} style={{padding: '8px', borderRadius: '2px', borderColor: '#0d47a1', display: 'flex', flex: 1, background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row'}}>
+                    <div onClick={this.openModal} style={{padding: '8px', borderRadius: '2px', borderColor: '#0d47a1', display: 'flex', flex: 1, alignItems: 'center', background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row'}}>
                         <img style={{flex: 1, width: 12, height: 12}} src={shareIcon}></img>
                         <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '12px'}}>Share</div>
                     </div>
@@ -1004,14 +1010,29 @@ class SideBar extends Component{
         var sidebarClass = this.state.isOpen ? 'sidebar open' : 'sidebar';
         return (
             <div ref={this.setWrapperRef} className={sidebarClass} style={{display: 'flex', flexDirection: 'column', zIndex: 5000}}>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px'}}>
-                    <input id="newScript" type="button" value="Create new script" onClick={this.createNewScript.bind(this)} />
+
+                <div style={{flex: 1}}>
+                    <div style={{marginTop: '10px', marginBottom: '24px', height: '64px', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
+                        <img style={{width: 40, height: 40, padding: '5px'}} src={scripptLogo}></img>
+                        <div style={{opacity: '.55', fontSize: '22px'}}>
+                        Scrippt
+                        </div>
+                    </div>
+
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', marginBottom: '12px'}}>
+                        <div onClick={this.createNewScript.bind(this)} style={{padding: '8px', borderRadius: '2px', width: '150px', borderColor: '#0d47a1', display: 'flex', alignItems: 'center', background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row', alignSelf: 'center'}}>
+                            <i className="material-icons" style={{color: 'white'}}>add</i>
+                            <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '13px'}}>Create new script</div>
+                        </div>
+                    </div>
+
+                    <div style={{display: 'flex', paddingLeft: '50px', height: '40px', alignItems: 'center'}}>
+                        <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '32px'}}>home</i>
+                        <Link to="/" style={{ color: '#555555', textDecoration: 'none', fontSize: '17px', paddingLeft: '5px' }} onClick={this.onHomeClick.bind(this)}>Home</Link>
+                    </div>
                 </div>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px'}}>
-                    <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px'}}>home</i>
-                    <Link to="/" onClick={this.onHomeClick.bind(this)}>Home</Link>
-                </div>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px'}}>
+
+                <div style={{display: 'flex', flex: 0, marginBottom: '56px'}}>
                     <LogoutButton/>
                 </div>
             </div>
