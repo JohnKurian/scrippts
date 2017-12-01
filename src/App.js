@@ -63,13 +63,15 @@ var db = firebase.firestore();
 export const auth = firebase.auth;
 
 
-function mainReducer(state = {activeScriptId: null, value: null}, action) {
+function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComplete: false, numScripts: 0}, action) {
     switch (action.type) {
 
         case 'SET_ACTIVE_SCRIPT_ID':
             return {...state, activeScriptId: action.activeScriptId};
         case 'SET_TITLE':
             return {...state, title: action.title};
+        case 'SCRIPT_FETCH_COMPLETE':
+            return {...state, scriptFetchComplete: true, numScripts: action.numScripts};
         default:
             return state
     }
@@ -530,8 +532,10 @@ class Home extends Component {
             <Col xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
                 {/*<Link activeStyle={{}} to={SCRIPT_ROUTE(this.props.scriptHeaders[key].uid)} style={{textDecoration: 'none'}} params={{scriptId: this.props.scriptHeaders[key].uid}}>*/}
                     <div onClick={this.createNewScript.bind(this)} style={{cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={123}>
-                        <i className="material-icons" style={{textDecoration: 'none', color: '#1976d2', fontSize: '100px'}}>note_add</i>
-                        create
+                        <i className="material-icons" style={{textDecoration: 'none', color: '#1976d2', fontSize: '100px'}}>add</i>
+                        <div style={{color: '#555555', fontSize: '20px', marginTop: '20px'}}>
+                        Create new script
+                        </div>
                         {/*{this.props.scriptHeaders[id]['uid']}*/}
                         {/*{this.props.scriptHeaders[key].title}*/}
                         {/*<a href="javascript:;" onClick={this.deleteScript.bind(this, this.props.user.uid, this.props.scriptHeaders[key].uid)}>*/}
@@ -542,6 +546,11 @@ class Home extends Component {
                 {/*</Link>*/}
             </Col>
         );
+
+        if(!store.getState().scriptFetchComplete || store.getState().numScripts>0) {
+            initFragment = null;
+        }
+
 
 
 
@@ -1256,6 +1265,8 @@ class App extends Component {
                             scriptIds.push(doc.data().uid)
                         });
 
+                        console.log('found ', scriptIds.length, 'scripts');
+                        store.dispatch({type: 'SCRIPT_FETCH_COMPLETE', scriptFetchComplete: true, numScripts: scriptIds.length});
 
                         //deleting script headers
                         if(scriptIds.length < this.state.scriptIds.length) {
