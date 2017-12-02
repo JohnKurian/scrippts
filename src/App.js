@@ -95,7 +95,7 @@ class Loader extends Component {
 
     render() {
         return (
-            <div>
+            <div style={{display: 'flex', flex: 1, height: window.innerHeight, justifyContent: 'center', alignItems: 'center', alignSelf: 'center', justifyItems: 'center'}}>
                 <svg className="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
                     <circle className="path" fill="none" strokeWidth="6" strokeLinecap="round" cx="33" cy="33" r="30"/>
                 </svg>
@@ -324,7 +324,6 @@ class Node extends Component {
                             </div>
                         );
 
-                        console.log('hovered:', this.state.hoveredNode, 'selected:', this.state.selectedNode);
                         if(this.state.hoveredNode === node.uid) {
                             footer = (
                                 <div onMouseEnter={this.onNodeHoveredIn.bind(this, node)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
@@ -575,12 +574,12 @@ class Home extends Component {
 
                                 <div style={{display: 'flex', flex: 1, flexDirection: 'row', width: '100%'}}>
                                     <div style={{display: 'flex', flexDirection: 'column', flex: 5, marginLeft: '15px'}}>
-                                        <div style={{marginBottom: '4px', fontWeight: '600', color: '#373737'}}>
+                                        <div style={{marginBottom: '4px', width: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '15px', fontWeight: '600', color: '#373737'}}>
                                         {this.props.scriptHeaders[key].title}
                                         </div>
                                         <div style={{display: 'flex', flexDirection: 'row'}}>
                                             <img style={{width: 20, height: 20, marginRight: '3px'}} src={argumentLogo}></img>
-                                            <div style={{fontSize: '11px', fontWeight: '300', color: '#373737'}}>
+                                            <div style={{fontSize: '10.5px', fontWeight: '300', color: '#373737'}}>
                                                 updated {this.timeSince(this.props.scriptHeaders[key].updatedTime)} ago
                                             </div>
                                         </div>
@@ -682,7 +681,8 @@ class Header extends Component{
             collaborators: [],
             shareEmailField: '',
             permissionValue: 'read-only',
-            shareModalMessage: ''
+            shareModalMessage: '',
+            timer: null
         };
 
         this.openModal = this.openModal.bind(this);
@@ -709,6 +709,12 @@ class Header extends Component{
             }
         )
     }
+
+    componentWillMount(props) {
+        this.timer = null;
+    }
+
+
 
     onFocus(node) {
 
@@ -802,6 +808,43 @@ class Header extends Component{
         }
     }
 
+    onChange = (evt) => {
+        // console.log('value:', evt.target.value)
+        // console.log(node)
+        this.setState({text: evt.target.value})
+        console.log('evt:', evt.target.value)
+
+        clearTimeout(this.timer);
+
+        this.setState({ value: 100 });
+
+        this.timer = setTimeout(this.triggerChange.bind(this), 1000);
+
+
+    }
+
+
+    triggerChange() {
+        console.log('inside trigger change')
+
+        let domNode = ReactDOM.findDOMNode(this.refs.title);
+        console.log(domNode)
+        console.log(domNode.innerText);
+
+        if(domNode.innerText.length>0) {
+            this.setState({title: domNode.innerText});
+            db.collection('scripts').doc(this.state.activeScriptId).update({title: domNode.innerText});
+            db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.state.activeScriptId).update({title: domNode.innerText});
+            store.dispatch({type: 'SET_TITLE', title: domNode.innerText});
+        }
+        else {
+            this.setState({title: 'Untitled'});
+            db.collection('scripts').doc(this.state.activeScriptId).update({title: 'Untitled'});
+            db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.state.activeScriptId).update({title: 'Untitled'});
+            store.dispatch({type: 'SET_TITLE', title: 'Untitled'});
+        }
+    }
+
     onTitleChange(evt) {
         let domNode = ReactDOM.findDOMNode(this.refs.title);
         console.log(domNode)
@@ -837,7 +880,7 @@ class Header extends Component{
             <div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
 
                 <div style={{display: 'flex', flex: 1,  alignItems: 'center', justifyContent: 'center'}}>
-                    <span ref="title" onBlur={this.onTitleChange.bind(this)} onKeyPress={this.onTitleHitEnter.bind(this)} contentEditable="true" style={{padding: '5px', minWidth: '50px', maxWidth: '500px', fontSize: '18px', overflow: 'hidden', whiteSpace: 'nowrap'}}>{this.state.title}</span>
+                    <span suppressContentEditableWarning={true} ref="title" onInput={this.onChange.bind(this)} onKeyPress={this.onTitleHitEnter.bind(this)} contentEditable="true" style={{padding: '5px', minWidth: '50px', maxWidth: '500px', fontSize: '18px', overflow: 'hidden', whiteSpace: 'nowrap'}}>{this.state.title}</span>
                 </div>
 
                 <div style={{flex: 0, marginRight: '32px'}}>
