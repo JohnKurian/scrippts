@@ -63,7 +63,7 @@ var db = firebase.firestore();
 export const auth = firebase.auth;
 
 
-function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComplete: false, numScripts: 0}, action) {
+function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComplete: false, numScripts: 0, isScriptCreation: false}, action) {
     switch (action.type) {
 
         case 'SET_ACTIVE_SCRIPT_ID':
@@ -72,6 +72,10 @@ function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComp
             return {...state, title: action.title};
         case 'SCRIPT_FETCH_COMPLETE':
             return {...state, scriptFetchComplete: true, numScripts: action.numScripts};
+        case 'CREATE_SCRIPT_INITIALIZED':
+            return {...state, isScriptCreation: true};
+        case 'CREATE_SCRIPT_FINISHED':
+            return {...state, isScriptCreation: false};
         default:
             return state
     }
@@ -405,6 +409,8 @@ class Home extends Component {
     createNewScript() {
         console.log('writing to scripts collection...');
 
+        store.dispatch({type: 'CREATE_SCRIPT_INITIALIZED', isScriptCreation: true});
+
         db.collection("scripts").add({
             creator: this.props.user.uid,
             scope: 'private',
@@ -453,6 +459,7 @@ class Home extends Component {
                             title: 'Untitled'
                         });
 
+                        store.dispatch({type: 'CREATE_SCRIPT_FINISHED', isScriptCreation: false});
                         this.props.history.push('/s/' + scriptRef.id);
                         window.location.reload();
 
@@ -461,6 +468,7 @@ class Home extends Component {
 
             }.bind(this))
             .catch(function(error) {
+                store.dispatch({type: 'CREATE_SCRIPT_FINISHED', isScriptCreation: false});
                 console.error("Error adding document: ", error);
             });
     }
@@ -676,6 +684,7 @@ class Header extends Component{
             premiseRelativeValue: 1,
             centerLock: true,
             modalIsOpen: false,
+            loaderModalIsOpen: false,
             activeScriptId: null,
             title: '',
             collaborators: [],
@@ -688,12 +697,16 @@ class Header extends Component{
         this.openModal = this.openModal.bind(this);
         this.afterOpenModal = this.afterOpenModal.bind(this);
         this.closeModal = this.closeModal.bind(this);
+
+        this.openLoaderModal = this.openLoaderModal.bind(this);
+        this.afterOpenLoaderModal = this.afterOpenLoaderModal.bind(this);
+        this.closeLoaderModal = this.closeLoaderModal.bind(this);
     }
 
     componentDidMount() {
         store.subscribe(() => {
             console.log('inside header:', store.getState());
-            this.setState({activeScriptId: store.getState().activeScriptId, title: store.getState().title})
+            this.setState({activeScriptId: store.getState().activeScriptId, title: store.getState().title, loaderModalIsOpen: store.getState().isScriptCreation})
 
             if(store.getState().activeScriptId!==null && store.getState().activeScriptId!==undefined) {
                 db.collection('scripts').doc(store.getState().activeScriptId).collection('collaborators').get()
@@ -736,13 +749,25 @@ class Header extends Component{
         this.setState({modalIsOpen: true});
     }
 
+    openLoaderModal() {
+        this.setState({loaderModalIsOpen: true});
+    }
+
     afterOpenModal() {
         // references are now sync'd and can be accessed.
         this.subtitle.style.color = 'black';
     }
 
+    afterOpenLoaderModal() {
+
+    }
+
     closeModal() {
         this.setState({modalIsOpen: false, shareModalMessage: '', shareEmailField: ''});
+    }
+
+    closeLoaderModal() {
+
     }
 
     validateEmail(email) {
@@ -863,6 +888,32 @@ class Header extends Component{
     }
 
     render() {
+
+        const loaderStyles = {
+            content : {
+                top                   : '33%',
+                left                  : '50%',
+                right                 : 'auto',
+                bottom                : 'auto',
+                marginRight           : '-50%',
+                transform             : 'translate(-50%, -50%)',
+                border: '0px',
+                backgroundColor: "rgba(255, 255, 255, 0)",
+                background: "rgba(255, 255, 255, 0)",
+            },
+            overlay: {
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(255, 255, 255, 0.75)",
+                background: "rgba(255, 255, 255, 0.75)",
+                border: '0px',
+                zIndex: 20000
+            }
+        };
+
         const collaborators = (Object.keys(this.state.collaborators).map(function(key) {
            return (
                <div>
@@ -915,7 +966,8 @@ class Header extends Component{
                         <div>{shareModalMessage}</div>
 
                     </Modal>
-                    <div onClick={this.openModal} style={{padding: '8px', borderRadius: '2px', borderColor: '#0d47a1', display: 'flex', flex: 1, alignItems: 'center', background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row'}}>
+
+                    <div onClick={this.openModal} style={{padding: '8px', borderRadius: '2px', borderColor: '#1565c0', display: 'flex', flex: 1, alignItems: 'center', background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row'}}>
                         <img style={{flex: 1, width: 12, height: 12}} src={shareIcon}></img>
                         <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '12px'}}>Share</div>
                     </div>
@@ -938,6 +990,13 @@ class Header extends Component{
                         <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '28px'}}>menu</i>
                     </a>
                 </div>
+                <Modal
+                    isOpen={this.state.loaderModalIsOpen}
+                    style={loaderStyles}
+                    contentLabel="Loader Modal"
+                >
+                    <Loader/>
+                </Modal>
                 {headerSubSection}
             </header>
         );
@@ -992,6 +1051,8 @@ class SideBar extends Component{
     createNewScript() {
         console.log('writing to scripts collection...');
 
+        store.dispatch({type: 'CREATE_SCRIPT_INITIALIZED', isScriptCreation: true});
+
         db.collection("scripts").add({
             creator: this.props.user.uid,
             scope: 'private',
@@ -1040,6 +1101,7 @@ class SideBar extends Component{
                             title: 'Untitled'
                         });
 
+                        store.dispatch({type: 'SCRIPT_CREATION_FINISHED', isScriptCreation: false});
                         this.props.history.push('/s/' + scriptRef.id);
                         window.location.reload();
 
@@ -1048,6 +1110,7 @@ class SideBar extends Component{
 
             }.bind(this))
             .catch(function(error) {
+                store.dispatch({type: 'SCRIPT_CREATION_FINISHED', isScriptCreation: false});
                 console.error("Error adding document: ", error);
             });
     }
@@ -1072,7 +1135,7 @@ class SideBar extends Component{
                     </div>
 
                     <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', marginBottom: '12px'}}>
-                        <div onClick={this.createNewScript.bind(this)} style={{padding: '8px', borderRadius: '2px', width: '150px', borderColor: '#0d47a1', display: 'flex', alignItems: 'center', background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row', alignSelf: 'center'}}>
+                        <div onClick={this.createNewScript.bind(this)} style={{padding: '8px', borderRadius: '2px', width: '150px', borderColor: '#1565c0', display: 'flex', alignItems: 'center', background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row', alignSelf: 'center'}}>
                             <i className="material-icons" style={{color: 'white'}}>add</i>
                             <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '13px'}}>Create new script</div>
                         </div>
