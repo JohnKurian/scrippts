@@ -155,7 +155,7 @@ class Node extends Component {
 
 
     onTextAreaClick(node, evt) {
-        console.log('text area clicked:', evt.target.style.height, evt.target.style.width);
+        console.log('text area clicked:', node.uid);
 
 
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
@@ -233,6 +233,48 @@ class Node extends Component {
             updatedTime: Date.now()
         })
 
+    }
+
+    onDeleteNodeClick(node) {
+
+        console.log(node);
+        //remove children field from parent node
+        // db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node.parentUid).update({
+        //     [node.uid]: firebase.firestore.FieldValue.delete()
+        // }).then(function (result) {
+        //     console.log(result)
+        // }).catch(function (err) {
+        //     console.log(err)
+        // });
+
+
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node.parentUid).get().then(function(doc) {
+            if (doc.exists) {
+                console.log("Document data:", doc.data().children);
+                let children = doc.data()['children'];
+                delete children[node.uid];
+                console.log(children);
+
+                db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node.parentUid).update({
+                    children: children
+                }).then(function (result) {
+                    console.log('update completed successfully:', result);
+                }).catch(function (err) {
+                    console.log(err);
+                });
+
+
+            } else {
+                console.log("No such document!");
+            }
+        }.bind(this)).catch(function(error) {
+            console.log("Error getting document:", error);
+        });
+
+
+
+        //delete node
+        //delete all children
     }
 
     onNodeEnter(node, evt) {
@@ -332,11 +374,19 @@ class Node extends Component {
                             footer = (
                                 <div onMouseEnter={this.onNodeHoveredIn.bind(this, node)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
 
-                                    <i data-tip='custom show' data-event='click focus' onClick={()=>{console.log('im in here')}} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
-                                    <ReactTooltip globalEventOff='click' place="bottom" />
+                                    <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                        <i data-tip='custom show' data-event='click focus' onClick={()=>{console.log('im in here')}} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
+                                        <ReactTooltip globalEventOff='click' place="bottom" />
 
-                                    <button style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
-                                    <button style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
+                                        <button style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
+                                        <button style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
+                                    </div>
+                                    { !(node.uid === this.props.parentNodeId) &&
+                                        <a style={{display: 'flex', justifyContent: 'flex-end', border: '0px', padding: '0px' }} href="javascript:;" onClick={this.onDeleteNodeClick.bind(this, node)}>
+                                        <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '21px'}}>delete_forever</i>
+                                        </a>
+                                    }
+
                                 </div>
                             );
                         }
@@ -380,7 +430,8 @@ class Node extends Component {
 
                                     </div>
                                 </div>
-                                {<Node data={node.children} parentNodeId={this.props.parentNodeId} scriptId={this.props.scriptId} premiseRelativeValue={currentNodeValue}/>}
+                                {(node.children!==undefined && Object.keys(node.children).length > 0) &&
+                                <Node data={node.children} parentNodeId={this.props.parentNodeId} scriptId={this.props.scriptId} premiseRelativeValue={currentNodeValue}/>}
                             </li>
                         )
                     }.bind(this))
@@ -1132,6 +1183,7 @@ class SideBar extends Component{
                         <div style={{opacity: '.55', fontSize: '22px'}}>
                         Scrippt
                         </div>
+                        <sup style={{opacity: 0.5}}> beta</sup>
                     </div>
 
                     <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', marginBottom: '12px'}}>
