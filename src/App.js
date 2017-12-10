@@ -16,7 +16,7 @@ import {Col, Grid, Row} from "react-flexbox-grid";
 import {applyMiddleware, createStore} from "redux";
 import logger from "redux-logger";
 
-import {BrowserRouter, Link, Route, Switch, withRouter} from "react-router-dom";
+import {BrowserRouter, Link, Route, Switch, withRouter, Redirect} from "react-router-dom";
 
 import Modal from "react-modal";
 
@@ -704,7 +704,7 @@ class Parent extends Component {
                             disableSidebar={this.disableSidebar.bind(this)}
                             isOpen={this.state.sidebarOpen}/>
                     )} />
-                    <Route exact path="/" render={(props) => ( <Home {...props} user={this.props.user} scriptIds={this.props.scriptIds} scriptHeaders={this.props.scriptHeaders}/> )}/>
+                    <Route exact path="/" render={(props) => ( this.props.user ? <Home {...props} user={this.props.user} scriptIds={this.props.scriptIds} scriptHeaders={this.props.scriptHeaders}/> : <Redirect to="/" />)}/>
                 </Switch>
             </div>
         );
@@ -1380,7 +1380,104 @@ class Editor extends Component{
     }
 }
 
-class App extends Component {
+
+class Signup extends Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            user: null,
+            signupEmail: '',
+            signupPassword: '',
+            signupError: '',
+            isAuthChecked: false,
+            scriptIds: []
+        };
+    }
+
+
+    handleSignupEmailChange(event) {
+        this.setState({signupEmail: event.target.value});
+    }
+
+    handleSignupPasswordChange(event) {
+        this.setState({signupPassword: event.target.value});
+    }
+
+
+    handleSignupSubmit(event) {
+        this.signup(this.state.signupEmail, this.state.signupPassword);
+        event.preventDefault();
+    }
+
+
+    signup(email, password) {
+
+        const result = auth().createUserWithEmailAndPassword(email, password)
+            .then(function(user){
+                console.log('uid',user);
+
+                console.log('writing to users collection...');
+                db.collection("users").doc(user.uid).set({
+                    uid: user.uid,
+                    email: user.email,
+                    emailVerified: user.emailVerified,
+                    photoURL: user.photoURL,
+                    isAnonymous: user.isAnonymous,
+                    displayName: user.displayName,
+                    phoneNumber: user.phoneNumber,
+                    // providerData: user.providerData
+                })
+                    .then(function() {
+                        console.log("user added to database");
+                    })
+                    .catch(function(error) {
+                        console.error("Error adding document: ", error);
+                    });
+
+            })
+            .catch(function(error) {
+                // Handle Errors here.
+                let errorCode = error.code;
+                let errorMessage = error.message;
+                // ...
+                console.log('signup-error', error, errorCode);
+                this.setState({signupError: errorMessage})
+            }.bind(this));
+
+        console.log('signup:', result)
+
+    }
+
+
+
+
+    render() {
+        return <div style={{marginTop: '100px'}}>
+
+            Signup
+            <form id="signup" onSubmit={this.handleSignupSubmit.bind(this)}>
+                <label>
+                    Email:
+                    <input type="text" value={this.state.signupEmail}
+                           onChange={this.handleSignupEmailChange.bind(this)}/>
+                </label>
+                <label>
+                    Password:
+                    <input type="text" value={this.state.signupPassword}
+                           onChange={this.handleSignupPasswordChange.bind(this)}/>
+                </label>
+                <input type="submit" value="Submit"/>
+            </form>
+            <div>
+                {this.state.signupError}
+            </div>
+
+        </div>
+    }
+}
+
+class Login extends Component {
 
     constructor(props) {
         super(props);
@@ -1388,11 +1485,86 @@ class App extends Component {
             user: null,
             loginEmail: '',
             loginPassword: '',
-            signupEmail: '',
-            signupPassword: '',
             loginError: '',
-            signupError: '',
-            deleteAccountError: '',
+            isAuthChecked: false,
+            scriptIds: []
+        };
+    }
+
+
+    handleLoginEmailChange(event) {
+        this.setState({loginEmail: event.target.value});
+    }
+
+    handleLoginPasswordChange(event) {
+        this.setState({loginPassword: event.target.value});
+    }
+
+
+    handleLoginSubmit(event) {
+        this.login(this.state.loginEmail, this.state.loginPassword);
+        event.preventDefault();
+    }
+
+    async login(email, password) {
+        const result = await auth().signInWithEmailAndPassword(email, password).catch(function(error) {
+            // Handle Errors here.
+            let errorCode = error.code;
+            let errorMessage = error.message;
+            console.log('auth-error:', error, errorCode);
+            this.setState({loginError: errorMessage})
+            this.props.history.push('/');
+            // ...
+        }.bind(this));
+
+    }
+
+
+    render() {
+        return <div style={{marginTop: '100px'}}>
+            Login
+            <form id="login" onSubmit={this.handleLoginSubmit.bind(this)}>
+                <label>
+                    Email:
+                    <input type="text" value={this.state.loginEmail}
+                           onChange={this.handleLoginEmailChange.bind(this)}/>
+                </label>
+                <label>
+                    Password:
+                    <input type="text" value={this.state.loginPassword}
+                           onChange={this.handleLoginPasswordChange.bind(this)}/>
+                </label>
+                <input type="submit" value="Submit"/>
+            </form>
+            <div>
+                {this.state.loginError}
+            </div>
+
+        </div>
+    }
+}
+
+class Landing extends Component {
+
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <div style={{marginTop: '100px'}}>
+                Landing page
+            </div>
+        )
+    }
+}
+
+class App extends Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            user: null,
             isAuthChecked: false,
             scriptIds: []
         };
@@ -1482,87 +1654,6 @@ class App extends Component {
     }
 
 
-    handleLoginEmailChange(event) {
-        this.setState({loginEmail: event.target.value});
-    }
-
-    handleLoginPasswordChange(event) {
-        this.setState({loginPassword: event.target.value});
-    }
-
-    handleSignupEmailChange(event) {
-        this.setState({signupEmail: event.target.value});
-    }
-
-    handleSignupPasswordChange(event) {
-        this.setState({signupPassword: event.target.value});
-    }
-
-    handleLoginSubmit(event) {
-        this.login(this.state.loginEmail, this.state.loginPassword);
-        event.preventDefault();
-    }
-
-    handleSignupSubmit(event) {
-        this.signup(this.state.signupEmail, this.state.signupPassword);
-        event.preventDefault();
-    }
-
-
-    async login(email, password) {
-        const result = await auth().signInWithEmailAndPassword(email, password).catch(function(error) {
-            // Handle Errors here.
-            let errorCode = error.code;
-            let errorMessage = error.message;
-            console.log('auth-error:', error, errorCode);
-            this.setState({loginError: errorMessage})
-            // ...
-        }.bind(this));
-
-    }
-
-    signup(email, password) {
-
-        const result = auth().createUserWithEmailAndPassword(email, password)
-            .then(function(user){
-                console.log('uid',user);
-
-                console.log('writing to users collection...');
-                db.collection("users").doc(user.uid).set({
-                    uid: user.uid,
-                    email: user.email,
-                    emailVerified: user.emailVerified,
-                    photoURL: user.photoURL,
-                    isAnonymous: user.isAnonymous,
-                    displayName: user.displayName,
-                    phoneNumber: user.phoneNumber,
-                    // providerData: user.providerData
-                })
-                    .then(function() {
-                        console.log("user added to database");
-                    })
-                    .catch(function(error) {
-                        console.error("Error adding document: ", error);
-                    });
-
-            })
-            .catch(function(error) {
-            // Handle Errors here.
-            let errorCode = error.code;
-            let errorMessage = error.message;
-            // ...
-            console.log('signup-error', error, errorCode);
-            this.setState({signupError: errorMessage})
-        }.bind(this));
-
-        console.log('signup:', result)
-
-    }
-
-
-    logout() {
-        auth().signOut()
-    }
 
     deleteAccount() {
         let user = firebase.auth().currentUser;
@@ -1586,68 +1677,16 @@ class App extends Component {
 
     render() {
         if(this.state.isAuthChecked) {
-            if (this.state.user === null) {
-                return (
-                    <div>
-                        Login
-                        <form id="login" onSubmit={this.handleLoginSubmit.bind(this)}>
-                            <label>
-                                Email:
-                                <input type="text" value={this.state.loginEmail}
-                                       onChange={this.handleLoginEmailChange.bind(this)}/>
-                            </label>
-                            <label>
-                                Password:
-                                <input type="text" value={this.state.loginPassword}
-                                       onChange={this.handleLoginPasswordChange.bind(this)}/>
-                            </label>
-                            <input type="submit" value="Submit"/>
-                        </form>
-                        <div>
-                            {this.state.loginError}
-                        </div>
-
-
-                        Signup
-                        <form id="signup" onSubmit={this.handleSignupSubmit.bind(this)}>
-                            <label>
-                                Email:
-                                <input type="text" value={this.state.signupEmail}
-                                       onChange={this.handleSignupEmailChange.bind(this)}/>
-                            </label>
-                            <label>
-                                Password:
-                                <input type="text" value={this.state.signupPassword}
-                                       onChange={this.handleSignupPasswordChange.bind(this)}/>
-                            </label>
-                            <input type="submit" value="Submit"/>
-                        </form>
-                        <div>
-                            {this.state.signupError}
-                        </div>
-
-                        Logout
-                        <input id="logout" type="button" value="logout" onClick={this.logout.bind(this)}/>
-
-                        Delete account
-                        <input id="delete" type="button" value="delete" onClick={this.deleteAccount.bind(this)}/>
-                        <div>
-                            {this.state.deleteAccountError}
-                        </div>
-
-
-                    </div>
-                )
-
-            }
-            else {
-
                 return (
                     <BrowserRouter>
-                        <Parent user={this.state.user} scriptIds={this.state.scriptIds} scriptHeaders={this.state.scriptHeaders}/>
+                        <div>
+                            <Route exact path="/" render={(props) => ( !this.state.user ? <Landing {...props} /> : null)}/>
+                            <Route exact path="/login" render={(props) => ( !this.state.user ? <Login {...props}  /> : <Redirect to="/"/> )}/>
+                            <Route exact path="/signup" render={(props) => ( !this.state.user ? <Signup {...props} /> : <Redirect to="/"/> )}/>
+                            <Route render={(props) => ( <Parent {...props} user={this.state.user} scriptIds={this.state.scriptIds} scriptHeaders={this.state.scriptHeaders}/> )}/>
+                        </div>
                     </BrowserRouter>
-                );
-            }
+                )
         }
         else {
             return (
