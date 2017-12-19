@@ -21,12 +21,36 @@ import {BrowserRouter, Link, Route, Switch, withRouter, Redirect} from "react-ro
 import Modal from "react-modal";
 
 import ReactTooltip from "react-tooltip";
+import Toggle from 'react-toggle'
 
 var firebase = require("firebase");
 require("firebase/firestore");
 
 const customStyles = {
     content : {
+        top                   : '33%',
+        left                  : '50%',
+        right                 : 'auto',
+        bottom                : 'auto',
+        marginRight           : '-50%',
+        transform             : 'translate(-50%, -50%)'
+    },
+    overlay: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(255, 255, 255, 0.75)",
+        zIndex: 10000
+    }
+};
+
+
+const shareModalStyles = {
+    content : {
+        width: '400px',
+        padding: '30px',
         top                   : '33%',
         left                  : '50%',
         right                 : 'auto',
@@ -738,7 +762,7 @@ class Header extends Component{
             loaderModalIsOpen: false,
             activeScriptId: null,
             title: '',
-            collaborators: [],
+            collaborators: {},
             shareEmailField: '',
             permissionValue: 'read-only',
             shareModalMessage: '',
@@ -759,16 +783,22 @@ class Header extends Component{
             console.log('inside header:', store.getState());
             this.setState({activeScriptId: store.getState().activeScriptId, title: store.getState().title, loaderModalIsOpen: store.getState().isScriptCreation})
 
-            if(store.getState().activeScriptId!==null && store.getState().activeScriptId!==undefined) {
-                db.collection('scripts').doc(store.getState().activeScriptId).collection('collaborators').get()
-                    .then(function (querySnapshot) {
+            if(store.getState().activeScriptId) {
+
+                db.collection('scripts').doc(store.getState().activeScriptId).collection('collaborators').onSnapshot(function (querySnapshot) {
                         querySnapshot.forEach(function (doc) {
                             console.log(doc.id, " => ", doc.data());
                             let collaborators = this.state.collaborators;
                             collaborators[doc.id] = doc.data();
                             this.setState({collaborators: collaborators})
                         }.bind(this));
-                    }.bind(this))
+                    }.bind(this));
+
+                db.collection('scripts').doc(store.getState().activeScriptId).onSnapshot(function (doc) {
+                    console.log('script change: ', doc.data());
+                    this.setState({scope: doc.data().scope})
+                }.bind(this))
+
                 }
             }
         )
@@ -864,6 +894,7 @@ class Header extends Component{
             var req = new XMLHttpRequest();
             req.onload = function() {
                 console.log('onload;', req.responseText);
+                this.setState({shareModalMessage: JSON.parse(req.responseText).msg})
             }.bind(this);
             req.onerror = function() {
                 console.log('onerror;', 'error');
@@ -938,6 +969,39 @@ class Header extends Component{
         }
     }
 
+    removeCollaborator(key) {
+
+        db.collection('scripts').doc(this.state.activeScriptId).collection('collaborators').doc(key).delete().then(function() {
+
+            let newCollabObj = Object.keys(this.state.collaborators)
+                .filter( objKey => objKey !== key)
+                .reduce((obj, objKey) => {
+                    obj[objKey] = this.state.collaborators[objKey]
+                    return obj;
+                }, {});
+
+            this.setState({collaborators: newCollabObj});
+
+        }.bind(this)).catch(function(error) {
+            console.error("Error removing document: ", error);
+        });
+
+    }
+
+    handleShareSettingsPermissionChange(key, evt) {
+        let obj = this.state.collaborators;
+        obj[key]['permission'] = evt.target.value;
+        this.setState({obj});
+        db.collection('scripts').doc(this.state.activeScriptId).collection('collaborators').doc(key).update({permission: evt.target.value})
+    }
+
+    handleScopeChange() {
+        let newScope = this.state.scope === 'public'? 'private': 'public';
+        db.collection('scripts').doc(this.state.activeScriptId).update({scope: newScope}).then(function(obj) {
+            this.setState({scope: newScope});
+        }.bind(this));
+    }
+
     render() {
 
         const loaderStyles = {
@@ -967,8 +1031,25 @@ class Header extends Component{
 
         const collaborators = (Object.keys(this.state.collaborators).map(function(key) {
            return (
-               <div>
-                   {this.state.collaborators[key]['email']}
+               <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+                   <div style={{}}>
+                       {this.state.collaborators[key]['email']}
+                   </div>
+                   <div style={{}}>
+                       {
+                           this.state.collaborators[key]['isOwner'] ?
+                           'is owner':
+                           <select style={{margin: '5px'}} name="permission" value={this.state.collaborators[key]['permission']} onChange={this.handleShareSettingsPermissionChange.bind(this, key)}>
+                               <option value="read-only">can view</option>
+                               <option value="write">can edit</option>
+                           </select>
+                       }
+                   </div>
+                   <div style={{}}>
+                       <a href="javascript:;" onClick={this.removeCollaborator.bind(this, key)} title="remove collaborator">
+                           <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>remove_circle</i>
+                       </a>
+                   </div>
                </div>
            );
         }.bind(this)));
@@ -990,31 +1071,48 @@ class Header extends Component{
                         isOpen={this.state.modalIsOpen}
                         onAfterOpen={this.afterOpenModal}
                         onRequestClose={this.closeModal}
-                        style={customStyles}
+                        style={shareModalStyles}
                         contentLabel="Example Modal"
                     >
-                        <div style={{display: 'flex', flex: 1, flexDirection: 'row'}}>
-                            <h4 ref={subtitle => this.subtitle = subtitle} style={{flex: 1, margin: 0, color: 'black'}}>Share settings</h4>
+                        <div style={{display: 'flex', flex: 1, flexDirection: 'row', marginBottom: '40px'}}>
+                            <h3 ref={subtitle => this.subtitle = subtitle} style={{flex: 1, margin: 0, color: 'black'}}>Share settings</h3>
                             <a href="javascript:;" onClick={this.closeModal}>
                                 <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>close</i>
                             </a>
                         </div>
 
-                        <div>
-                            {collaborators}
+                        <div style={{marginBottom: '30px', display: 'flex', flexDirection: 'row'}}>
+                            <h4 style={{margin: 0, color: 'black'}}>Link Sharing</h4>
+                            <label style={{display: 'flex', marginLeft: '10px'}}>
+                                <Toggle style={{width: '2px'}}
+                                        defaultChecked={this.state.scope === 'public'}
+                                        onChange={this.handleScopeChange.bind(this)}/>
+                                <span style={{marginLeft: '5px'}}>
+                                    {this.state.scope === 'public'? ' anyone with the link can view' : 'only specific people can view'}
+                                </span>
+                            </label>
                         </div>
 
-                        <div>Add a collaborator</div>
-                        <form onSubmit={this.onShareFormSubmit.bind(this)}>
-                            <input type="text" value={this.state.shareEmailField} onChange={this.handleShareModalEmailInputChange.bind(this)} />
-                            <select name="permission" value={this.state.permissionValue} onChange={this.handlePermissionChange.bind(this)}>
-                                <option value="read-only">can view</option>
-                                <option value="write">can edit</option>
-                            </select>
-                            <button>add</button>
+                        <div style={{marginBottom: '30px'}}>
+                            <h4 style={{margin: 0, color: 'black', marginBottom: '5px'}}>Collaborators</h4>
+                            <div>
+                                {collaborators}
+                            </div>
+                        </div>
 
-                        </form>
-                        <div>{shareModalMessage}</div>
+                        <div >
+                            <div>Add a collaborator</div>
+                            <form onSubmit={this.onShareFormSubmit.bind(this)}>
+                                <input style={{margin: '5px', width: '200px'}} type="text" value={this.state.shareEmailField} onChange={this.handleShareModalEmailInputChange.bind(this)} />
+                                <select style={{margin: '5px'}} name="permission" value={this.state.permissionValue} onChange={this.handlePermissionChange.bind(this)}>
+                                    <option value="read-only">can view</option>
+                                    <option value="write">can edit</option>
+                                </select>
+                                <button style={{margin: '5px'}}>add</button>
+
+                            </form>
+                            <div>{shareModalMessage}</div>
+                        </div>
 
                     </Modal>
 

@@ -101,7 +101,8 @@ app.get('/share', (req, res) => {
                                 console.log('write:', writeResult.id);
 
                                 console.log('query:', req.query);
-                                res.send({code: 1, msg: 'collaborator'});
+                                res.send({code: 1, msg: 'collaborator successfully added'});
+                                return;
 
                             });
 
@@ -111,7 +112,8 @@ app.get('/share', (req, res) => {
         })
         .catch(function(error) {
             console.log("Error getting documents: ", error);
-            res.send({code: 2, msg: 'error: cannot find document'})
+            res.send({code: 2, msg: 'error: cannot find document'});
+            return;
         });
 
 
