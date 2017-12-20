@@ -102,7 +102,6 @@ app.get('/share', (req, res) => {
 
                                 console.log('query:', req.query);
                                 res.send({code: 1, msg: 'collaborator successfully added'});
-                                return;
 
                             });
 
@@ -113,12 +112,22 @@ app.get('/share', (req, res) => {
         .catch(function(error) {
             console.log("Error getting documents: ", error);
             res.send({code: 2, msg: 'error: cannot find document'});
-            return;
         });
 
 
 
 
+});
+
+
+app.get('/removeCollaborator', (req, res) => {
+    admin.firestore().collection("users").doc(req.query.userId).collection('scripts').doc(req.query.scriptId).delete().then(function() {
+        console.log("Document successfully deleted!");
+        res.send({code: 1, msg: 'successfully removed collaborator'})
+    }).catch(function(error) {
+        console.error("Error removing document: ", error);
+        res.send({code: 2, msg: 'error removing document'})
+    });
 });
 
 // This HTTPS endpoint can only be accessed by your Firebase Users.
