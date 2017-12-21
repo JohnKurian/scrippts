@@ -811,6 +811,12 @@ class Header extends Component{
         this.timer = null;
     }
 
+    componentWillReceiveProps(props) {
+        if(props.user) {
+            this.setState({loginModalIsOpen: false, signupModalIsOpen: false});
+        }
+    }
+
 
 
     onFocus(node) {
