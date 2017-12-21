@@ -717,9 +717,10 @@ class Parent extends Component {
     render() {
         return (
             <div>
-                <Header user={this.props.user} onClick={this.handleViewSidebar.bind(this)} />
 
-                <Route render={(props) => ( <SideBar {...props} isOpen={this.state.sidebarOpen} disableSidebar={this.disableSidebar.bind(this)} user={this.props.user}/>)}/>
+                <Route render={(props) => ( <Header {...props }user={this.props.user} onClick={this.handleViewSidebar.bind(this)} /> )} />
+
+                <Route render={(props) => ( this.props.user ? <SideBar {...props} isOpen={this.state.sidebarOpen} disableSidebar={this.disableSidebar.bind(this)} user={this.props.user}/> : null)}/>
 
                 <Switch>
                     <Route exact path="/s/:scriptId" render={(props) => (
@@ -1066,6 +1067,10 @@ class Header extends Component{
         }.bind(this));
     }
 
+    onLogoClick() {
+        this.props.history.push('/');
+    }
+
     render() {
 
         const loaderStyles = {
@@ -1098,129 +1103,145 @@ class Header extends Component{
             'write': 'can edit'
         };
 
-        const collaborators = (Object.keys(this.state.collaborators).map(function(key) {
-           return (
-               <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-                   <div style={{}}>
-                       {this.state.collaborators[key]['email']}
-                   </div>
-
-
-                   {    (this.state.collaborators && this.state.collaborators[this.props.user.uid]) &&
-                       <div style={{}}>
-                           {
-                               this.state.collaborators[key]['isOwner'] ?
-                                   'is owner' :
-                                   this.state.collaborators[this.props.user.uid]['isOwner'] ?
-                                       (<select style={{margin: '5px'}} name="permission"
-                                                value={this.state.collaborators[key]['permission']}
-                                                onChange={this.handleShareSettingsPermissionChange.bind(this, key)}>
-                                           <option value="read-only">can view</option>
-                                           <option value="write">can edit</option>
-                                       </select>) : permissionObj[this.state.collaborators[key]['permission']]
-                           }
-                       </div>
-                   }
-
-                   {   (this.state.collaborators && this.state.collaborators[this.props.user.uid]) &&
-                       (this.state.collaborators[this.props.user.uid]['isOwner'] &&  key !== this.props.user.uid) ||
-                        (key === this.props.user.uid && !this.state.collaborators[this.props.user.uid]['isOwner'])
-                       ?
-                       <div style={{}}>
-                           <a href="javascript:;" onClick={this.removeCollaborator.bind(this, key)}
-                              title="remove collaborator">
-                               <i className="material-icons"
-                                  style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>remove_circle</i>
-                           </a>
-                       </div> : <div style={{width: '20px'}}></div>
-                   }
-
-
-               </div>
-           );
-        }.bind(this)));
+        let collaborators = null;
+        let headerSubSection = null;
 
         let shareModalMessage = (<br/>);
         if(this.state.shareModalMessage.length>0) {
             shareModalMessage = this.state.shareModalMessage;
         }
 
-        let headerSubSection = (
-            <div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
+        if(this.props.user) {
 
-                <div style={{display: 'flex', flex: 1,  alignItems: 'center', justifyContent: 'center'}}>
-                    <span suppressContentEditableWarning={true} ref="title" onInput={this.onChange.bind(this)} onKeyPress={this.onTitleHitEnter.bind(this)} contentEditable="true" style={{padding: '5px', minWidth: '50px', maxWidth: '500px', fontSize: '18px', overflow: 'hidden', whiteSpace: 'nowrap'}}>{this.state.title}</span>
-                </div>
 
-                <div style={{flex: 0, marginRight: '32px'}}>
-                    <Modal
-                        isOpen={this.state.modalIsOpen}
-                        onAfterOpen={this.afterOpenModal}
-                        onRequestClose={this.closeModal}
-                        style={shareModalStyles}
-                        contentLabel="Example Modal"
-                    >
-                        <div style={{display: 'flex', flex: 1, flexDirection: 'row', marginBottom: '40px'}}>
-                            <h3 ref={subtitle => this.subtitle = subtitle} style={{flex: 1, margin: 0, color: 'black'}}>Share settings</h3>
-                            <a href="javascript:;" onClick={this.closeModal}>
-                                <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>close</i>
-                            </a>
+            collaborators = (Object.keys(this.state.collaborators).map(function(key) {
+                return (
+                    <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <div style={{}}>
+                            {this.state.collaborators[key]['email']}
                         </div>
 
-                        <div style={{marginBottom: '30px', display: 'flex', flexDirection: 'row'}}>
-                            <h4 style={{margin: 0, color: 'black'}}>Link Sharing</h4>
-                            <label style={{display: 'flex', marginLeft: '10px'}}>
-                                { (this.props.user && this.state.collaborators && this.state.collaborators[this.props.user.uid]) &&
+
+                        {    (this.state.collaborators && this.state.collaborators[this.props.user.uid]) &&
+                        <div style={{}}>
+                            {
+                                this.state.collaborators[key]['isOwner'] ?
+                                    'is owner' :
+                                    this.state.collaborators[this.props.user.uid]['isOwner'] ?
+                                        (<select style={{margin: '5px'}} name="permission"
+                                                 value={this.state.collaborators[key]['permission']}
+                                                 onChange={this.handleShareSettingsPermissionChange.bind(this, key)}>
+                                            <option value="read-only">can view</option>
+                                            <option value="write">can edit</option>
+                                        </select>) : permissionObj[this.state.collaborators[key]['permission']]
+                            }
+                        </div>
+                        }
+
+                        {   (this.state.collaborators && this.state.collaborators[this.props.user.uid]) &&
+                        (this.state.collaborators[this.props.user.uid]['isOwner'] &&  key !== this.props.user.uid) ||
+                        (key === this.props.user.uid && !this.state.collaborators[this.props.user.uid]['isOwner'])
+                            ?
+                            <div style={{}}>
+                                <a href="javascript:;" onClick={this.removeCollaborator.bind(this, key)}
+                                   title="remove collaborator">
+                                    <i className="material-icons"
+                                       style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>remove_circle</i>
+                                </a>
+                            </div> : <div style={{width: '20px'}}></div>
+                        }
+
+
+                    </div>
+                );
+            }.bind(this)));
+
+
+            headerSubSection = (
+                <div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
+
+                    <div style={{display: 'flex', flex: 1,  alignItems: 'center', justifyContent: 'center'}}>
+                        <span suppressContentEditableWarning={true} ref="title" onInput={this.onChange.bind(this)} onKeyPress={this.onTitleHitEnter.bind(this)} contentEditable="true" style={{padding: '5px', minWidth: '50px', maxWidth: '500px', fontSize: '18px', overflow: 'hidden', whiteSpace: 'nowrap'}}>{this.state.title}</span>
+                    </div>
+
+                    <div style={{flex: 0, marginRight: '32px'}}>
+                        <Modal
+                            isOpen={this.state.modalIsOpen}
+                            onAfterOpen={this.afterOpenModal}
+                            onRequestClose={this.closeModal}
+                            style={shareModalStyles}
+                            contentLabel="Example Modal"
+                        >
+                            <div style={{display: 'flex', flex: 1, flexDirection: 'row', marginBottom: '40px'}}>
+                                <h3 ref={subtitle => this.subtitle = subtitle} style={{flex: 1, margin: 0, color: 'black'}}>Share settings</h3>
+                                <a href="javascript:;" onClick={this.closeModal}>
+                                    <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>close</i>
+                                </a>
+                            </div>
+
+                            <div style={{marginBottom: '30px', display: 'flex', flexDirection: 'row'}}>
+                                <h4 style={{margin: 0, color: 'black'}}>Link Sharing</h4>
+                                <label style={{display: 'flex', marginLeft: '10px'}}>
+                                    { (this.props.user && this.state.collaborators && this.state.collaborators[this.props.user.uid]) &&
                                     <Toggle style={{width: '2px'}}
                                             defaultChecked={this.state.scope === 'public'}
                                             disabled={!this.state.collaborators[this.props.user.uid]['isOwner']}
                                             onChange={this.handleScopeChange.bind(this)}/>
-                                }
-                                <span style={{marginLeft: '5px'}}>
+                                    }
+                                    <span style={{marginLeft: '5px'}}>
                                     {this.state.scope === 'public'? ' anyone with the link can view' : 'only specific people can view'}
                                 </span>
-                            </label>
-                        </div>
-
-                        <div style={{marginBottom: '30px'}}>
-                            <h4 style={{margin: 0, color: 'black', marginBottom: '5px'}}>Collaborators</h4>
-                            <div>
-                                {collaborators}
+                                </label>
                             </div>
+
+                            <div style={{marginBottom: '30px'}}>
+                                <h4 style={{margin: 0, color: 'black', marginBottom: '5px'}}>Collaborators</h4>
+                                <div>
+                                    {collaborators}
+                                </div>
+                            </div>
+
+                            {   (this.props.user && this.state.collaborators && this.state.collaborators[this.props.user.uid]) ?
+
+                                this.state.collaborators[this.props.user.uid]['isOwner'] &&
+                                <div >
+                                    <div>Add a collaborator</div>
+                                    <form onSubmit={this.onShareFormSubmit.bind(this)}>
+                                        <input style={{margin: '5px', width: '200px'}} type="text"
+                                               value={this.state.shareEmailField}
+                                               onChange={this.handleShareModalEmailInputChange.bind(this)}/>
+                                        <select style={{margin: '5px'}} name="permission" value={this.state.permissionValue}
+                                                onChange={this.handlePermissionChange.bind(this)}>
+                                            <option value="read-only">can view</option>
+                                            <option value="write">can edit</option>
+                                        </select>
+                                        <button style={{margin: '5px'}}>add</button>
+
+                                    </form>
+                                    <div>{shareModalMessage}</div>
+                                </div> : ''
+
+                            }
+
+                        </Modal>
+
+                        <div onClick={this.openModal} style={{padding: '8px', borderRadius: '2px', borderColor: '#1565c0', display: 'flex', flex: 1, alignItems: 'center', background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row'}}>
+                            <img style={{flex: 1, width: 12, height: 12}} src={shareIcon}></img>
+                            <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '12px'}}>Share</div>
                         </div>
-
-                        {   (this.props.user && this.state.collaborators && this.state.collaborators[this.props.user.uid]) ?
-
-                            this.state.collaborators[this.props.user.uid]['isOwner'] &&
-                            <div >
-                                <div>Add a collaborator</div>
-                                <form onSubmit={this.onShareFormSubmit.bind(this)}>
-                                    <input style={{margin: '5px', width: '200px'}} type="text"
-                                           value={this.state.shareEmailField}
-                                           onChange={this.handleShareModalEmailInputChange.bind(this)}/>
-                                    <select style={{margin: '5px'}} name="permission" value={this.state.permissionValue}
-                                            onChange={this.handlePermissionChange.bind(this)}>
-                                        <option value="read-only">can view</option>
-                                        <option value="write">can edit</option>
-                                    </select>
-                                    <button style={{margin: '5px'}}>add</button>
-
-                                </form>
-                                <div>{shareModalMessage}</div>
-                            </div> : ''
-
-                        }
-
-                    </Modal>
-
-                    <div onClick={this.openModal} style={{padding: '8px', borderRadius: '2px', borderColor: '#1565c0', display: 'flex', flex: 1, alignItems: 'center', background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row'}}>
-                        <img style={{flex: 1, width: 12, height: 12}} src={shareIcon}></img>
-                        <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '12px'}}>Share</div>
                     </div>
-                </div>
 
-            </div>
-        );
+                </div>
+            );
+
+
+
+
+
+
+
+        }
+
 
         if(store.getState().activeScriptId===null) {
             headerSubSection = (
@@ -1242,7 +1263,7 @@ class Header extends Component{
                     )
                     :
                     (
-                        <div style={{marginTop: '15px', marginBottom: '24px', height: '64px', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
+                        <div onClick={this.onLogoClick.bind(this)} style={{marginTop: '15px', cursor: 'pointer', marginBottom: '24px', height: '64px', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
                             <img style={{width: 30, height: 30, padding: '5px'}} src={scripptLogo}></img>
                             <div style={{opacity: '.55', fontSize: '20px'}}>
                                 Scrippt
@@ -1800,8 +1821,14 @@ class Landing extends Component {
 
     render() {
         return (
-            <div style={{marginTop: '100px'}}>
-                Landing page
+            <div style={{display: 'flex', flex: 1, height: '100vh', flexDirection: 'column'}}>
+                <div style={{ flex: 1, marginTop: '100px'}}>
+                    Landing page
+                </div>
+
+                <div style={{ flex: 0, alignSelf: 'center', marginBottom: '20px'}}>
+                    Footer
+                </div>
             </div>
         )
     }
