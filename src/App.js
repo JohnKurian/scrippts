@@ -47,6 +47,52 @@ const customStyles = {
 };
 
 
+
+const loginModalStyles = {
+    content : {
+        padding: '0px',
+        top                   : '33%',
+        left                  : '50%',
+        right                 : 'auto',
+        bottom                : 'auto',
+        marginRight           : '-50%',
+        transform             : 'translate(-50%, -50%)'
+    },
+    overlay: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(255, 255, 255, 0.75)",
+        zIndex: 10000
+    }
+};
+
+
+
+const signupModalStyles = {
+    content : {
+        padding: '0px',
+        top                   : '33%',
+        left                  : '50%',
+        right                 : 'auto',
+        bottom                : 'auto',
+        marginRight           : '-50%',
+        transform             : 'translate(-50%, -50%)'
+    },
+    overlay: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(255, 255, 255, 0.75)",
+        zIndex: 10000
+    }
+};
+
+
 const shareModalStyles = {
     content : {
         width: '400px',
@@ -1291,7 +1337,7 @@ class Header extends Component{
                 <Modal
                     isOpen={this.state.loginModalIsOpen}
                     onRequestClose={this.closeLoginModal.bind(this)}
-                    style={customStyles}
+                    style={loginModalStyles}
                     contentLabel="Loader Modal"
                 >
                     <Login closeLoginModal={this.closeLoginModal.bind(this)}/>
@@ -1300,7 +1346,7 @@ class Header extends Component{
                 <Modal
                     isOpen={this.state.signupModalIsOpen}
                     onRequestClose={this.closeSignupModal.bind(this)}
-                    style={customStyles}
+                    style={signupModalStyles}
                     contentLabel="Loader Modal"
                 >
                     <Signup closeSignupModal={this.closeSignupModal.bind(this)}/>
@@ -1661,6 +1707,7 @@ class Signup extends Component {
             user: null,
             signupEmail: '',
             signupPassword: '',
+            signupConfirmPassword: '',
             signupError: '',
             isAuthChecked: false,
             scriptIds: []
@@ -1674,6 +1721,31 @@ class Signup extends Component {
 
     handleSignupPasswordChange(event) {
         this.setState({signupPassword: event.target.value});
+
+        if(event.target.value.length < 6) {
+            event.target.setCustomValidity("password should be at least 6 characters")
+        } else {
+            event.target.setCustomValidity("")
+        }
+
+        if(event.target.value !== this.state.signupConfirmPassword) {
+            event.target.setCustomValidity("Passwords don't match")
+        } else {
+            event.target.setCustomValidity("")
+        }
+    }
+
+    handleSignupConfirmPasswordChange(event) {
+        this.setState({signupConfirmPassword: event.target.value});
+        if(event.target.value !== this.state.signupPassword) {
+            event.target.setCustomValidity("Passwords don't match")
+        } else {
+            event.target.setCustomValidity("")
+        }
+    }
+
+    handleUsernameChange(event) {
+        let regexValidator = /^[a-zA-Z0-9]+([_-]?[a-zA-Z0-9])*$/;
     }
 
 
@@ -1725,21 +1797,29 @@ class Signup extends Component {
 
 
     render() {
-        return <div style={{marginTop: '100px'}}>
+        return <div style={{width: '350px'}}>
 
-            Signup
-            <form id="signup" onSubmit={this.handleSignupSubmit.bind(this)}>
-                <label>
-                    Email:
-                    <input type="text" value={this.state.signupEmail}
+            <div style={{background: '#1565c0', color: 'white', textAlign: 'center', padding: '10px', fontSize: '19px'}}>Signup</div>
+            <form style={{width: '100%'}} id="signup" onSubmit={this.handleSignupSubmit.bind(this)}>
+
+                <div style={{paddingTop: '20px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '10px'}}>
+                    <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="email" placeholder="email" required value={this.state.signupEmail}
                            onChange={this.handleSignupEmailChange.bind(this)}/>
-                </label>
-                <label>
-                    Password:
-                    <input type="text" value={this.state.signupPassword}
+                </div>
+
+                <div style={{paddingLeft: '50px', paddingRight: '50px', paddingBottom: '10px'}}>
+                    <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="password" placeholder="password" required value={this.state.signupPassword}
                            onChange={this.handleSignupPasswordChange.bind(this)}/>
-                </label>
-                <input type="submit" value="Submit"/>
+                </div>
+
+                <div style={{paddingLeft: '50px', paddingRight: '50px', paddingBottom: '20px'}}>
+                    <input id="confirm_password" style={{width: '100%', height: '25px', fontSize: '14px'}} type="password" placeholder="confirm password" required value={this.state.signupConfirmPassword}
+                           onChange={this.handleSignupConfirmPasswordChange.bind(this)}/>
+                </div>
+
+                <div style={{paddingLeft: '50px', paddingRight: '50px', paddingBottom: '25px'}}>
+                    <input style={{width: '100%', fontSize: '14px', height: '30px', background: '#1565c0', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="submit" value="Submit"/>
+                </div>
             </form>
             <div>
                 {this.state.signupError}
@@ -1770,6 +1850,11 @@ class Login extends Component {
 
     handleLoginPasswordChange(event) {
         this.setState({loginPassword: event.target.value});
+        if(event.target.value.length < 6) {
+            event.target.setCustomValidity("password should be at least 6 characters")
+        } else {
+            event.target.setCustomValidity("")
+        }
     }
 
 
@@ -1796,20 +1881,21 @@ class Login extends Component {
 
 
     render() {
-        return <div style={{marginTop: '100px'}}>
-            Login
-            <form id="login" onSubmit={this.handleLoginSubmit.bind(this)}>
-                <label>
-                    Email:
-                    <input type="text" value={this.state.loginEmail}
+        return <div style={{width: '350px'}}>
+            <div style={{background: '#1565c0', color: 'white', textAlign: 'center', padding: '10px', fontSize: '19px'}}>Login</div>
+            <form style={{width: '100%'}} id="login" onSubmit={this.handleLoginSubmit.bind(this)}>
+                <div style={{paddingTop: '20px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '10px'}}>
+                    <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="email" placeholder='email/username' required value={this.state.loginEmail}
                            onChange={this.handleLoginEmailChange.bind(this)}/>
-                </label>
-                <label>
-                    Password:
-                    <input type="text" value={this.state.loginPassword}
+
+                </div>
+                <div style={{paddingLeft: '50px', paddingRight: '50px', paddingBottom: '20px'}}>
+                    <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="password" placeholder="password" required value={this.state.loginPassword}
                            onChange={this.handleLoginPasswordChange.bind(this)}/>
-                </label>
-                <input type="submit" value="Submit"/>
+                </div>
+                <div style={{paddingLeft: '50px', paddingRight: '50px', paddingBottom: '25px'}}>
+                    <input style={{width: '100%', fontSize: '14px', height: '30px', background: '#1565c0', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="submit" value="Submit"/>
+                </div>
             </form>
             <div>
                 {this.state.loginError}
