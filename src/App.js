@@ -23,6 +23,8 @@ import Modal from "react-modal";
 import ReactTooltip from "react-tooltip";
 import Toggle from 'react-toggle'
 
+import Textarea from "react-textarea-autosize";
+
 var firebase = require("firebase");
 require("firebase/firestore");
 
@@ -484,17 +486,17 @@ class Node extends Component {
 
                                         </div>
 
-                                        <textarea
+                                        <Textarea
                                             id={node.uid}
                                             key={node.text}
-                                            style={{background: color, width: width, height: height}}
+                                            style={{resize: 'none', width: '300px', background: color}}
+                                            autoFocus={true}
+                                            defaultValue={node.text}
                                             onFocus={this.onFocus.bind(this, node)}
                                             onBlur={this.onBlur.bind(this, node)}
                                             onChange={this.onChange.bind(this, node)}
                                             onClick={this.onTextAreaClick.bind(this, node)}
-                                            autoFocus={true}
-                                            defaultValue={node.text}>
-                                        </textarea>
+                                        />
 
                                         {footer}
 
