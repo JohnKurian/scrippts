@@ -525,6 +525,7 @@ class Home extends Component {
     }
 
     componentDidMount() {
+        document.title = 'Home';
         store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
 
     }
@@ -1034,12 +1035,14 @@ class Header extends Component{
             db.collection('scripts').doc(this.state.activeScriptId).update({title: domNode.innerText});
             db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.state.activeScriptId).update({title: domNode.innerText});
             store.dispatch({type: 'SET_TITLE', title: domNode.innerText});
+            document.title = domNode.innerText;
         }
         else {
             this.setState({title: 'Untitled'});
             db.collection('scripts').doc(this.state.activeScriptId).update({title: 'Untitled'});
             db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.state.activeScriptId).update({title: 'Untitled'});
             store.dispatch({type: 'SET_TITLE', title: 'Untitled'});
+            document.title = 'Untitled';
         }
     }
 
@@ -1632,6 +1635,8 @@ class Editor extends Component{
 
                             store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: this.props.match.params.scriptId});
                             store.dispatch({type: 'SET_TITLE', title: doc.data().title});
+
+                            document.title = doc.data().title;
 
                             this.setState({premiseNode: doc.data().parentNodeId});
 
