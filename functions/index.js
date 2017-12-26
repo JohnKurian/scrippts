@@ -31,8 +31,14 @@ const validateFirebaseIdToken = (req, res, next) => {
             'Make sure you authorize your request by providing the following HTTP header:',
             'Authorization: Bearer <Firebase ID Token>',
             'or by passing a "__session" cookie.');
-        res.status(403).send('Unauthorized');
-        return;
+        if(req.url.split('?')[0].substring(1) === 'checkUsername') {
+            next();
+            return;
+        }
+        else {
+            res.status(403).send('Unauthorized');
+            return;
+        }
     }
 
     let idToken;
@@ -50,6 +56,9 @@ const validateFirebaseIdToken = (req, res, next) => {
         req.user = decodedIdToken;
         next();
     }).catch(error => {
+        if(req.url.split('?')[0].substring(1) === 'checkUsername') {
+            next();
+        }
         console.error('Error while verifying Firebase ID token:', error);
         res.status(403).send('Unauthorized');
     });
@@ -58,15 +67,15 @@ const validateFirebaseIdToken = (req, res, next) => {
 app.use(cors);
 app.use(cookieParser);
 app.use(validateFirebaseIdToken);
-app.get('/share', (req, res) => {
+app.get('/addCollaborator', (req, res) => {
 
     //fetch user uid
 
-    admin.firestore().collection('users').where('email', '==', req.query['id'])
+    admin.firestore().collection('users').where('username', '==', req.query['id'])
         .get()
         .then(function(querySnapshot) {
             if(querySnapshot._docs().length===0) {
-                res.send({code: 0, msg: 'error: user email not found'})
+                res.send({code: 0, msg: 'error: username not found'})
                 return;
             }
             querySnapshot.forEach(function(doc) {
@@ -74,12 +83,14 @@ app.get('/share', (req, res) => {
 
                 let uid = doc.data()['uid'];
                 let email = doc.data()['email'];
+                let username = doc.data()['username'];
 
                 //add to scripts/collaborators
                 let collabObj = {};
                 collabObj['permission'] = req.query['accessLevel'];
                 collabObj['uid'] = uid;
                 collabObj['email'] = email;
+                collabObj['username'] = username;
                 collabObj['isOwner'] = false;
 
                 admin.firestore().collection('scripts').doc(req.query['scriptId']).collection('collaborators').doc(uid).set(collabObj)
@@ -128,6 +139,29 @@ app.get('/removeCollaborator', (req, res) => {
         console.error("Error removing document: ", error);
         res.send({code: 2, msg: 'error removing document'})
     });
+});
+
+
+app.get('/checkUsername', (req, res) => {
+    let regexValidator = /^[a-zA-Z0-9]+([_-]?[a-zA-Z0-9])*$/;
+    if(!regexValidator.test(req.query['username'])) {
+        res.send({code: 2, msg: "Username isn't valid"})
+    }
+    admin.firestore().collection('users').where('username', '==', req.query['username'])
+        .get()
+        .then(function(querySnapshot) {
+            if(querySnapshot.empty) {
+                res.send({code: 1, msg: 'Username is valid'})
+            }
+            else {
+                res.send({code:0, msg: 'Username exists already'})
+            }
+
+        })
+        .catch(function(error) {
+            console.log("Error getting documents: ", error);
+            res.send({code: 2, msg: 'error: username check failed'});
+        });
 });
 
 // This HTTPS endpoint can only be accessed by your Firebase Users.

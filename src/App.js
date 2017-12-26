@@ -814,7 +814,7 @@ class Header extends Component{
             activeScriptId: null,
             title: '',
             collaborators: {},
-            shareEmailField: '',
+            shareUsernameField: '',
             permissionValue: 'read-only',
             shareModalMessage: '',
             timer: null
@@ -895,7 +895,7 @@ class Header extends Component{
     }
 
     closeModal() {
-        this.setState({modalIsOpen: false, shareModalMessage: '', shareEmailField: ''});
+        this.setState({modalIsOpen: false, shareModalMessage: '', shareUsernameField: ''});
     }
 
 
@@ -942,25 +942,25 @@ class Header extends Component{
 
 
 
-    validateEmail(email) {
-        var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        return re.test(email);
+    validateUsername(username) {
+        let regexValidator = /^[a-zA-Z0-9]+([_-]?[a-zA-Z0-9])*$/;
+        return regexValidator.test(username);
     }
 
 
     onShareFormSubmit(evt) {
         evt.preventDefault();
-        if(this.validateEmail(this.state.shareEmailField)) {
-            this.share(this.state.shareEmailField, this.state.permissionValue, this.state.activeScriptId);
+        if(this.validateUsername(this.state.shareUsernameField)) {
+            this.share(this.state.shareUsernameField, this.state.permissionValue, this.state.activeScriptId);
         }
         else {
             this.setState({shareModalMessage: 'invalid email id format'})
         }
     }
 
-    handleShareModalEmailInputChange(event) {
-        this.setState({shareEmailField: event.target.value});
-        if(event.target.value.length===0 || this.validateEmail(event.target.value)) {
+    handleShareModalUsernameInputChange(event) {
+        this.setState({shareUsernameField: event.target.value});
+        if(event.target.value.length===0 || this.validateUsername(event.target.value)) {
             this.setState({shareModalMessage: ''});
         }
     }
@@ -969,15 +969,15 @@ class Header extends Component{
         this.setState({permissionValue: event.target.value});
     }
 
-    share(email, permission, activeScriptId) {
+    share(username, permission, activeScriptId) {
         let permissionObj = {};
         permissionObj['permission'] = permission;
 
         // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/share';
-        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/share';
+        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/addCollaborator';
 
-        let id = email;
-        let type = 'email';
+        let id = username;
+        let type = 'username';
         let params = "id=" + id + "&" + "type=" + type + "&" + "scriptId=" + activeScriptId + "&" + "accessLevel=" + permission;
 
         firebase.auth().currentUser.getToken().then(function(token) {
@@ -1172,7 +1172,7 @@ class Header extends Component{
                 return (
                     <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
                         <div style={{}}>
-                            {this.state.collaborators[key]['email']}
+                            {this.state.collaborators[key]['username']}
                         </div>
 
 
@@ -1262,8 +1262,9 @@ class Header extends Component{
                                     <div>Add a collaborator</div>
                                     <form onSubmit={this.onShareFormSubmit.bind(this)}>
                                         <input style={{margin: '5px', width: '200px'}} type="text"
-                                               value={this.state.shareEmailField}
-                                               onChange={this.handleShareModalEmailInputChange.bind(this)}/>
+                                               value={this.state.shareUsernameField}
+                                               placeholder="enter username"
+                                               onChange={this.handleShareModalUsernameInputChange.bind(this)}/>
                                         <select style={{margin: '5px'}} name="permission" value={this.state.permissionValue}
                                                 onChange={this.handlePermissionChange.bind(this)}>
                                             <option value="read-only">can view</option>
@@ -1709,11 +1710,20 @@ class Signup extends Component {
             user: null,
             signupEmail: '',
             signupPassword: '',
+            signupUsername: '',
+            usernameMessage: '',
+            usernameMessageColor: '',
+            usernameHasChanged: false,
+            usernameVerified: true,
             signupConfirmPassword: '',
             signupError: '',
             isAuthChecked: false,
             scriptIds: []
         };
+    }
+
+    componentWillMount(props) {
+        this.timer = null;
     }
 
 
@@ -1730,11 +1740,6 @@ class Signup extends Component {
             event.target.setCustomValidity("")
         }
 
-        if(event.target.value !== this.state.signupConfirmPassword) {
-            event.target.setCustomValidity("Passwords don't match")
-        } else {
-            event.target.setCustomValidity("")
-        }
     }
 
     handleSignupConfirmPasswordChange(event) {
@@ -1747,17 +1752,70 @@ class Signup extends Component {
     }
 
     handleUsernameChange(event) {
+        this.setState({signupUsername: event.target.value, usernameHasChanged:true, usernameVerified: false});
         let regexValidator = /^[a-zA-Z0-9]+([_-]?[a-zA-Z0-9])*$/;
+
+        if(!regexValidator.test(event.target.value)) {
+            event.target.setCustomValidity("Username isn't valid")
+        } else {
+            event.target.setCustomValidity("")
+        }
+
+        clearTimeout(this.timer);
+        this.timer = setTimeout(this.checkUsername.bind(this, event.target.value), 1000);
+
+    }
+
+    checkUsername(username) {
+        console.log('checking for username...');
+
+
+        // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/share';
+        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/checkUsername';
+
+        let params = "username=" + username;
+
+        console.log('Sending request to', helloUserUrl + "?" + params, 'with ID token in Authorization header.');
+        var req = new XMLHttpRequest();
+        req.onload = function() {
+            console.log('onload-username:', req.responseText);
+            let colorCode = {
+                '0': 'red',
+                '1': 'green',
+                '2': 'red'
+            }
+            this.setState({usernameHasChanged: false, usernameVerified: JSON.parse(req.responseText).code===1, usernameMessage: JSON.parse(req.responseText).msg, usernameMessageColor: colorCode[JSON.parse(req.responseText).code]})
+            return true;
+        }.bind(this);
+        req.onerror = function() {
+            console.log('onerror;', 'error');
+            this.setState({usernameHasChanged: false, usernameVerified: false});
+            return -100;
+        }.bind(this);
+        req.open('GET', helloUserUrl + "?" + params, true);
+        // req.setRequestHeader('Authorization', 'Bearer ' + token);
+        req.send();
     }
 
 
     handleSignupSubmit(event) {
-        this.signup(this.state.signupEmail, this.state.signupPassword);
-        event.preventDefault();
+        if(this.state.signupPassword!==this.state.signupConfirmPassword) {
+            this.setState({signupError: "passwords don't match"});
+            event.preventDefault();
+        }
+        if(!this.state.usernameHasChanged && this.state.usernameVerified) {
+            this.signup(this.state.signupEmail, this.state.signupPassword, this.state.signupUsername);
+            event.preventDefault();
+        }
+        else {
+            this.setState({signupError: this.state.usernameMessage});
+            event.preventDefault();
+        }
+
     }
 
 
-    signup(email, password) {
+    signup(email, password, username) {
 
         const result = auth().createUserWithEmailAndPassword(email, password)
             .then(function(user){
@@ -1772,6 +1830,7 @@ class Signup extends Component {
                     isAnonymous: user.isAnonymous,
                     displayName: user.displayName,
                     phoneNumber: user.phoneNumber,
+                    username: this.state.signupUsername
                     // providerData: user.providerData
                 })
                     .then(function() {
@@ -1781,7 +1840,7 @@ class Signup extends Component {
                         console.error("Error adding document: ", error);
                     });
 
-            })
+            }.bind(this))
             .catch(function(error) {
                 // Handle Errors here.
                 let errorCode = error.code;
@@ -1804,12 +1863,18 @@ class Signup extends Component {
             <div style={{background: '#1565c0', color: 'white', textAlign: 'center', padding: '10px', fontSize: '19px'}}>Signup</div>
             <form style={{width: '100%'}} id="signup" onSubmit={this.handleSignupSubmit.bind(this)}>
 
-                <div style={{paddingTop: '20px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '10px'}}>
+                <div style={{paddingTop: '30px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '10px'}}>
                     <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="email" placeholder="email" required value={this.state.signupEmail}
                            onChange={this.handleSignupEmailChange.bind(this)}/>
                 </div>
 
-                <div style={{paddingLeft: '50px', paddingRight: '50px', paddingBottom: '10px'}}>
+                <div style={{paddingLeft: '50px', paddingRight: '50px'}}>
+                    <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="text" placeholder="username" required value={this.state.signupUsername}
+                           onChange={this.handleUsernameChange.bind(this)}/>
+                </div>
+                <span style={{fontSize: '13px', paddingLeft: '50px', color: this.state.usernameMessageColor}}>{this.state.usernameMessage}</span>
+
+                <div style={{paddingLeft: '50px', paddingRight: '50px', paddingBottom: '10px', paddingTop: '10px'}}>
                     <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="password" placeholder="password" required value={this.state.signupPassword}
                            onChange={this.handleSignupPasswordChange.bind(this)}/>
                 </div>
@@ -1819,13 +1884,13 @@ class Signup extends Component {
                            onChange={this.handleSignupConfirmPasswordChange.bind(this)}/>
                 </div>
 
-                <div style={{paddingLeft: '50px', paddingRight: '50px', paddingBottom: '25px'}}>
+                <div style={{paddingLeft: '50px', paddingRight: '50px'}}>
                     <input style={{width: '100%', fontSize: '14px', height: '30px', background: '#1565c0', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="submit" value="Submit"/>
                 </div>
             </form>
-            <div>
+            <span style={{fontSize: '13px', paddingLeft: '50px', color: 'red', paddingBottom: '40px'}}>
                 {this.state.signupError}
-            </div>
+            </span>
 
         </div>
     }
