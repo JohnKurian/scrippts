@@ -144,9 +144,15 @@ app.get('/removeCollaborator', (req, res) => {
 
 app.get('/checkUsername', (req, res) => {
     let regexValidator = /^[a-zA-Z0-9]+([_-]?[a-zA-Z0-9])*$/;
+
     if(!regexValidator.test(req.query['username'])) {
         res.send({code: 2, msg: "Username isn't valid"})
     }
+
+    if(req.query['username'].length>20) {
+        res.send({code: 2, msg: "username shouldn't be more than 20 characters"})
+    }
+
     admin.firestore().collection('users').where('username', '==', req.query['username'])
         .get()
         .then(function(querySnapshot) {

@@ -1170,14 +1170,14 @@ class Header extends Component{
 
             collaborators = (Object.keys(this.state.collaborators).map(function(key) {
                 return (
-                    <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-                        <div style={{}}>
+                    <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                        <div style={{flex: 1, fontSize: '15px'}}>
                             {this.state.collaborators[key]['username']}
                         </div>
 
 
                         {    (this.state.collaborators && this.state.collaborators[this.props.user.uid]) &&
-                        <div style={{}}>
+                        <div style={{flex: 1}}>
                             {
                                 this.state.collaborators[key]['isOwner'] ?
                                     'is owner' :
@@ -1757,6 +1757,12 @@ class Signup extends Component {
 
         if(!regexValidator.test(event.target.value)) {
             event.target.setCustomValidity("Username isn't valid")
+        } else {
+            event.target.setCustomValidity("")
+        }
+
+        if(event.target.value.length>20) {
+            event.target.setCustomValidity("username shouldn't be more than 20 characters")
         } else {
             event.target.setCustomValidity("")
         }
