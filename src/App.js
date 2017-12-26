@@ -1902,7 +1902,7 @@ class Login extends Component {
         super(props);
         this.state = {
             user: null,
-            loginEmail: '',
+            loginValue: '',
             loginPassword: '',
             loginError: '',
             isAuthChecked: false,
@@ -1911,8 +1911,8 @@ class Login extends Component {
     }
 
 
-    handleLoginEmailChange(event) {
-        this.setState({loginEmail: event.target.value});
+    handleLoginValueChange(event) {
+        this.setState({loginValue: event.target.value});
     }
 
     handleLoginPasswordChange(event) {
@@ -1925,10 +1925,6 @@ class Login extends Component {
     }
 
 
-    handleLoginSubmit(event) {
-        this.login(this.state.loginEmail, this.state.loginPassword);
-        event.preventDefault();
-    }
 
     async login(email, password) {
         const result = await auth().signInWithEmailAndPassword(email, password).catch(function(error) {
@@ -1947,26 +1943,90 @@ class Login extends Component {
     }
 
 
+    validateEmail(email) {
+        var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(email);
+    }
+
+
+    fetchUserFromUsername(username, password) {
+        console.log('checking for username...');
+
+        // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/share';
+        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/fetchUserFromUsername';
+
+        let params = "username=" + username;
+
+        console.log('Sending request to', helloUserUrl + "?" + params, 'with ID token in Authorization header.');
+        var req = new XMLHttpRequest();
+        req.onload = function() {
+            console.log('onload-username:', req.responseText);
+            let colorCode = {
+                '0': 'red',
+                '1': 'green',
+                '2': 'red'
+            }
+            if(JSON.parse(req.responseText).code===1) {
+                this.login(JSON.parse(req.responseText).email, password)
+                return true;
+            }
+
+            else if(JSON.parse(req.responseText).code===0) {
+                this.setState({loginError: "username doesn't exist"})
+            }
+
+            else if(JSON.parse(req.responseText).code===2) {
+                this.setState({loginError: "an unexpected error has occured"})
+            }
+
+
+            return true;
+        }.bind(this);
+        req.onerror = function() {
+            console.log('onerror;', 'error');
+            this.setState({usernameHasChanged: false, usernameVerified: false, loginError: 'an unexpected error has occured'});
+            return -100;
+        }.bind(this);
+        req.open('GET', helloUserUrl + "?" + params, true);
+        // req.setRequestHeader('Authorization', 'Bearer ' + token);
+        req.send();
+    }
+
+    handleLoginSubmit(event) {
+        this.setState({loginError: ''})
+
+        if(this.validateEmail(this.state.loginValue)) {
+            this.login(this.state.loginValue, this.state.loginPassword);
+            event.preventDefault();
+        }
+        else {
+            this.fetchUserFromUsername(this.state.loginValue, this.state.loginPassword);
+            event.preventDefault();
+
+        }
+
+    }
+
+
+
     render() {
         return <div style={{width: '350px'}}>
             <div style={{background: '#1565c0', color: 'white', textAlign: 'center', padding: '10px', fontSize: '19px'}}>Login</div>
             <form style={{width: '100%'}} id="login" onSubmit={this.handleLoginSubmit.bind(this)}>
                 <div style={{paddingTop: '20px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '10px'}}>
-                    <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="email" placeholder='email/username' required value={this.state.loginEmail}
-                           onChange={this.handleLoginEmailChange.bind(this)}/>
+                    <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="text" placeholder='enter email or username' required value={this.state.loginValue}
+                           onChange={this.handleLoginValueChange.bind(this)}/>
 
                 </div>
                 <div style={{paddingLeft: '50px', paddingRight: '50px', paddingBottom: '20px'}}>
-                    <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="password" placeholder="password" required value={this.state.loginPassword}
+                    <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="password" placeholder="enter password" required value={this.state.loginPassword}
                            onChange={this.handleLoginPasswordChange.bind(this)}/>
                 </div>
-                <div style={{paddingLeft: '50px', paddingRight: '50px', paddingBottom: '25px'}}>
+                <div style={{paddingLeft: '50px', paddingRight: '50px'}}>
                     <input style={{width: '100%', fontSize: '14px', height: '30px', background: '#1565c0', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="submit" value="Submit"/>
                 </div>
             </form>
-            <div>
-                {this.state.loginError}
-            </div>
+            <div style={{color: 'red', fontSize: '13px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '25px'}}>{this.state.loginError}</div>
 
         </div>
     }

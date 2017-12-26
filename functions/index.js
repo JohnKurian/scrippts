@@ -31,7 +31,7 @@ const validateFirebaseIdToken = (req, res, next) => {
             'Make sure you authorize your request by providing the following HTTP header:',
             'Authorization: Bearer <Firebase ID Token>',
             'or by passing a "__session" cookie.');
-        if(req.url.split('?')[0].substring(1) === 'checkUsername') {
+        if(req.url.split('?')[0].substring(1) === 'checkUsername' || req.url.split('?')[0].substring(1) === 'fetchUserFromUsername') {
             next();
             return;
         }
@@ -56,7 +56,7 @@ const validateFirebaseIdToken = (req, res, next) => {
         req.user = decodedIdToken;
         next();
     }).catch(error => {
-        if(req.url.split('?')[0].substring(1) === 'checkUsername') {
+        if(req.url.split('?')[0].substring(1) === 'checkUsername' || req.url.split('?')[0].substring(1) === 'fetchUserFromUsername') {
             next();
         }
         console.error('Error while verifying Firebase ID token:', error);
@@ -155,6 +155,30 @@ app.get('/checkUsername', (req, res) => {
             }
             else {
                 res.send({code:0, msg: 'Username exists already'})
+            }
+
+        })
+        .catch(function(error) {
+            console.log("Error getting documents: ", error);
+            res.send({code: 2, msg: 'error: username check failed'});
+        });
+});
+
+
+app.get('/fetchUserFromUsername', (req, res) => {
+    let regexValidator = /^[a-zA-Z0-9]+([_-]?[a-zA-Z0-9])*$/;
+    if(!regexValidator.test(req.query['username'])) {
+        res.send({code: 2, msg: "Username isn't valid", email: null})
+    }
+    admin.firestore().collection('users').where('username', '==', req.query['username'])
+        .get()
+        .then(function(querySnapshot) {
+            if(querySnapshot.empty) {
+                res.send({code: 0, msg: "Username doesn't exist", email: null})
+            }
+            else {
+                console.log(querySnapshot._docs()[0]._fieldsProto['email'].stringValue);
+                res.send({code:1, msg: 'Username exists already', email: querySnapshot._docs()[0]._fieldsProto['email'].stringValue});
             }
 
         })
