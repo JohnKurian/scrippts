@@ -962,6 +962,63 @@ const LogoutButton = withRouter(({ history }) => (
     )
 );
 
+class ForgotPassword extends Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            email: ''
+        };
+    }
+
+    validateEmail(email) {
+        var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(email);
+    }
+
+    send() {
+        console.log('im in here')
+        var auth = firebase.auth();
+
+        auth.sendPasswordResetEmail(this.state.email).then(function() {
+            console.log('email sent')
+            // Email sent.
+        }.bind(this)).catch(function(error) {
+            // An error happened.
+        });
+    }
+
+    handleEmailChange(evt) {
+        this.setState({email: evt.target.value});
+
+        if(!this.validateEmail(evt.target.value)) {
+            evt.target.setCustomValidity("email isn't valid")
+        } else {
+            evt.target.setCustomValidity("")
+        }
+    }
+
+    handleSubmit() {
+
+    }
+
+    close() {
+
+    }
+
+    render() {
+        return (
+            <div>
+                <div>Password reset</div>
+                <div>Please enter your email. We will send you an email to reset your password.</div>
+                <input style={{width: '100px', fontSize: '14px'}} type="email" placeholder="email" required value={this.state.email}
+                       onChange={this.handleEmailChange.bind(this)}/>
+                <button onClick={this.send.bind(this)}>send</button>
+                <button onClick={this.props.closeModal}>close</button>
+            </div>
+        )
+    }
+}
 
 class Header extends Component{
 
@@ -983,7 +1040,8 @@ class Header extends Component{
             shareUsernameField: '',
             permissionValue: 'read-only',
             shareModalMessage: '',
-            timer: null
+            timer: null,
+            forgotPasswordModalIsOpen: false
         };
 
         this.openModal = this.openModal.bind(this);
@@ -1103,6 +1161,16 @@ class Header extends Component{
 
     closeSignupModal() {
         this.setState({signupModalIsOpen: false});
+    }
+
+
+    openForgotPasswordModal() {
+        this.setState({forgotPasswordModalIsOpen: true, loginModalIsOpen: false})
+    }
+
+
+    closeForgotPasswordModal() {
+        this.setState({forgotPasswordModalIsOpen: false})
     }
 
 
@@ -1511,7 +1579,7 @@ class Header extends Component{
                     style={loginModalStyles}
                     contentLabel="Loader Modal"
                 >
-                    <Login closeLoginModal={this.closeLoginModal.bind(this)}/>
+                    <Login openForgotPasswordModal={this.openForgotPasswordModal.bind(this)} closeLoginModal={this.closeLoginModal.bind(this)}/>
                 </Modal>
 
                 <Modal
@@ -1521,6 +1589,15 @@ class Header extends Component{
                     contentLabel="Loader Modal"
                 >
                     <Signup closeSignupModal={this.closeSignupModal.bind(this)}/>
+                </Modal>
+
+                <Modal
+                    isOpen={this.state.forgotPasswordModalIsOpen}
+                    onRequestClose={this.closeForgotPasswordModal.bind(this)}
+                    style={signupModalStyles}
+                    contentLabel="Loader Modal"
+                >
+                    <ForgotPassword closeModal={this.closeForgotPasswordModal.bind(this)}/>
                 </Modal>
 
 
@@ -2214,6 +2291,8 @@ class Login extends Component {
                 </div>
             </form>
             <div style={{color: 'red', fontSize: '13px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '25px'}}>{this.state.loginError}</div>
+
+            <button onClick={this.props.openForgotPasswordModal}>forgot</button>
 
         </div>
     }
