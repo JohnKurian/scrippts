@@ -515,6 +515,169 @@ class Node extends Component {
     }
 }
 
+class Profile extends Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            showConfirmDeletion: false,
+            deletionConfirmPassword: '',
+            showChangePassword: false,
+            oldPassword: '',
+            newPassword: '',
+        };
+    }
+
+    componentDidMount() {
+        document.title = 'Profile';
+        store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
+    }
+
+    onDeleteAccountSubmit() {
+        this.setState({showConfirmDeletion: true});
+        console.log('delete account clicked');
+    }
+
+    onCancelDeletionClick() {
+        this.setState({showConfirmDeletion: false, deletionConfirmPassword: ''})
+    }
+
+    onConfirmDeletionClick() {
+
+        var user = firebase.auth().currentUser;
+        const credential = firebase.auth.EmailAuthProvider.credential(
+            this.props.user.email,
+            this.state.deletionConfirmPassword
+        );
+
+// Prompt the user to re-provide their sign-in credentials
+
+        user.reauthenticateWithCredential(credential).then(function() {
+            console.log('user is re-authenticated');
+            // User re-authenticated.
+
+                db.collection("users").doc(this.props.user.uid).delete().then(function() {
+                    console.log("user document deleted!");
+
+                    user.delete().then(function() {
+                        console.log('user deleted successfully.');
+                        this.props.history.push('/');
+                        window.location.reload();
+                    }.bind(this)).catch(function(error) {
+                    // An error happened.
+                    });
+
+                }.bind(this)).catch(function(error) {
+                    console.error("Error removing user document: ", error);
+                });
+
+                // User deleted.
+
+        }.bind(this)).catch(function(error) {
+            console.log('error:', error)
+            // An error happened.
+        });
+
+
+    }
+
+    handleDeletionConfirmPasswordChange(evt) {
+        this.setState({deletionConfirmPassword: evt.target.value })
+    }
+
+    onPasswordChangeClick() {
+        this.setState({showChangePassword: true})
+    }
+
+    handleOldPasswordChange(evt) {
+        this.setState({oldPassword: evt.target.value })
+    }
+
+    handleNewPasswordChange(evt) {
+        this.setState({newPassword: evt.target.value })
+    }
+
+    onConfirmPasswordChangeClick() {
+
+        var user = firebase.auth().currentUser;
+        const credential = firebase.auth.EmailAuthProvider.credential(
+            this.props.user.email,
+            this.state.oldPassword
+        );
+
+// Prompt the user to re-provide their sign-in credentials
+
+        user.reauthenticateWithCredential(credential).then(function() {
+            console.log('user is re-authenticated');
+            user.updatePassword(this.state.newPassword).then(function() {
+                console.log('password update successful');
+                // Update successful.
+            }).catch(function(error) {
+                // An error happened.
+            });            // User re-authenticated.
+        }.bind(this)).catch(function(error) {
+            console.log('error:', error)
+            // An error happened.
+        });
+
+    }
+
+    onCancelPasswordChangeClick() {
+        this.setState({showChangePassword: false, oldPassword: '', newPassword: ''})
+    }
+
+
+    render() {
+
+
+        return (
+            <div style={{marginTop: '100px'}}>
+                profile
+                <div>
+                    email: {this.props.user.email}
+                </div>
+
+                <div>
+                    username: {this.props.user.username}
+                </div>
+
+                <div>
+                    password:
+                    <button onClick={this.onPasswordChangeClick.bind(this)} style={{width: '50px', fontSize: '14px', height: '30px', background: 'red', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="button" value="Submit">change</button>
+
+                </div>
+                {this.state.showChangePassword &&
+                    <div>
+                        <input style={{width: '200px', height: '25px', fontSize: '14px'}} type="password" placeholder="enter old password" value={this.state.oldPassword}
+                               onChange={this.handleOldPasswordChange.bind(this)}/>
+                        <input style={{width: '200px', height: '25px', fontSize: '14px'}} type="password" placeholder="enter new password" value={this.state.newPassword}
+                               onChange={this.handleNewPasswordChange.bind(this)}/>
+
+                        <button onClick={this.onConfirmPasswordChangeClick.bind(this)}>Confirm</button>
+                        <button onClick={this.onCancelPasswordChangeClick.bind(this)}>Cancel</button>
+                    </div>
+                }
+
+                <button onClick={this.onDeleteAccountSubmit.bind(this)} style={{width: '50px', fontSize: '14px', height: '30px', background: 'red', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="button" value="Submit">delete</button>
+                {this.state.showConfirmDeletion &&
+                    <div>
+                        sure you wanna delete?
+                        <input style={{width: '200px', height: '25px', fontSize: '14px'}} type="password" placeholder="enter password" value={this.state.deletionConfirmPassword}
+                               onChange={this.handleDeletionConfirmPasswordChange.bind(this)}/>
+                        <button onClick={this.onConfirmDeletionClick.bind(this)}>Confirm</button>
+                        <button onClick={this.onCancelDeletionClick.bind(this)}>Cancel</button>
+                    </div>
+
+                }
+            </div>
+        )
+    }
+
+
+}
+
+
+
 class Home extends Component {
 
     constructor(props) {
@@ -779,6 +942,7 @@ class Parent extends Component {
                             isOpen={this.state.sidebarOpen}/>
                     )} />
                     <Route exact path="/" render={(props) => ( this.props.user ? <Home {...props} user={this.props.user} scriptIds={this.props.scriptIds} scriptHeaders={this.props.scriptHeaders}/> : <Redirect to="/" />)}/>
+                    <Route exact path="/profile" render={(props) => ( this.props.user ? <Profile {...props} user={this.props.user} /> : <Redirect to="/" />)}/>
                 </Switch>
             </div>
         );
@@ -792,6 +956,7 @@ const LogoutButton = withRouter(({ history }) => (
         <Link to="/" style={{ color: '#555555', textDecoration: 'none', fontSize: '17px', paddingLeft: '5px' }} onClick={() => {
             auth().signOut();
             history.push('/');
+            window.location.reload();
         }}>Logout</Link>
     </div>
     )
@@ -1496,6 +1661,11 @@ class SideBar extends Component{
         store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
     }
 
+    onProfileClick() {
+        this.props.disableSidebar();
+        // store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
+    }
+
     render() {
         var sidebarClass = this.state.isOpen ? 'sidebar open' : 'sidebar';
         return (
@@ -1521,6 +1691,12 @@ class SideBar extends Component{
                         <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '32px'}}>home</i>
                         <Link to="/" style={{ color: '#555555', textDecoration: 'none', fontSize: '17px', paddingLeft: '5px' }} onClick={this.onHomeClick.bind(this)}>Home</Link>
                     </div>
+
+                    <div style={{display: 'flex', paddingLeft: '50px', height: '40px', alignItems: 'center'}}>
+                        <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '32px'}}>account_circle</i>
+                        <Link to="/profile" style={{ color: '#555555', textDecoration: 'none', fontSize: '17px', paddingLeft: '5px' }} onClick={this.onProfileClick.bind(this)}>Profile</Link>
+                    </div>
+
                 </div>
 
                 <div style={{display: 'flex', flex: 0, marginBottom: '56px'}}>
@@ -2049,6 +2225,10 @@ class Landing extends Component {
         super(props);
     }
 
+    componentDidMount() {
+        document.title = 'Scrippt';
+    }
+
     render() {
         return (
             <div style={{display: 'flex', flex: 1, height: '100vh', flexDirection: 'column'}}>
@@ -2086,11 +2266,21 @@ class App extends Component {
                 let userObj = {
                     displayName: user.displayName,
                     email: user.email,
+                    username: user.username,
                     emailVerified: user.emailVerified,
                     photoURL: user.photoURL,
                     isAnonymous: user.isAnonymous,
                     uid: user.uid
                 };
+
+                this.setState({user: userObj});
+
+                db.collection("users").doc(user.uid).get().then(function(doc) {
+                    this.setState({user:  doc.data()});
+                }.bind(this)).catch(function(error) {
+                    console.log("Error getting user:", error);
+                });
+
 
                 db.collection("users").doc(user.uid).collection('scripts')
                     .onSnapshot(function(querySnapshot) {
@@ -2142,7 +2332,6 @@ class App extends Component {
                         console.log('user-fetch-scriptId-error', error);
                     });
 
-                this.setState({user: userObj})
 
 
 
