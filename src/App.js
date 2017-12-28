@@ -2085,6 +2085,14 @@ class Signup extends Component {
             .then(function(user){
                 console.log('uid',user);
 
+                firebase.auth().currentUser.sendEmailVerification().then(function() {
+                    console.log('verification email sent');
+                    // Email sent.
+                }).catch(function(error) {
+                    // An error happened.
+                });
+
+
                 console.log('writing to users collection...');
                 db.collection("users").doc(user.uid).set({
                     uid: user.uid,
