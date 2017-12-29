@@ -967,7 +967,9 @@ class ForgotPassword extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            email: ''
+            email: '',
+            message: '',
+            messageColor: ''
         };
     }
 
@@ -977,15 +979,16 @@ class ForgotPassword extends Component {
     }
 
     send() {
-        console.log('im in here')
         var auth = firebase.auth();
 
         auth.sendPasswordResetEmail(this.state.email).then(function() {
+            this.setState({message: 'verification mail sent.', messageColor: 'green'});
             console.log('email sent')
             // Email sent.
         }.bind(this)).catch(function(error) {
+            this.setState({message: error.message, messageColor: 'red'});
             // An error happened.
-        });
+        }.bind(this));
     }
 
     handleEmailChange(evt) {
@@ -1008,13 +1011,15 @@ class ForgotPassword extends Component {
 
     render() {
         return (
-            <div>
-                <div>Password reset</div>
-                <div>Please enter your email. We will send you an email to reset your password.</div>
-                <input style={{width: '100px', fontSize: '14px'}} type="email" placeholder="email" required value={this.state.email}
+            <div style={{width: '350px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px'}}>
+                <div style={{padding: '10px', color: '#0d47a1'}}>Password reset</div>
+                <div style={{padding: '10px'}}>Please enter your email. We will send you an email to reset your password.</div>
+                <input style={{width: '250px', fontSize: '14px'}} type="email" placeholder="email" required value={this.state.email}
                        onChange={this.handleEmailChange.bind(this)}/>
-                <button onClick={this.send.bind(this)}>send</button>
-                <button onClick={this.props.closeModal}>close</button>
+                <div style={{color: this.state.messageColor}}>{this.state.message}</div>
+
+                <button style={{margin: '10px', borderRadius: '10px', width: '60px', fontSize: '14px', height: '30px', background: '#1565c0', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} onClick={this.send.bind(this)}>send</button>
+                <button style={{margin: '10px', borderRadius: '10px', width: '60px', fontSize: '14px', height: '30px', background: 'red', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} onClick={this.props.closeModal}>cancel</button>
             </div>
         )
     }
@@ -2300,7 +2305,9 @@ class Login extends Component {
             </form>
             <div style={{color: 'red', fontSize: '13px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '25px'}}>{this.state.loginError}</div>
 
-            <button onClick={this.props.openForgotPasswordModal}>forgot</button>
+            <div style={{display: 'flex', marginBottom: '10px', justifyContent: 'center'}}>
+            <div style={{color: '#0d47a1', cursor: 'pointer', textDecoration: 'underline', fontSize: '13px'}} onClick={this.props.openForgotPasswordModal}>forgot password?</div>
+            </div>
 
         </div>
     }
