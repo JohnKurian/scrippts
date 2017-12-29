@@ -222,7 +222,15 @@ class Node extends Component {
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
             text: this.state.text,
             updatedTime: Date.now()
-        })
+        });
+
+        db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.props.scriptId).update({
+            updatedTime: Date.now()
+        });
+
+        db.collection('scripts').doc(this.props.scriptId).update({
+            updatedTime: Date.now()
+        });
     }
 
 
@@ -503,7 +511,7 @@ class Node extends Component {
                                     </div>
                                 </div>
                                 {(node.children!==undefined && Object.keys(node.children).length > 0) &&
-                                <Node data={node.children} parentNodeId={this.props.parentNodeId} scriptId={this.props.scriptId} premiseRelativeValue={currentNodeValue}/>}
+                                <Node user={this.props.user} data={node.children} parentNodeId={this.props.parentNodeId} scriptId={this.props.scriptId} premiseRelativeValue={currentNodeValue}/>}
                             </li>
                         )
                     }.bind(this))
@@ -755,6 +763,8 @@ class Home extends Component {
                             collaborator: true,
                             forked: false,
                             uid: scriptRef.id,
+                            createdTime: Date.now(),
+                            updatedTime: Date.now(),
                             title: 'Untitled'
                         });
 
@@ -973,6 +983,7 @@ class Parent extends Component {
                     <Route exact path="/s/:scriptId" render={(props) => (
                         <Editor
                             {...props}
+                            user={this.props.user}
                             disableSidebar={this.disableSidebar.bind(this)}
                             isOpen={this.state.sidebarOpen}/>
                     )} />
@@ -1719,6 +1730,8 @@ class ScriptList extends Component {
                             collaborator: true,
                             forked: false,
                             uid: scriptRef.id,
+                            createdTime: Date.now(),
+                            updatedTime: Date.now(),
                             title: 'Untitled'
                         });
 
@@ -1872,6 +1885,8 @@ class SideBar extends Component{
                             collaborator: true,
                             forked: false,
                             uid: scriptRef.id,
+                            createdTime: Date.now(),
+                            updatedTime: Date.now(),
                             title: 'Untitled'
                         });
 
@@ -2114,7 +2129,7 @@ class Editor extends Component{
 
                 <div className="EditorContainer">
                     <div className="tree" id="tree">
-                        <Node data={this.state.tree} parentNodeId={Object.keys(this.state.tree)[0]} scriptId={this.props.match.params.scriptId} premiseRelativeValue={this.state.premiseRelativeValue}/>
+                        <Node user={this.props.user} data={this.state.tree} parentNodeId={Object.keys(this.state.tree)[0]} scriptId={this.props.match.params.scriptId} premiseRelativeValue={this.state.premiseRelativeValue}/>
                     </div>
                 </div>
 
@@ -2537,7 +2552,7 @@ class App extends Component {
                 });
 
 
-                db.collection("users").doc(user.uid).collection('scripts')
+                db.collection("users").doc(user.uid).collection('scripts').orderBy('updatedTime', 'desc')
                     .onSnapshot(function(querySnapshot) {
                         console.log('onsnapshot triggered');
                         let scriptIds = [];
