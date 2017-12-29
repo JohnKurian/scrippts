@@ -525,6 +525,8 @@ class Profile extends Component {
             showChangePassword: false,
             oldPassword: '',
             newPassword: '',
+            accountDeletionMessage: '',
+            accountDeletionMessageColor: ''
         };
     }
 
@@ -539,7 +541,7 @@ class Profile extends Component {
     }
 
     onCancelDeletionClick() {
-        this.setState({showConfirmDeletion: false, deletionConfirmPassword: ''})
+        this.setState({showConfirmDeletion: false, deletionConfirmPassword: '', accountDeletionMessage: '', accountDeletionMessageColor: ''})
     }
 
     onConfirmDeletionClick() {
@@ -574,9 +576,10 @@ class Profile extends Component {
                 // User deleted.
 
         }.bind(this)).catch(function(error) {
+            this.setState({accountDeletionMessage: error.message, accountDeletionMessageColor: 'red'});
             console.log('error:', error)
             // An error happened.
-        });
+        }.bind(this));
 
 
     }
@@ -631,44 +634,52 @@ class Profile extends Component {
 
 
         return (
-            <div style={{marginTop: '100px'}}>
-                profile
-                <div>
-                    email: {this.props.user.email}
-                </div>
+            <div style={{marginTop: '75px', display: 'flex', justifyContent: 'center'}}>
+                <div style={{width: '400px', padding: '20px', display: 'flex', flexDirection: 'column', background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
+                    <div style={{alignSelf: 'center', fontSize: '20px', color: '#0d47a1', marginBottom: '25px'}}>profile</div>
+                <div style={{display: 'flex', flexDirection: 'row', padding: '5px'}}>
+                        <div style={{flex: 1}}>email</div>
+                        <div style={{flex: 1}}>{this.props.user.email}</div>
+                    </div>
 
-                <div>
-                    username: {this.props.user.username}
-                </div>
+                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px'}}>
+                    <div style={{flex: 1}}>username</div>
+                    <div style={{flex: 1}}>{this.props.user.username}</div>
+                    </div>
 
-                <div>
-                    password:
-                    <button onClick={this.onPasswordChangeClick.bind(this)} style={{width: '50px', fontSize: '14px', height: '30px', background: 'red', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="button" value="Submit">change</button>
-
-                </div>
+                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px'}}>
+                        <div style={{flex: 1}}>password</div>
+                        <div onClick={this.onPasswordChangeClick.bind(this)} style={{flex: 1, color: '#0d47a1', cursor: 'pointer', textDecoration: 'underline', fontSize: '15px'}}>change</div>
+                    </div>
                 {this.state.showChangePassword &&
-                    <div>
+                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
                         <input style={{width: '200px', height: '25px', fontSize: '14px'}} type="password" placeholder="enter old password" value={this.state.oldPassword}
                                onChange={this.handleOldPasswordChange.bind(this)}/>
                         <input style={{width: '200px', height: '25px', fontSize: '14px'}} type="password" placeholder="enter new password" value={this.state.newPassword}
                                onChange={this.handleNewPasswordChange.bind(this)}/>
 
-                        <button onClick={this.onConfirmPasswordChangeClick.bind(this)}>Confirm</button>
-                        <button onClick={this.onCancelPasswordChangeClick.bind(this)}>Cancel</button>
+                        <div style={{marginBottom: '5px'}}>
+                            <button style={{margin: '5px', borderRadius: '5px', width: '64px', fontSize: '13px', height: '24px', background: '#1565c0', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} onClick={this.onConfirmPasswordChangeClick.bind(this)}>Confirm</button>
+                            <button style={{margin: '5px', borderRadius: '5px', width: '60px', fontSize: '13px', height: '20px', background: 'white', borderColor: 'transparent', color: 'black', textDecoration: 'underline', cursor: 'pointer' }} onClick={this.onCancelPasswordChangeClick.bind(this)}>Cancel</button>
+                        </div>
                     </div>
                 }
 
-                <button onClick={this.onDeleteAccountSubmit.bind(this)} style={{width: '50px', fontSize: '14px', height: '30px', background: 'red', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="button" value="Submit">delete</button>
+                <button onClick={this.onDeleteAccountSubmit.bind(this)} style={{margin: '10px', alignSelf: 'center', borderRadius: '10px', width: '200px', fontSize: '14px', height: '30px', background: '#b71c1c', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="button" value="Submit">delete account</button>
                 {this.state.showConfirmDeletion &&
-                    <div>
-                        sure you wanna delete?
-                        <input style={{width: '200px', height: '25px', fontSize: '14px'}} type="password" placeholder="enter password" value={this.state.deletionConfirmPassword}
+                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                        enter password to confirm deletion
+                        <input style={{width: '200px', marginTop: '5px', height: '25px', fontSize: '14px'}} type="password" placeholder="enter password" value={this.state.deletionConfirmPassword}
                                onChange={this.handleDeletionConfirmPasswordChange.bind(this)}/>
-                        <button onClick={this.onConfirmDeletionClick.bind(this)}>Confirm</button>
-                        <button onClick={this.onCancelDeletionClick.bind(this)}>Cancel</button>
+                     <div>
+                        <button style={{margin: '5px', borderRadius: '5px', width: '64px', fontSize: '13px', height: '24px', background: '#b71c1c', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} onClick={this.onConfirmDeletionClick.bind(this)}>Confirm</button>
+                        <button style={{margin: '5px', borderRadius: '5px', width: '60px', fontSize: '13px', height: '20px', background: 'white', borderColor: 'transparent', color: 'black', textDecoration: 'underline', cursor: 'pointer' }} onClick={this.onCancelDeletionClick.bind(this)}>Cancel</button>
+                     </div>
+                    <div style={{color: this.state.accountDeletionMessageColor}}>{this.state.accountDeletionMessage}</div>
                     </div>
 
                 }
+                </div>
             </div>
         )
     }
@@ -952,8 +963,8 @@ class Parent extends Component {
 const LogoutButton = withRouter(({ history }) => (
 
     <div style={{display: 'flex', paddingLeft: '50px', height: '40px', alignItems: 'center'}}>
-        <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '32px'}}>power_settings_new</i>
-        <Link to="/" style={{ color: '#555555', textDecoration: 'none', fontSize: '17px', paddingLeft: '5px' }} onClick={() => {
+        <i className="material-icons" style={{textDecoration: 'none', color: '#7f0000', fontSize: '32px'}}>power_settings_new</i>
+        <Link to="/" style={{ color: '#7f0000', textDecoration: 'none', fontSize: '17px', paddingLeft: '5px' }} onClick={() => {
             auth().signOut();
             history.push('/');
             window.location.reload();
