@@ -694,6 +694,7 @@ class Home extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            createScriptModalIsOpen: false
 
         };
     }
@@ -826,6 +827,20 @@ class Home extends Component {
 
     }
 
+    openCreateScriptModal() {
+        this.setState({createScriptModalIsOpen: true})
+    }
+
+
+    closeCreateScriptModal() {
+        this.setState({createScriptModalIsOpen: false})
+    }
+
+
+    onCreateNewScriptClick() {
+        this.setState({createScriptModalIsOpen: true})
+    }
+
 
     render() {
 
@@ -836,7 +851,7 @@ class Home extends Component {
         let initFragment = (
             <Col xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
                 {/*<Link activeStyle={{}} to={SCRIPT_ROUTE(this.props.scriptHeaders[key].uid)} style={{textDecoration: 'none'}} params={{scriptId: this.props.scriptHeaders[key].uid}}>*/}
-                    <div onClick={this.createNewScript.bind(this)} style={{cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={123}>
+                    <div onClick={this.openCreateScriptModal.bind(this)} style={{cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={123}>
                         <i className="material-icons" style={{textDecoration: 'none', color: '#1976d2', fontSize: '100px'}}>add</i>
                         <div style={{color: '#555555', fontSize: '20px', marginTop: '20px'}}>
                         Create new script
@@ -907,6 +922,15 @@ class Home extends Component {
 
         return (
             <div>
+                <Modal
+                    isOpen={this.state.createScriptModalIsOpen}
+                    onRequestClose={this.closeCreateScriptModal.bind(this)}
+                    style={signupModalStyles}
+                    contentLabel="Loader Modal"
+                >
+                    <Route render={(props) => ( <ScriptList {...props} user={this.props.user} closeCreateScript={this.closeCreateScriptModal.bind(this)}/> )} />
+                </Modal>
+
                 <div style={{marginTop: '100px', paddingLeft: '100px', paddingRight: '100px'}}>
                     <Grid fluid>
                         <Row start="xs">
@@ -1636,6 +1660,108 @@ class Header extends Component{
     }
 }
 
+class ScriptList extends Component {
+
+    constructor(props, context) {
+        super(props, context);
+        this.state = {
+
+        };
+    }
+
+    createNewScript() {
+        console.log('writing to scripts collection...');
+
+        store.dispatch({type: 'CREATE_SCRIPT_INITIALIZED', isScriptCreation: true});
+
+        db.collection("scripts").add({
+            creator: this.props.user.uid,
+            scope: 'private',
+            createdTime: Date.now(),
+            updatedTime: Date.now(),
+            type: 'argument',
+            title: 'Untitled',
+            collaborators: [this.props.user.uid]
+        })
+            .then(function(scriptRef) {
+                console.log("Document written with ID: ", scriptRef.id);
+
+                db.collection('scripts').doc(scriptRef.id).update({uid: scriptRef.id});
+
+                let permissionObj = {};
+                permissionObj['permission'] = 'write';
+                permissionObj['uid'] = this.props.user.uid;
+                permissionObj['email'] =  this.props.user.email;
+                permissionObj['isOwner'] = true;
+
+                db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj);
+
+                db.collection('scripts').doc(scriptRef.id).collection('nodes').add({
+                    text: ''
+                })
+                    .then(function (nodeRef) {
+
+                        db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id});
+
+                        db.collection('scripts').doc(scriptRef.id).collection('nodes').doc(nodeRef.id).update({
+                            parentUid: null,
+                            relativeToParent: 1,
+                            uid: nodeRef.id,
+                            text: '',
+                            createdTime: Date.now(),
+                            updatedTime: Date.now()
+                        }).then(function (nodeRef) {
+                            console.log('script addition finished 2')
+                        });
+
+                        db.collection('users').doc(this.props.user.uid).collection('scripts').doc(scriptRef.id).set({
+                            creator: true,
+                            collaborator: true,
+                            forked: false,
+                            uid: scriptRef.id,
+                            title: 'Untitled'
+                        });
+
+                        store.dispatch({type: 'SCRIPT_CREATION_FINISHED', isScriptCreation: false});
+                        this.props.history.push('/s/' + scriptRef.id);
+                        window.location.reload();
+
+
+                    }.bind(this))
+
+            }.bind(this))
+            .catch(function(error) {
+                store.dispatch({type: 'SCRIPT_CREATION_FINISHED', isScriptCreation: false});
+                console.error("Error adding document: ", error);
+            });
+    }
+
+    render() {
+        return (
+            <div style={{width: '350px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px'}}>
+            <div style={{margin: '15px'}}>select the type of script to create</div>
+
+                <div onClick={this.createNewScript.bind(this)} style={{cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 100, height: 112, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={123}>
+                    <div style={{display: 'flex', padding: '15px'}}>
+                        <img style={{width: 65, height: 65}} src={argumentLogo}></img>
+                    </div>
+                    <div style={{display: 'flex', color: '#555555', fontSize: '15px', marginTop: '20px'}}>
+                       Argument
+                    </div>
+                    {/*{this.props.scriptHeaders[id]['uid']}*/}
+                    {/*{this.props.scriptHeaders[key].title}*/}
+                    {/*<a href="javascript:;" onClick={this.deleteScript.bind(this, this.props.user.uid, this.props.scriptHeaders[key].uid)}>*/}
+                    {/*<i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>delete_forever</i>*/}
+                    {/*</a>*/}
+                    <br/>
+                </div>
+            </div>
+        )
+    }
+
+
+}
+
 class SideBar extends Component{
 
     constructor(props, context) {
@@ -1643,7 +1769,8 @@ class SideBar extends Component{
 
         this.state = {
             isOpen: false,
-            isInternalLinkClicked: false
+            isInternalLinkClicked: false,
+            createScriptModalIsOpen: false
         };
 
         this.setWrapperRef = this.setWrapperRef.bind(this);
@@ -1676,6 +1803,20 @@ class SideBar extends Component{
 
     componentWillReceiveProps(props) {
         this.setState({isOpen: props.isOpen});
+    }
+
+    openCreateScriptModal() {
+        this.setState({createScriptModalIsOpen: true})
+    }
+
+
+    closeCreateScriptModal() {
+        this.setState({createScriptModalIsOpen: false})
+    }
+
+
+    onCreateNewScriptClick() {
+        this.setState({createScriptModalIsOpen: true})
     }
 
 
@@ -1764,6 +1905,15 @@ class SideBar extends Component{
         return (
             <div ref={this.setWrapperRef} className={sidebarClass} style={{display: 'flex', flexDirection: 'column', zIndex: 5000}}>
 
+                <Modal
+                    isOpen={this.state.createScriptModalIsOpen}
+                    onRequestClose={this.closeCreateScriptModal.bind(this)}
+                    style={signupModalStyles}
+                    contentLabel="Loader Modal"
+                >
+                    <Route render={(props) => ( <ScriptList {...props} user={this.props.user} closeCreateScript={this.closeCreateScriptModal.bind(this)}/> )} />
+                </Modal>
+
                 <div style={{flex: 1}}>
                     <div style={{marginTop: '10px', marginBottom: '24px', height: '64px', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
                         <img style={{width: 40, height: 40, padding: '5px'}} src={scripptLogo}></img>
@@ -1774,7 +1924,7 @@ class SideBar extends Component{
                     </div>
 
                     <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', marginBottom: '12px'}}>
-                        <div onClick={this.createNewScript.bind(this)} style={{padding: '8px', borderRadius: '2px', width: '150px', borderColor: '#1565c0', display: 'flex', alignItems: 'center', background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row', alignSelf: 'center'}}>
+                        <div onClick={this.onCreateNewScriptClick.bind(this)} style={{padding: '8px', borderRadius: '2px', width: '150px', borderColor: '#1565c0', display: 'flex', alignItems: 'center', background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row', alignSelf: 'center'}}>
                             <i className="material-icons" style={{color: 'white'}}>add</i>
                             <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '13px'}}>Create new script</div>
                         </div>
