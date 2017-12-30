@@ -2157,7 +2157,8 @@ class Signup extends Component {
             signupConfirmPassword: '',
             signupError: '',
             isAuthChecked: false,
-            scriptIds: []
+            scriptIds: [],
+            signupInProgress: false
         };
     }
 
@@ -2249,6 +2250,7 @@ class Signup extends Component {
             event.preventDefault();
         }
         if(!this.state.usernameHasChanged && this.state.usernameVerified) {
+            this.setState({signupInProgress: true, signupError: ''});
             this.signup(this.state.signupEmail, this.state.signupPassword, this.state.signupUsername);
             event.preventDefault();
         }
@@ -2300,7 +2302,7 @@ class Signup extends Component {
                 let errorMessage = error.message;
                 // ...
                 console.log('signup-error', error, errorCode);
-                this.setState({signupError: errorMessage})
+                this.setState({signupError: errorMessage, signupInProgress: false})
             }.bind(this));
 
         console.log('signup:', result)
@@ -2340,10 +2342,15 @@ class Signup extends Component {
                 <div style={{paddingLeft: '50px', paddingRight: '50px'}}>
                     <input style={{width: '100%', fontSize: '14px', height: '30px', background: '#1565c0', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="submit" value="Submit"/>
                 </div>
+                {this.state.signupInProgress && <div style={{display: 'flex', justifyContent: 'center', paddingLeft: '50px', paddingRight: '50px', marginTop: '5px'}}>
+                    <svg className="spinner" width="40px" height="40px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+                        <circle className="path" fill="none" strokeWidth="6" strokeLinecap="round" cx="33" cy="33" r="30"/>
+                    </svg>
+                </div>}
             </form>
-            <span style={{fontSize: '13px', paddingLeft: '50px', color: 'red', paddingBottom: '40px'}}>
+            <div style={{fontSize: '13px', paddingLeft: '50px', paddingRight: '50px', color: 'red', paddingBottom: '10px'}}>
                 {this.state.signupError}
-            </span>
+            </div>
 
         </div>
     }
@@ -2359,7 +2366,8 @@ class Login extends Component {
             loginPassword: '',
             loginError: '',
             isAuthChecked: false,
-            scriptIds: []
+            scriptIds: [],
+            loginInProgress: false
         };
     }
 
@@ -2425,11 +2433,11 @@ class Login extends Component {
             }
 
             else if(JSON.parse(req.responseText).code===0) {
-                this.setState({loginError: "username doesn't exist"})
+                this.setState({loginInProgress: false, loginError: "username doesn't exist"})
             }
 
             else if(JSON.parse(req.responseText).code===2) {
-                this.setState({loginError: "an unexpected error has occured"})
+                this.setState({loginInProgress: false, loginError: "an unexpected error has occured"})
             }
 
 
@@ -2437,7 +2445,7 @@ class Login extends Component {
         }.bind(this);
         req.onerror = function() {
             console.log('onerror;', 'error');
-            this.setState({usernameHasChanged: false, usernameVerified: false, loginError: 'an unexpected error has occured'});
+            this.setState({usernameHasChanged: false, usernameVerified: false, loginInProgress: false, loginError: 'an unexpected error has occured'});
             return -100;
         }.bind(this);
         req.open('GET', helloUserUrl + "?" + params, true);
@@ -2446,7 +2454,7 @@ class Login extends Component {
     }
 
     handleLoginSubmit(event) {
-        this.setState({loginError: ''})
+        this.setState({loginError: '', loginInProgress: true});
 
         if(this.validateEmail(this.state.loginValue)) {
             this.login(this.state.loginValue, this.state.loginPassword);
@@ -2478,6 +2486,12 @@ class Login extends Component {
                 <div style={{paddingLeft: '50px', paddingRight: '50px'}}>
                     <input style={{width: '100%', fontSize: '14px', height: '30px', background: '#1565c0', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="submit" value="Submit"/>
                 </div>
+
+                {this.state.loginInProgress && <div style={{display: 'flex', justifyContent: 'center', paddingLeft: '50px', paddingRight: '50px', marginTop: '5px'}}>
+                    <svg className="spinner" width="40px" height="40px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+                        <circle className="path" fill="none" strokeWidth="6" strokeLinecap="round" cx="33" cy="33" r="30"/>
+                    </svg>
+                </div>}
             </form>
             <div style={{color: 'red', fontSize: '13px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '25px'}}>{this.state.loginError}</div>
 
