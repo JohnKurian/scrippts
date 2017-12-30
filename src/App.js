@@ -696,14 +696,79 @@ class Profile extends Component {
 }
 
 
+class DeleteScript extends Component {
+
+    constructor(props, context) {
+        super(props, context);
+        this.state = {
+            deleteScriptInProgress: false,
+            error: ''
+        };
+    }
+
+
+    deleteScript(userId, scriptId, closeDeleteScript, evt) {
+        evt.preventDefault();
+        this.setState({deleteScriptInProgress: true});
+        console.log('im in here');
+        db.collection("scripts").doc(scriptId).delete().then(function() {
+            console.log("Document successfully deleted from /scripts");
+
+            db.collection("users").doc(userId).collection('scripts').doc(scriptId).delete().then(function() {
+                console.log("Document successfully deleted from /users/scripts");
+                closeDeleteScript();
+            }).catch(function(error) {
+                this.setState({error: 'an unexpected error has occurred.'});
+                console.error("Error removing document from /users/scripts: ", error);
+            }.bind(this));
+
+
+        }).catch(function(error) {
+            this.setState({error: 'an unexpected error has occurred.'});
+            console.error("Error removing document from /scripts: ", error);
+        });
+    }
+
+
+
+    render() {
+        return (
+            <div style={{width: '350px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px'}}>
+                <div style={{margin: '15px'}}>Are you sure you want to delete '{this.props.scriptTitle}'? </div>
+
+                <div style={{display: 'flex', flexDirection: 'row'}}>
+                    <button onClick={this.deleteScript.bind(this, this.props.userId, this.props.scriptId, this.props.closeDeleteScript)} style={{margin: '10px', borderRadius: '10px', width: '64px', fontSize: '14px', height: '30px', background: '#b71c1c', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} >confirm</button>
+                    <button onClick={this.props.closeDeleteScript} style={{margin: '10px', borderRadius: '10px', width: '64px', fontSize: '14px', height: '30px', background: 'white', borderColor: 'black', color: 'black',cursor: 'pointer' }} >cancel</button>
+                </div>
+                {this.state.deleteScriptInProgress && <div style={{display: 'flex', justifyContent: 'center', paddingLeft: '50px', paddingRight: '50px', marginTop: '5px'}}>
+                    <svg className="spinner" width="30px" height="30px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+                        <circle className="path" fill="none" strokeWidth="6" strokeLinecap="round" cx="33" cy="33" r="30"/>
+                    </svg>
+                </div>}
+
+                <div>
+                    {this.state.error}
+                </div>
+
+            </div>
+        )
+    }
+
+
+}
+
+
 
 class Home extends Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            createScriptModalIsOpen: false
-
+            createScriptModalIsOpen: false,
+            deleteScriptConfirmationModalIsOpen: false,
+            selectedDeleteScriptId: '',
+            selectedDeleteScriptTitle: '',
+            userId: ''
         };
     }
 
@@ -736,6 +801,7 @@ class Home extends Component {
                 permissionObj['permission'] = 'write';
                 permissionObj['uid'] = this.props.user.uid;
                 permissionObj['email'] =  this.props.user.email;
+                permissionObj['username'] =  this.props.user.username;
                 permissionObj['isOwner'] = true;
 
                 db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj);
@@ -783,23 +849,6 @@ class Home extends Component {
     }
 
 
-    deleteScript(userId, scriptId, evt) {
-        evt.preventDefault();
-        console.log('im in here');
-        db.collection("scripts").doc(scriptId).delete().then(function() {
-            console.log("Document successfully deleted from /scripts");
-
-            db.collection("users").doc(userId).collection('scripts').doc(scriptId).delete().then(function() {
-                console.log("Document successfully deleted from /users/scripts");
-            }).catch(function(error) {
-                console.error("Error removing document from /users/scripts: ", error);
-            });
-
-
-        }).catch(function(error) {
-            console.error("Error removing document from /scripts: ", error);
-        });
-    }
 
     timeSince(date) {
 
@@ -849,6 +898,22 @@ class Home extends Component {
 
     onCreateNewScriptClick() {
         this.setState({createScriptModalIsOpen: true})
+    }
+
+
+    openDeleteScriptConfirmationModal() {
+        this.setState({deleteScriptConfirmationModalIsOpen: true})
+    }
+
+
+    closeDeleteScriptConfirmationModal() {
+        this.setState({deleteScriptConfirmationModalIsOpen: false})
+    }
+
+
+    onScriptDeleteClick(uid, scriptId, title, evt) {
+        evt.preventDefault();
+        this.setState({deleteScriptConfirmationModalIsOpen: true, selectedDeleteScriptId: scriptId, userId: uid, selectedDeleteScriptTitle: title })
     }
 
 
@@ -916,7 +981,7 @@ class Home extends Component {
                                         </div>
                                     </div>
                                     <div style={{flex: 1, alignSelf: 'center'}}>
-                                        <a href="javascript:;" onClick={this.deleteScript.bind(this, this.props.user.uid, this.props.scriptHeaders[key].uid)}>
+                                        <a href="javascript:;" onClick={this.onScriptDeleteClick.bind(this, this.props.user.uid, this.props.scriptHeaders[key].uid,  this.props.scriptHeaders[key].title)}>
                                             <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>delete_forever</i>
                                         </a>
                                     </div>
@@ -939,6 +1004,18 @@ class Home extends Component {
                     contentLabel="Loader Modal"
                 >
                     <Route render={(props) => ( <ScriptList {...props} user={this.props.user} closeCreateScript={this.closeCreateScriptModal.bind(this)}/> )} />
+                </Modal>
+
+                <Modal
+                    isOpen={this.state.deleteScriptConfirmationModalIsOpen}
+                    onRequestClose={this.closeDeleteScriptConfirmationModal.bind(this)}
+                    style={signupModalStyles}
+                    contentLabel="Loader Modal"
+                >
+                    <Route render={(props) => ( <DeleteScript {...props} userId={this.state.userId}
+                                                              scriptId={this.state.selectedDeleteScriptId}
+                                                              scriptTitle={this.state.selectedDeleteScriptTitle}
+                                                              closeDeleteScript={this.closeDeleteScriptConfirmationModal.bind(this)}/> )} />
                 </Modal>
 
                 <div style={{marginTop: '100px', paddingLeft: '100px', paddingRight: '100px'}}>
@@ -1121,8 +1198,10 @@ class Header extends Component{
                     }.bind(this));
 
                 db.collection('scripts').doc(store.getState().activeScriptId).onSnapshot(function (doc) {
-                    console.log('script change: ', doc.data());
-                    this.setState({scope: doc.data().scope})
+                    if(doc.exists) {
+                        console.log('script change: ', doc.data());
+                        this.setState({scope: doc.data().scope})
+                    }
                 }.bind(this))
 
                 }
@@ -1703,6 +1782,7 @@ class ScriptList extends Component {
                 permissionObj['permission'] = 'write';
                 permissionObj['uid'] = this.props.user.uid;
                 permissionObj['email'] =  this.props.user.email;
+                permissionObj['username'] =  this.props.user.username;
                 permissionObj['isOwner'] = true;
 
                 db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj);
@@ -1751,7 +1831,7 @@ class ScriptList extends Component {
 
     render() {
         return (
-            <div style={{width: '350px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px'}}>
+            <div style={{width: '350px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '30px'}}>
             <div style={{margin: '15px'}}>select the type of script to create</div>
 
                 <div onClick={this.createNewScript.bind(this)} style={{cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 100, height: 112, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={123}>
@@ -1858,6 +1938,7 @@ class SideBar extends Component{
                 permissionObj['permission'] = 'write';
                 permissionObj['uid'] = this.props.user.uid;
                 permissionObj['email'] =  this.props.user.email;
+                permissionObj['username'] =  this.props.user.username;
                 permissionObj['isOwner'] = true;
 
                 db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj);
@@ -2566,7 +2647,7 @@ class App extends Component {
                 });
 
 
-                db.collection("users").doc(user.uid).collection('scripts').orderBy('updatedTime', 'desc')
+                db.collection("users").doc(user.uid).collection('scripts')
                     .onSnapshot(function(querySnapshot) {
                         console.log('onsnapshot triggered');
                         let scriptIds = [];
@@ -2597,16 +2678,18 @@ class App extends Component {
                         scriptIds.map(function(id) {
 
                             db.collection('scripts').doc(id).get().then(function (doc) {
-                                console.log('inside here')
-                                if(this.state['scriptHeaderObj']===undefined || this.state['scriptHeaderObj']===null) {
-                                    let scriptHeaderObj = Object.assign({}, this.state.scriptHeaders, {[id]: doc.data() });
-                                    scriptHeaderObj[id] = doc.data();
-                                    this.setState({scriptHeaders: scriptHeaderObj});
-                                }
-                                else {
-                                    let scriptHeaderObj = Object.assign({}, this.state.scriptHeaders, {[id]: doc.data() });
-                                    scriptHeaderObj[id] = doc.data();
-                                    this.setState({scriptHeaders: scriptHeaderObj});
+                                if(doc.exists) {
+                                    console.log('inside here');
+                                    if (this.state['scriptHeaderObj'] === undefined || this.state['scriptHeaderObj'] === null) {
+                                        let scriptHeaderObj = Object.assign({}, this.state.scriptHeaders, {[id]: doc.data()});
+                                        scriptHeaderObj[id] = doc.data();
+                                        this.setState({scriptHeaders: scriptHeaderObj});
+                                    }
+                                    else {
+                                        let scriptHeaderObj = Object.assign({}, this.state.scriptHeaders, {[id]: doc.data()});
+                                        scriptHeaderObj[id] = doc.data();
+                                        this.setState({scriptHeaders: scriptHeaderObj});
+                                    }
                                 }
                             }.bind(this))
 
