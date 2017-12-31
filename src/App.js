@@ -1061,7 +1061,7 @@ class Parent extends Component {
         return (
             <div>
 
-                <Route render={(props) => ( <Header {...props }user={this.props.user} onClick={this.handleViewSidebar.bind(this)} /> )} />
+                <Route render={(props) => ( <Header {...props } scriptHeaders={this.props.scriptHeaders} user={this.props.user} onClick={this.handleViewSidebar.bind(this)} /> )} />
 
                 <Route render={(props) => ( this.props.user ? <SideBar {...props} isOpen={this.state.sidebarOpen} disableSidebar={this.disableSidebar.bind(this)} user={this.props.user}/> : null)}/>
 
@@ -1071,6 +1071,7 @@ class Parent extends Component {
                             {...props}
                             user={this.props.user}
                             disableSidebar={this.disableSidebar.bind(this)}
+                            scriptHeaders={this.props.scriptHeaders}
                             isOpen={this.state.sidebarOpen}/>
                     )} />
                     <Route exact path="/" render={(props) => ( this.props.user ? <Home {...props} user={this.props.user} scriptIds={this.props.scriptIds} scriptHeaders={this.props.scriptHeaders}/> : <Redirect to="/" />)}/>
@@ -1225,6 +1226,17 @@ class Header extends Component{
     componentWillReceiveProps(props) {
         if(props.user) {
             this.setState({loginModalIsOpen: false, signupModalIsOpen: false});
+        }
+
+        console.log('im in here header ')
+
+        if(props.scriptHeaders && this.state.activeScriptId) {
+            let scriptList = Object.keys(props.scriptHeaders);
+            console.log('scriptList:', scriptList);
+            if (!scriptList.includes(this.state.activeScriptId)) {
+                console.log('@@@@@@@@@@@@ script not found in header @@@@@@@@@@@@');
+                store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
+            }
         }
     }
 
@@ -2062,10 +2074,24 @@ class Editor extends Component{
             tree: {},
             premiseNode: "",
             premiseRelativeValue: 1,
-            centerLock: true
+            centerLock: true,
+            scriptDoesNotExist: false,
+            insufficientPermission: false,
+            checkingForPermission: false
         };
 
         this.handleScroll = this.handleScroll.bind(this);
+    }
+
+    componentWillReceiveProps(nextProps) {
+        if(nextProps.scriptHeaders) {
+            let scriptList = Object.keys(nextProps.scriptHeaders);
+            console.log('scriptList:', scriptList);
+            if (!scriptList.includes(nextProps.match.params.scriptId)) {
+                console.log('@@@@@@@@@@@@ script not found @@@@@@@@@@@@');
+                this.setState({scriptDoesNotExist: true});
+            }
+        }
     }
 
     convertFlatObjectToTree(flat) {
@@ -2170,13 +2196,16 @@ class Editor extends Component{
 
                         } else {
                             console.log("No such script");
+                            this.setState({scriptDoesNotExist: true});
                         }
                     }.bind(this)).catch(function (error) {
+                        this.setState({scriptDoesNotExist: true});
                         console.log("Error getting script:", error);
                     }.bind(this));
 
 
                 }.bind(this), function (error) {
+                    this.setState({checkingForPermission: true});
                     console.log('script-fetch-onSnapshot error:', error);
                     console.log('attempting to fetch again...');
                     if(retryCount<20) {
@@ -2187,6 +2216,7 @@ class Editor extends Component{
                         }.bind(this), 200);
                     }
                     else {
+                        this.setState({checkingForPermission: false, insufficientPermission: true});
                         console.log('seems like you dont have permission. Please refresh the page and try again later');
                     }
 
@@ -2214,16 +2244,50 @@ class Editor extends Component{
         let contentClass = this.props.isOpen ? 'content open' : 'content';
         return (
             <div>
-            <div className={contentClass}>
+                { (!this.state.checkingForPermission && !this.state.scriptDoesNotExist && !this.state.insufficientPermission) &&
+                    <div className={contentClass}>
 
-                <div className="EditorContainer">
-                    <div className="tree" id="tree">
-                        <Node user={this.props.user} data={this.state.tree} parentNodeId={Object.keys(this.state.tree)[0]} scriptId={this.props.match.params.scriptId} premiseRelativeValue={this.state.premiseRelativeValue}/>
+                        <div className="EditorContainer">
+                            <div className="tree" id="tree">
+                                <Node user={this.props.user} data={this.state.tree}
+                                      parentNodeId={Object.keys(this.state.tree)[0]}
+                                      scriptId={this.props.match.params.scriptId}
+                                      premiseRelativeValue={this.state.premiseRelativeValue}/>
+                            </div>
+                        </div>
+
+
+                    </div>
+                }
+
+                { this.state.scriptDoesNotExist &&
+                <div style={{marginTop: '150px', display: 'flex', justifyContent: 'center'}}>
+                    <div style={{width: '300px', alignItems: 'center', padding: '20px', display: 'flex', flexDirection: 'column', background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
+                        <i className="material-icons" style={{textDecoration: 'none', color: '#f57f17', fontSize: '35px'}}>warning</i>
+                        <div>script does not exist</div>
                     </div>
                 </div>
 
+                }
 
-            </div>
+                { this.state.checkingForPermission &&
+                <div style={{marginTop: '150px', display: 'flex', justifyContent: 'center'}}>
+                    <svg className="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+                        <circle className="path" fill="none" strokeWidth="6" strokeLinecap="round" cx="33" cy="33" r="30"/>
+                    </svg>
+                </div>
+                }
+
+                { this.state.insufficientPermission &&
+                <div style={{marginTop: '150px', display: 'flex', justifyContent: 'center'}}>
+                    <div style={{width: '300px',  alignItems: 'center', padding: '20px', display: 'flex', flexDirection: 'column', background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
+                        <i className="material-icons" style={{textDecoration: 'none', color: '#f57f17', fontSize: '35px'}}>warning</i>
+                        <div>insufficient permission</div>
+                    </div>
+                </div>
+                }
+
+
             </div>
         );
     }
