@@ -132,13 +132,24 @@ app.get('/addCollaborator', (req, res) => {
 
 
 app.get('/removeCollaborator', (req, res) => {
-    admin.firestore().collection("users").doc(req.query.userId).collection('scripts').doc(req.query.scriptId).delete().then(function() {
-        console.log("Document successfully deleted!");
-        res.send({code: 1, msg: 'successfully removed collaborator'})
-    }).catch(function(error) {
+
+
+    admin.firestore().collection('scripts').doc(req.query.scriptId).collection('collaborators').doc(req.query.userId).delete().then(function() {
+
+        admin.firestore().collection("users").doc(req.query.userId).collection('scripts').doc(req.query.scriptId).delete().then(function () {
+            console.log("Document successfully deleted!");
+            res.send({code: 1, msg: 'successfully removed collaborator'})
+        }).catch(function (error) {
+            console.error("Error removing document: ", error);
+            res.send({code: 2, msg: 'error removing document'})
+        });
+
+    }).catch(function (error) {
         console.error("Error removing document: ", error);
         res.send({code: 2, msg: 'error removing document'})
     });
+
+
 });
 
 

@@ -148,6 +148,8 @@ function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComp
             return {...state, isScriptCreation: true};
         case 'CREATE_SCRIPT_FINISHED':
             return {...state, isScriptCreation: false};
+        case 'SCRIPT_NUM_UPDATE':
+            return {...state, numScripts: action.numScripts};
         default:
             return state
     }
@@ -716,6 +718,7 @@ class DeleteScript extends Component {
 
             db.collection("users").doc(userId).collection('scripts').doc(scriptId).delete().then(function() {
                 console.log("Document successfully deleted from /users/scripts");
+                //TODO: removing collaborators
                 closeDeleteScript();
             }).catch(function(error) {
                 this.setState({error: 'an unexpected error has occurred.'});
@@ -768,13 +771,19 @@ class Home extends Component {
             deleteScriptConfirmationModalIsOpen: false,
             selectedDeleteScriptId: '',
             selectedDeleteScriptTitle: '',
-            userId: ''
+            userId: '',
+            numScripts: 0
         };
     }
 
     componentDidMount() {
         document.title = 'Home';
         store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
+
+        store.subscribe(() => {
+                this.setState({numScripts: store.getState().numScripts})
+            }
+        )
 
     }
 
@@ -942,7 +951,7 @@ class Home extends Component {
             </Col>
         );
 
-        if(!store.getState().scriptFetchComplete || store.getState().numScripts>0) {
+        if(!store.getState().scriptFetchComplete || this.state.numScripts>0) {
             initFragment = null;
         }
 
@@ -1427,7 +1436,7 @@ class Header extends Component{
     }
 
 
-    removePartner(userId, scriptId) {
+    removePartner(userId, scriptId, isOwner) {
 
         // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/share';
         let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/removeCollaborator';
@@ -1439,6 +1448,22 @@ class Header extends Component{
             var req = new XMLHttpRequest();
             req.onload = function() {
                 console.log('onload;', req.responseText);
+                if(!isOwner) {
+                    this.props.history.push('/');
+                    window.location.reload();
+                }
+                else {
+                    let newCollabObj = Object.keys(this.state.collaborators)
+                        .filter( objKey => objKey !== userId)
+                        .reduce((obj, objKey) => {
+                            obj[objKey] = this.state.collaborators[objKey];
+                            return obj;
+                        }, {});
+
+
+                    this.setState({collaborators: newCollabObj});
+
+                }
                 this.setState({shareModalMessage: JSON.parse(req.responseText).msg})
             }.bind(this);
             req.onerror = function() {
@@ -1452,25 +1477,8 @@ class Header extends Component{
 
     }
 
-    removeCollaborator(key) {
-
-        db.collection('scripts').doc(this.state.activeScriptId).collection('collaborators').doc(key).delete().then(function() {
-
-            let newCollabObj = Object.keys(this.state.collaborators)
-                .filter( objKey => objKey !== key)
-                .reduce((obj, objKey) => {
-                    obj[objKey] = this.state.collaborators[objKey];
-                    return obj;
-                }, {});
-
-            this.removePartner(key, this.state.activeScriptId);
-
-            this.setState({collaborators: newCollabObj});
-
-        }.bind(this)).catch(function(error) {
-            console.error("Error removing document: ", error);
-        });
-
+    removeCollaborator(key, isOwner) {
+        this.removePartner(key, this.state.activeScriptId, isOwner);
     }
 
     handleShareSettingsPermissionChange(key, evt) {
@@ -1563,7 +1571,7 @@ class Header extends Component{
                         (key === this.props.user.uid && !this.state.collaborators[this.props.user.uid]['isOwner'])
                             ?
                             <div style={{}}>
-                                <a href="javascript:;" onClick={this.removeCollaborator.bind(this, key)}
+                                <a href="javascript:;" onClick={this.removeCollaborator.bind(this, key, this.state.collaborators[this.props.user.uid]['isOwner']  )}
                                    title="remove collaborator">
                                     <i className="material-icons"
                                        style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>remove_circle</i>
@@ -2675,25 +2683,20 @@ class App extends Component {
 
                         this.setState({scriptIds: scriptIds});
 
-                        scriptIds.map(function(id) {
+                        scriptIds.map(async(id) => {
+                            let doc = await db.collection('scripts').doc(id).get();
+                            if(doc.exists) {
+                                let scriptHeaderObj = Object.assign({}, this.state.scriptHeaders, {[id]: doc.data()});
+                                scriptHeaderObj[id] = doc.data();
+                                store.dispatch({type: 'SCRIPT_NUM_UPDATE', numScripts: Object.keys(scriptHeaderObj).length});
+                                this.setState({scriptHeaders: scriptHeaderObj});
 
-                            db.collection('scripts').doc(id).get().then(function (doc) {
-                                if(doc.exists) {
-                                    console.log('inside here');
-                                    if (this.state['scriptHeaderObj'] === undefined || this.state['scriptHeaderObj'] === null) {
-                                        let scriptHeaderObj = Object.assign({}, this.state.scriptHeaders, {[id]: doc.data()});
-                                        scriptHeaderObj[id] = doc.data();
-                                        this.setState({scriptHeaders: scriptHeaderObj});
-                                    }
-                                    else {
-                                        let scriptHeaderObj = Object.assign({}, this.state.scriptHeaders, {[id]: doc.data()});
-                                        scriptHeaderObj[id] = doc.data();
-                                        this.setState({scriptHeaders: scriptHeaderObj});
-                                    }
-                                }
-                            }.bind(this))
+                            } else {
+                                store.dispatch({type: 'SCRIPT_NUM_UPDATE', numScripts: store.getState().numScripts - 1 });
+                            }
 
-                        }.bind(this))
+                        });
+
 
                     }.bind(this), function(error) {
                         console.log('user-fetch-scriptId-error', error);
