@@ -1097,6 +1097,7 @@ class Parent extends Component {
                     )} />
                     <Route exact path="/" render={(props) => ( this.props.user ? <Home {...props} user={this.props.user} scriptIds={this.props.scriptIds} scriptHeaders={this.props.scriptHeaders}/> : <Redirect to="/" />)}/>
                     <Route exact path="/profile" render={(props) => ( this.props.user ? <Profile {...props} user={this.props.user} /> : <Redirect to="/" />)}/>
+                    <Route component={NoMatch}/>
                 </Switch>
             </div>
         );
@@ -2698,6 +2699,20 @@ class Landing extends Component {
                     Footer
                 </div>
             </div>
+        )
+    }
+}
+
+class NoMatch extends Component {
+
+    render() {
+        return (
+            <div style={{marginTop: '150px', display: 'flex', justifyContent: 'center'}}>
+            <div style={{width: '300px',  alignItems: 'center', padding: '20px', display: 'flex', flexDirection: 'column', background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
+                <i className="material-icons" style={{textDecoration: 'none', color: '#f57f17', fontSize: '35px'}}>warning</i>
+                <div>page not found</div>
+            </div>
+        </div>
         )
     }
 }
