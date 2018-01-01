@@ -568,20 +568,41 @@ class Profile extends Component {
             console.log('user is re-authenticated');
             // User re-authenticated.
 
-                db.collection("users").doc(this.props.user.uid).delete().then(function() {
-                    console.log("user document deleted!");
 
-                    user.delete().then(function() {
-                        console.log('user deleted successfully.');
-                        this.props.history.push('/');
-                        window.location.reload();
+            db.collection("users").doc(this.props.user.uid).collection('scripts').get().then(function(querySnapshot) {
+                console.log('begin script deletion');
+                let counter = 0;
+                querySnapshot.forEach(function(script) {
+                    counter++;
+
+                    db.collection("scripts").doc(script.id).delete().then(function() {
+                        console.log("script successfully deleted!");
                     }.bind(this)).catch(function(error) {
-                    // An error happened.
-                    });
+                        console.error("Error removing document: ", error);
+                    }.bind(this));
 
-                }.bind(this)).catch(function(error) {
-                    console.error("Error removing user document: ", error);
-                });
+                    if(counter===querySnapshot.size) {
+                        console.log('end deletion..begin user deletion');
+
+                        db.collection("users").doc(this.props.user.uid).delete().then(function() {
+                            console.log("user document deleted!");
+
+                            user.delete().then(function() {
+                                console.log('user deleted successfully.');
+                                this.props.history.push('/');
+                                window.location.reload();
+                            }.bind(this)).catch(function(error) {
+                                // An error happened.
+                            });
+
+                        }.bind(this)).catch(function(error) {
+                            console.error("Error removing user document: ", error);
+                        });
+                    }
+                }.bind(this));
+
+            }.bind(this));
+
 
                 // User deleted.
 
