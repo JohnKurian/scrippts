@@ -575,7 +575,8 @@ class Profile extends Component {
             // User re-authenticated.
 
 
-            db.collection("users").doc(this.props.user.uid).collection('scripts').get().then(function(querySnapshot) {
+            db.collection("users").doc(this.props.user.uid).collection('scripts')
+                .where('creator', '==', true).get().then(function(querySnapshot) {
                 console.log('begin script deletion');
                 let counter = 0;
                 querySnapshot.forEach(function(script) {
@@ -1884,10 +1885,10 @@ class ScriptList extends Component {
             <div style={{margin: '15px'}}>select the type of script to create</div>
 
                 <div onClick={this.createNewScript.bind(this)} style={{cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 100, height: 112, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={123}>
-                    <div style={{display: 'flex', padding: '15px'}}>
+                    <div style={{display: 'flex', flex: 3, paddingTop: '10px'}}>
                         <img style={{width: 65, height: 65}} src={argumentLogo}></img>
                     </div>
-                    <div style={{display: 'flex', color: '#555555', fontSize: '15px', marginTop: '20px'}}>
+                    <div style={{display: 'flex', flex: 1, color: '#555555', fontSize: '15px', marginBottom: '4px'}}>
                        Argument
                     </div>
                     {/*{this.props.scriptHeaders[id]['uid']}*/}
@@ -1895,7 +1896,6 @@ class ScriptList extends Component {
                     {/*<a href="javascript:;" onClick={this.deleteScript.bind(this, this.props.user.uid, this.props.scriptHeaders[key].uid)}>*/}
                     {/*<i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>delete_forever</i>*/}
                     {/*</a>*/}
-                    <br/>
                 </div>
             </div>
         )
