@@ -1182,8 +1182,32 @@ class ForgotPassword extends Component {
                        onChange={this.handleEmailChange.bind(this)}/>
                 <div style={{color: this.state.messageColor}}>{this.state.message}</div>
 
-                <button style={{margin: '10px', borderRadius: '10px', width: '60px', fontSize: '14px', height: '30px', background: '#1565c0', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} onClick={this.send.bind(this)}>send</button>
-                <button style={{margin: '10px', borderRadius: '10px', width: '60px', fontSize: '14px', height: '30px', background: 'red', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} onClick={this.props.closeModal}>cancel</button>
+                <button
+                    style={{margin: '10px',
+                        borderRadius: '10px',
+                        width: '60px',
+                        fontSize: '14px',
+                        height: '30px',
+                        background: '#1565c0',
+                        borderColor: 'transparent',
+                        color: '#fff',
+                        cursor: 'pointer' }}
+                    onClick={this.send.bind(this)}>
+                    send
+                </button>
+                <button
+                    style={{margin: '10px',
+                        borderRadius: '10px',
+                        width: '60px',
+                        fontSize: '14px',
+                        height: '30px',
+                        background: 'red',
+                        borderColor: 'transparent',
+                        color: '#fff',
+                        cursor: 'pointer' }}
+                    onClick={this.props.closeModal}>
+                    cancel
+                </button>
             </div>
         )
     }
@@ -1236,13 +1260,17 @@ class Header extends Component{
                             collaborators[doc.id] = doc.data();
                             this.setState({collaborators: collaborators})
                         }.bind(this));
-                    }.bind(this));
+                    }.bind(this), function(error){
+                    console.log('header collab fetch error:', error)
+                });
 
                 db.collection('scripts').doc(store.getState().activeScriptId).onSnapshot(function (doc) {
                     if(doc.exists) {
                         this.setState({scope: doc.data().scope})
                     }
-                }.bind(this))
+                }.bind(this), function(error){
+                    console.log('header scope fetch error:', error)
+                })
 
                 }
             }
@@ -1626,12 +1654,30 @@ class Header extends Component{
                 );
             }.bind(this)));
 
-
+            let isEditable = false;
+            if(this.props.user) {
+                if(this.state.collaborators[this.props.user.uid]) {
+                    if(this.state.collaborators[this.props.user.uid]['isOwner']) {
+                        isEditable = true;
+                    }
+                }
+            }
             headerSubSection = (
                 <div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
 
                     <div style={{display: 'flex', flex: 1,  alignItems: 'center', justifyContent: 'center'}}>
-                        <span suppressContentEditableWarning={true} ref="title" onInput={this.onChange.bind(this)} onKeyPress={this.onTitleHitEnter.bind(this)} contentEditable="true" style={{padding: '5px', minWidth: '50px', maxWidth: '500px', fontSize: '18px', overflow: 'hidden', whiteSpace: 'nowrap'}}>{this.state.title}</span>
+                        <span suppressContentEditableWarning={true}
+                              ref="title" onInput={this.onChange.bind(this)}
+                              onKeyPress={this.onTitleHitEnter.bind(this)}
+                              contentEditable={isEditable}
+                              style={{padding: '5px',
+                                  minWidth: '50px',
+                                  maxWidth: '500px',
+                                  fontSize: '18px',
+                                  overflow: 'hidden',
+                                  whiteSpace: 'nowrap'}}>
+                            {this.state.title}
+                            </span>
                     </div>
 
                     <div style={{flex: 0, marginRight: '32px'}}>
@@ -1696,31 +1742,60 @@ class Header extends Component{
 
                         </Modal>
 
-                        <div onClick={this.openModal} style={{padding: '8px', borderRadius: '2px', borderColor: '#1565c0', display: 'flex', flex: 1, alignItems: 'center', background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row'}}>
-                            <img style={{flex: 1, width: 12, height: 12}} src={shareIcon}></img>
-                            <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '12px'}}>Share</div>
-                        </div>
+                        { Object.keys(this.state.collaborators).length>0 &&
+                            <div onClick={this.openModal} style={{
+                                padding: '8px',
+                                borderRadius: '2px',
+                                borderColor: '#1565c0',
+                                display: 'flex',
+                                flex: 1,
+                                alignItems: 'center',
+                                background: '#1565c0',
+                                color: 'white',
+                                cursor: 'pointer',
+                                flexDirection: 'row'
+                            }}>
+                                <img style={{flex: 1, width: 12, height: 12}} src={shareIcon}></img>
+                                <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '12px'}}>
+                                    Share
+                                </div>
+                            </div>
+                        }
+
                     </div>
 
                 </div>
             );
 
 
-
-
-
-
-
         }
 
 
-        if(store.getState().activeScriptId===null) {
+
+        var re = new RegExp("^/s/", "i");
+        console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$', this.props.location.pathname)
+
+        let titleSection = null;
+
+        if(re.test(this.props.location.pathname) && this.props.user===null) {
+            console.log('***************im here');
+            titleSection = (<div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
+
+                <div style={{display: 'flex', flex: 1,  alignItems: 'center', justifyContent: 'center'}}>
+                    <span suppressContentEditableWarning={true} ref="title" onInput={this.onChange.bind(this)} onKeyPress={this.onTitleHitEnter.bind(this)} contentEditable="false" style={{padding: '5px', minWidth: '50px', maxWidth: '500px', fontSize: '18px', overflow: 'hidden', whiteSpace: 'nowrap'}}>{this.state.title}</span>
+                </div>
+            </div>);
+        }
+
+        if(!re.test(this.props.location.pathname)) {
             headerSubSection = (
                 <div style={{flex: 1}}>
 
                 </div>
             );
         }
+
+
         return (
             <header style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignContent: 'center'}}>
                 { this.props.user ?
@@ -1780,6 +1855,7 @@ class Header extends Component{
                     <ForgotPassword closeModal={this.closeForgotPasswordModal.bind(this)}/>
                 </Modal>
 
+                {titleSection}
 
                 {   this.props.user ?
                     headerSubSection :
@@ -2204,7 +2280,18 @@ class Editor extends Component{
                 collaborators[doc.id] = doc.data();
                 this.setState({collaborators: collaborators})
             }.bind(this));
-        }.bind(this));
+
+        }.bind(this), function(error){
+            console.log('error in collab fetch', error)
+        });
+
+        db.collection('scripts').doc(this.props.match.params.scriptId).onSnapshot(function (doc) {
+            if(doc.exists) {
+                this.setState({scope: doc.data().scope})
+            }
+        }.bind(this), function(error){
+            console.log('nerror in scope fetch', error)
+        });
 
         this.props.disableSidebar();
         window.addEventListener('wheel', this.handleScroll);
@@ -2245,10 +2332,10 @@ class Editor extends Component{
 
 
                 }.bind(this), function (error) {
-                    this.setState({checkingForPermission: true});
+                    this.setState({checkingForPermission: true, scriptDoesNotExist: false});
                     console.log('script-fetch-onSnapshot error:', error);
                     console.log('attempting to fetch again...');
-                    if(retryCount<20) {
+                    if(retryCount<10) {
                         setTimeout(function () {
                             if (this.props.history.location.pathname !== '/') {
                                 fetchTree.call(this, retryCount);
@@ -2256,7 +2343,7 @@ class Editor extends Component{
                         }.bind(this), 200);
                     }
                     else {
-                        this.setState({checkingForPermission: false, insufficientPermission: true});
+                        this.setState({checkingForPermission: false, insufficientPermission: true, scriptDoesNotExist: false});
                         console.log('seems like you dont have permission. Please refresh the page and try again later');
                     }
 
@@ -2282,33 +2369,64 @@ class Editor extends Component{
 
     render() {
         let contentClass = this.props.isOpen ? 'content open' : 'content';
+        console.log('public condition:', (this.props.user===null && this.state.scope === 'public' && Object.keys(this.state.tree).length>0));
+        console.log('private condition 1:', (!this.state.checkingForPermission && !this.state.scriptDoesNotExist &&
+        !this.state.insufficientPermission && Object.keys(this.state.collaborators).length>0
+        && this.props.user));
+        console.log('private condition 2:', this.props.user===null);
         return (
             <div>
-                { (!this.state.checkingForPermission && !this.state.scriptDoesNotExist && !this.state.insufficientPermission && Object.keys(this.state.collaborators).length>0 && this.props.user) &&
-                    <div className={contentClass}>
+                {
+                    (this.props.user===null && this.state.scope === 'public' && Object.keys(this.state.tree).length>0) ||
+                    (this.props.user && this.state.scope === 'public' && Object.keys(this.state.tree).length>0 && !this.state.collaborators[this.props.user.uid]) ?
 
-                        { this.state.collaborators[this.props.user.uid] &&
-                        <div className="EditorContainer">
-                            <div className="tree" id="tree">
-                                <Node user={this.props.user} data={this.state.tree}
-                                      parentNodeId={Object.keys(this.state.tree)[0]}
-                                      scriptId={this.props.match.params.scriptId}
-                                      premiseRelativeValue={this.state.premiseRelativeValue}
-                                      canEdit={this.state.collaborators[this.props.user.uid]['isOwner'] || (this.state.collaborators[this.props.user.uid]['permission'] === 'write')}/>
+                        <div className={contentClass}>
+                            <div className="EditorContainer">
+                                <div className="tree" id="tree">
+                                    <Node user={this.props.user} data={this.state.tree}
+                                          parentNodeId={Object.keys(this.state.tree)[0]}
+                                          scriptId={this.props.match.params.scriptId}
+                                          premiseRelativeValue={this.state.premiseRelativeValue}
+                                          canEdit={false}/>
 
+                                </div>
                             </div>
                         </div>
-                        }
 
 
-                    </div>
-                }
+                        :
+
+                        <div>
+                            { (!this.state.checkingForPermission && !this.state.scriptDoesNotExist &&
+                            !this.state.insufficientPermission && Object.keys(this.state.collaborators).length>0
+                            && this.props.user) &&
+                            <div className={contentClass}>
+
+                                { this.state.collaborators[this.props.user.uid] &&
+                                <div className="EditorContainer">
+                                    <div className="tree" id="tree">
+                                        <Node user={this.props.user} data={this.state.tree}
+                                              parentNodeId={Object.keys(this.state.tree)[0]}
+                                              scriptId={this.props.match.params.scriptId}
+                                              premiseRelativeValue={this.state.premiseRelativeValue}
+                                              canEdit={this.state.collaborators[this.props.user.uid]['isOwner'] || (this.state.collaborators[this.props.user.uid]['permission'] === 'write')}/>
+
+                                    </div>
+                                </div>
+                                }
+
+                            </div>
+                            }
+                        </div>
+
+
+                };
 
                 { this.state.scriptDoesNotExist &&
                 <div style={{marginTop: '150px', display: 'flex', justifyContent: 'center'}}>
                     <div style={{width: '300px', alignItems: 'center', padding: '20px', display: 'flex', flexDirection: 'column', background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
                         <i className="material-icons" style={{textDecoration: 'none', color: '#f57f17', fontSize: '35px'}}>warning</i>
-                        <div>script does not exist</div>
+                        <div style={{textAlign: 'center'}}>script does not exist</div>
                     </div>
                 </div>
 
@@ -2326,7 +2444,7 @@ class Editor extends Component{
                 <div style={{marginTop: '150px', display: 'flex', justifyContent: 'center'}}>
                     <div style={{width: '300px',  alignItems: 'center', padding: '20px', display: 'flex', flexDirection: 'column', background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
                         <i className="material-icons" style={{textDecoration: 'none', color: '#f57f17', fontSize: '35px'}}>warning</i>
-                        <div>insufficient permission</div>
+                        <div style={{textAlign: 'center'}}>script does not exist or you have insufficient permission to view this script</div>
                     </div>
                 </div>
                 }
