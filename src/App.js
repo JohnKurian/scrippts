@@ -1234,7 +1234,8 @@ class Header extends Component{
             permissionValue: 'read-only',
             shareModalMessage: '',
             timer: null,
-            forgotPasswordModalIsOpen: false
+            forgotPasswordModalIsOpen: false,
+            isConnected: true
         };
 
         this.openModal = this.openModal.bind(this);
@@ -1247,6 +1248,18 @@ class Header extends Component{
     }
 
     componentDidMount() {
+
+
+        var connectedRef = firebase.database().ref(".info/connected");
+        connectedRef.on("value", function(snap) {
+            if (snap.val() === true) {
+                this.setState({isConnected: true})
+            } else {
+                this.setState({isConnected: false})
+            }
+        }.bind(this));
+
+
         store.subscribe(() => {
             console.log('inside header:', store.getState());
             this.setState({activeScriptId: store.getState().activeScriptId, title: store.getState().title, loaderModalIsOpen: store.getState().isScriptCreation})
@@ -1797,7 +1810,9 @@ class Header extends Component{
 
 
         return (
-            <header style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignContent: 'center'}}>
+            <div>
+            <div className='header' style={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+                <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignContent: 'center'}}>
                 { this.props.user ?
                     (
                         <div style={{marginLeft: '24px'}}>
@@ -1871,7 +1886,16 @@ class Header extends Component{
                         </div>
                     )
                 }
-            </header>
+                </div>
+            </div>
+                { !this.state.isConnected &&
+                    <div className="isConnected"
+                         style={{top: 0, display: 'flex', justifyContent: 'center', color: 'white', backgroundColor: '#f57f17'}}>
+                        <i className="material-icons" style={{textDecoration: 'none', color: 'white', fontSize: '20px'}}>warning</i>
+                        not
+                        connected to the internet</div>
+                }
+            </div>
         );
     }
 }
