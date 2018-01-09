@@ -182,6 +182,144 @@ class Loader extends Component {
     }
 }
 
+
+
+class Source extends Component {
+
+    onTextAreaClick(node, evt) {
+        console.log('text area clicked:');
+
+    }
+
+
+
+    onFocus(node, evt) {
+        console.log('onFocus')
+    }
+
+    onBlur(node, evt) {
+        console.log('onBlur')
+    }
+
+    onChange = (node, evt) => {
+        // console.log('value:', evt.target.value)
+        // console.log(node)
+        this.setState({source: evt.target.value})
+
+        clearTimeout(this.timer);
+
+        this.timer = setTimeout(this.triggerChange.bind(this, evt.target.value), 1000);
+
+
+    }
+
+
+    triggerChange(source) {
+
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(this.props.node['uid']).update({
+            source: source
+        });
+
+        db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.props.scriptId).update({
+            updatedTime: Date.now()
+        });
+
+        db.collection('scripts').doc(this.props.scriptId).update({
+            updatedTime: Date.now()
+        });
+    }
+
+
+    render() {
+        return (
+            <div style={{margin: '100px'}}>
+                add source
+                <Textarea
+                    style={{resize: 'none', width: '400px'}}
+                    autoFocus={true}
+                    defaultValue={this.props.source}
+                    onFocus={this.onFocus.bind(this, {})}
+                    onBlur={this.onBlur.bind(this, {})}
+                    onChange={this.onChange.bind(this, {})}
+                    onClick={this.onTextAreaClick.bind(this, {})}
+                />
+            </div>
+        )
+    }
+}
+
+
+
+
+
+
+class Fallacy extends Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            selectedFallacy: null
+        };
+    }
+
+    componentDidMount() {
+        this.setState({selectedFallacy: this.props.fallacy})
+    }
+
+
+
+    onFallacyClick(fallacy, evt) {
+
+        this.setState({selectedFallacy: fallacy});
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(this.props.node['uid']).update({
+            fallacy: fallacy,
+            updatedTime: Date.now()
+        });
+    }
+
+    removeSelectedFallacy(fallacy, evt) {
+        this.setState({selectedFallacy: null});
+
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(this.props.node['uid']).update({
+            fallacy: null,
+            updatedTime: Date.now()
+        });
+    }
+
+    render() {
+
+        let fallacies = [
+            {title: 'ad hominem', shortDescription: 'personal attacks'},
+            {title: 'strawman', shortDescription: 'inaccurate representation of the argument'}
+        ]
+
+
+        return (
+            <div style={{margin: '100px'}}>
+
+                {this.state.selectedFallacy && <div>
+                    <div>{this.state.selectedFallacy.title}</div>
+                    <div>{this.state.selectedFallacy.shortDescription}</div>
+                    <a href="javascript:;" onClick={this.removeSelectedFallacy.bind(this)}
+                       title="remove fallacy">
+                        <i className="material-icons"
+                           style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>remove_circle</i>
+                    </a>
+                </div>}
+
+                {fallacies.map( fallacy =>
+                    <div key={fallacy.title} style={{cursor: 'pointer'}} onClick={this.onFallacyClick.bind(this, fallacy)}>
+                        <div>{fallacy.title}</div>
+                        <div>{fallacy.shortDescription}</div>
+                    </div>
+                )
+                }
+
+            </div>
+        )
+    }
+}
+
 class Node extends Component {
 
     constructor(props) {
@@ -194,7 +332,9 @@ class Node extends Component {
             textAreaWidth: '275px',
             activeNode: null,
             hoveredNode: null,
-            selectedNode: null
+            selectedNode: null,
+            fallacyModalIsOpen: false,
+            sourceModalIsOpen: false
         };
     }
 
@@ -367,6 +507,37 @@ class Node extends Component {
         this.setState({hoveredNode: null});
     }
 
+
+    openSourceModal() {
+        this.setState({sourceModalIsOpen: true})
+    }
+
+
+    closeSourceModal() {
+        this.setState({sourceModalIsOpen: false})
+    }
+
+    openFallacyModal() {
+        this.setState({fallacyModalIsOpen: true})
+    }
+
+
+    closeFallacyModal() {
+        this.setState({fallacyModalIsOpen: false})
+    }
+
+
+
+
+
+    onSourceClick() {
+        this.setState({sourceModalIsOpen: true})
+    }
+
+    onFallacyClick() {
+        this.setState({fallacyModalIsOpen: true})
+    }
+
     render() {
 
         if(this.props.data===undefined) {
@@ -456,6 +627,11 @@ class Node extends Component {
                             footer = (
                                 <div onMouseEnter={this.onNodeHoveredIn.bind(this, node)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
 
+                                    <div style={{display: 'flex'}}>
+                                        <i className="material-icons" onClick={this.onSourceClick.bind(this)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>link</i>
+                                        <i className="material-icons" onClick={this.onFallacyClick.bind(this)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '22px'}}>report_problem</i>
+                                    </div>
+
                                     <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                                         <i data-tip='custom show' data-event='click focus' onClick={()=>{console.log('im in here')}} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
                                         <ReactTooltip globalEventOff='click' place="bottom" />
@@ -477,6 +653,31 @@ class Node extends Component {
                         return (
                             <li key={node.uid}>
                                 <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+
+                                    <Modal
+                                        isOpen={this.state.sourceModalIsOpen}
+                                        onRequestClose={this.closeSourceModal.bind(this)}
+                                        style={signupModalStyles}
+                                        contentLabel="Source Modal"
+                                    >
+                                        <Source source={node.source}
+                                                scriptId={this.props.scriptId}
+                                                user={this.props.user}
+                                                node={node}/>
+                                    </Modal>
+
+                                    <Modal
+                                        isOpen={this.state.fallacyModalIsOpen}
+                                        onRequestClose={this.closeFallacyModal.bind(this)}
+                                        style={signupModalStyles}
+                                        contentLabel="Fallacy Modal"
+                                    >
+                                        <Fallacy fallacy={node.fallacy}
+                                                 scriptId={this.props.scriptId}
+                                                 node={node}
+                                                 user={this.props.user}/>
+                                    </Modal>
+
                                     {/*<div className="circle"></div>*/}
                                     <div onMouseEnter={this.onNodeEnter.bind(this, node)} onMouseLeave={this.onNodeLeave.bind(this, node)} style={{
                                         background: 'white',
@@ -508,6 +709,41 @@ class Node extends Component {
                                             onChange={this.onChange.bind(this, node)}
                                             onClick={this.onTextAreaClick.bind(this, node)}
                                         />
+
+
+                                        {node.source &&
+                                            <div style={{display: 'flex'}}>
+                                                <i className="material-icons" style={{textDecoration: 'none', color: '#1976d2', fontSize: '24px', marginRight: '3px'}}>link</i>
+                                                <div
+                                                    style={{
+                                                    padding: '3px',
+                                                    width: '270px',
+                                                    wordWrap: 'break-word',
+                                                    whiteSpace: 'pre-wrap',
+                                                    textAlign: 'left',
+                                                    fontSize: '13px'
+                                                }}>
+                                                    {node.source}
+                                                </div>
+                                            </div>
+                                        }
+
+                                        {node.fallacy &&
+                                        <div style={{display: 'flex'}}>
+                                            <i className="material-icons" style={{textDecoration: 'none', color: 'orange', fontSize: '24px', marginRight: '3px'}}>warning</i>
+                                            <div
+                                                style={{
+                                                    padding: '3px',
+                                                    width: '270px',
+                                                    wordWrap: 'break-word',
+                                                    whiteSpace: 'pre-wrap',
+                                                    textAlign: 'left',
+                                                    fontSize: '13px'
+                                                }}>
+                                                {node.fallacy.title}
+                                            </div>
+                                        </div>
+                                        }
 
                                         {footer}
 
