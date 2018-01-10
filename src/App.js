@@ -344,16 +344,16 @@ class Node extends Component {
 
         clearTimeout(this.timer);
 
-        this.timer = setTimeout(this.triggerChange.bind(this, node), 1000);
+        this.timer = setTimeout(this.triggerChange.bind(this, node, evt.target.value), 1000);
 
 
     }
 
 
-    triggerChange(node) {
+    triggerChange(node ,text) {
 
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
-            text: this.state.text,
+            text: text,
             updatedTime: Date.now()
         });
 
@@ -2095,7 +2095,7 @@ class Header extends Component{
                 }
                 </div>
             </div>
-                { !this.state.isConnected &&
+                { (!this.state.isConnected && false) &&
                     <div className="isConnected"
                          style={{top: 0, display: 'flex', justifyContent: 'center', color: 'white', backgroundColor: '#f57f17'}}>
                         <i className="material-icons" style={{textDecoration: 'none', color: 'white', fontSize: '20px'}}>warning</i>
