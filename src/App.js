@@ -187,23 +187,19 @@ class Loader extends Component {
 class Source extends Component {
 
     onTextAreaClick(node, evt) {
-        console.log('text area clicked:');
 
     }
 
 
 
     onFocus(node, evt) {
-        console.log('onFocus')
     }
 
     onBlur(node, evt) {
-        console.log('onBlur')
     }
 
     onChange = (node, evt) => {
-        // console.log('value:', evt.target.value)
-        // console.log(node)
+
         this.setState({source: evt.target.value})
 
         clearTimeout(this.timer);
@@ -345,13 +341,8 @@ class Node extends Component {
 
 
     onChange = (node, evt) => {
-        // console.log('value:', evt.target.value)
-        // console.log(node)
-        this.setState({text: evt.target.value})
 
         clearTimeout(this.timer);
-
-        this.setState({ value: 100 });
 
         this.timer = setTimeout(this.triggerChange.bind(this, node), 1000);
 
@@ -377,8 +368,6 @@ class Node extends Component {
 
 
     onTextAreaClick(node, evt) {
-        console.log('text area clicked:', node.uid);
-
 
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
             textAreaWidth: evt.target.style.width,
@@ -397,12 +386,10 @@ class Node extends Component {
 
 
     onFocus(node, evt) {
-        console.log('onFocus')
         this.setState({showTools: true, selectedNode: node.uid});
     }
 
     onBlur(node, evt) {
-        console.log('onBlur')
         this.setState({showTools: true,  selectedNode: null})
     }
 
@@ -449,7 +436,6 @@ class Node extends Component {
     onSaveClick(node) {
 
         //attach child node to flat object
-        console.log('im in here')
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
             text: this.state.text,
             updatedTime: Date.now()
@@ -633,7 +619,7 @@ class Node extends Component {
                                     </div>
 
                                     <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                                        <i data-tip='custom show' data-event='click focus' onClick={()=>{console.log('im in here')}} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
+                                        <i data-tip='custom show' data-event='click focus' onClick={()=>{ }} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
                                         <ReactTooltip globalEventOff='click' place="bottom" />
 
                                         <button style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
@@ -699,7 +685,7 @@ class Node extends Component {
 
                                         <Textarea
                                             id={node.uid}
-                                            key={node.text}
+                                            key={node.uid}
                                             style={{resize: 'none', width: '300px', background: color}}
                                             autoFocus={node.uid === this.state.selectedNode}
                                             defaultValue={node.text}
@@ -789,7 +775,6 @@ class Profile extends Component {
 
     onDeleteAccountSubmit() {
         this.setState({showConfirmDeletion: true});
-        console.log('delete account clicked');
     }
 
     onCancelDeletionClick() {
@@ -976,7 +961,6 @@ class DeleteScript extends Component {
     deleteScript(userId, scriptId, closeDeleteScript, evt) {
         evt.preventDefault();
         this.setState({deleteScriptInProgress: true});
-        console.log('im in here');
         db.collection("scripts").doc(scriptId).delete().then(function() {
             console.log("Document successfully deleted from /scripts");
 
@@ -1497,14 +1481,12 @@ class Header extends Component{
 
 
         store.subscribe(() => {
-            console.log('inside header:', store.getState());
             this.setState({activeScriptId: store.getState().activeScriptId, title: store.getState().title, loaderModalIsOpen: store.getState().isScriptCreation})
 
             if(store.getState().activeScriptId) {
 
                 db.collection('scripts').doc(store.getState().activeScriptId).collection('collaborators').onSnapshot(function (querySnapshot) {
                         querySnapshot.forEach(function (doc) {
-                            console.log(doc.id, " => ", doc.data());
                             let collaborators = this.state.collaborators;
                             collaborators[doc.id] = doc.data();
                             this.setState({collaborators: collaborators})
@@ -1535,13 +1517,11 @@ class Header extends Component{
             this.setState({loginModalIsOpen: false, signupModalIsOpen: false});
         }
 
-        console.log('im in here header ')
 
         if(props.scriptHeaders && this.state.activeScriptId) {
             let scriptList = Object.keys(props.scriptHeaders);
             console.log('scriptList:', scriptList);
             if (!scriptList.includes(this.state.activeScriptId)) {
-                console.log('@@@@@@@@@@@@ script not found in header @@@@@@@@@@@@');
                 store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
             }
         }
@@ -1693,7 +1673,6 @@ class Header extends Component{
     onTitleHitEnter(evt) {
         var keycode = evt.charCode || evt.keyCode;
         if (keycode  === 13) { //Enter key's keycode
-            console.log('im in here');
             evt.preventDefault();
         }
     }
@@ -1702,7 +1681,6 @@ class Header extends Component{
         // console.log('value:', evt.target.value)
         // console.log(node)
         this.setState({text: evt.target.value})
-        console.log('evt:', evt.target.value)
 
         clearTimeout(this.timer);
 
@@ -1715,11 +1693,8 @@ class Header extends Component{
 
 
     triggerChange() {
-        console.log('inside trigger change')
 
         let domNode = ReactDOM.findDOMNode(this.refs.title);
-        console.log(domNode)
-        console.log(domNode.innerText);
 
         if(domNode.innerText.length>0) {
             this.setState({title: domNode.innerText});
@@ -1739,8 +1714,6 @@ class Header extends Component{
 
     onTitleChange(evt) {
         let domNode = ReactDOM.findDOMNode(this.refs.title);
-        console.log(domNode)
-        console.log(domNode.innerText);
 
         if(domNode.innerText.length>0) {
             this.setState({title: domNode.innerText});
@@ -2022,12 +1995,10 @@ class Header extends Component{
 
 
         var re = new RegExp("^/s/", "i");
-        console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$', this.props.location.pathname)
 
         let titleSection = null;
 
         if(re.test(this.props.location.pathname) && this.props.user===null) {
-            console.log('***************im here');
             titleSection = (<div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
 
                 <div style={{display: 'flex', flex: 1,  alignItems: 'center', justifyContent: 'center'}}>
@@ -2188,7 +2159,6 @@ class ScriptList extends Component {
                             createdTime: Date.now(),
                             updatedTime: Date.now()
                         }).then(function (nodeRef) {
-                            console.log('script addition finished 2')
                         });
 
                         db.collection('users').doc(this.props.user.uid).collection('scripts').doc(scriptRef.id).set({
@@ -2343,7 +2313,6 @@ class SideBar extends Component{
                             createdTime: Date.now(),
                             updatedTime: Date.now()
                         }).then(function (nodeRef) {
-                            console.log('script addition finished 2')
                         });
 
                         db.collection('users').doc(this.props.user.uid).collection('scripts').doc(scriptRef.id).set({
@@ -2452,9 +2421,7 @@ class Editor extends Component{
     componentWillReceiveProps(nextProps) {
         if(nextProps.scriptHeaders) {
             let scriptList = Object.keys(nextProps.scriptHeaders);
-            console.log('scriptList:', scriptList);
             if (!scriptList.includes(nextProps.match.params.scriptId)) {
-                console.log('@@@@@@@@@@@@ script not found @@@@@@@@@@@@');
                 this.setState({scriptDoesNotExist: true});
             }
         }
@@ -2534,8 +2501,6 @@ class Editor extends Component{
 
         db.collection('scripts').doc(this.props.match.params.scriptId).collection('collaborators').onSnapshot(function (querySnapshot) {
             querySnapshot.forEach(function (doc) {
-                console.log('inside editor collab:');
-                console.log(doc.id, " => ", doc.data());
                 let collaborators = this.state.collaborators;
                 collaborators[doc.id] = doc.data();
                 this.setState({collaborators: collaborators})
@@ -2629,11 +2594,6 @@ class Editor extends Component{
 
     render() {
         let contentClass = this.props.isOpen ? 'content open' : 'content';
-        console.log('public condition:', (this.props.user===null && this.state.scope === 'public' && Object.keys(this.state.tree).length>0));
-        console.log('private condition 1:', (!this.state.checkingForPermission && !this.state.scriptDoesNotExist &&
-        !this.state.insufficientPermission && Object.keys(this.state.collaborators).length>0
-        && this.props.user));
-        console.log('private condition 2:', this.props.user===null);
         return (
             <div>
                 {
@@ -2967,7 +2927,7 @@ class Login extends Component {
             // Handle Errors here.
             let errorCode = error.code;
             let errorMessage = error.message;
-            console.log('auth-error:##################################', error, errorCode);
+            console.log('auth-error:', error, errorCode);
             this.setState({loginError: errorMessage, error: error, errorCode: errorCode})
             if(!error) {
                 this.props.closeLoginModal();
@@ -3357,7 +3317,6 @@ class App extends Component {
 
                         //deleting script headers
                         if(scriptIds.length < this.state.scriptIds.length) {
-                            console.log('inside delete')
                             Array.prototype.diff = function(a) {
                                 return this.filter(function(i) {return a.indexOf(i) < 0;});
                             };
