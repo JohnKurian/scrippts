@@ -8,6 +8,13 @@ import argumentLogo from "./argument_icon.png";
 import scripptLogo from './scrippt_logo_40px.png';
 
 import shareIcon from "./share_icon.png";
+import landingSectionOne from './landing_section_one.png';
+import landingSectionTwo from './landing_section_two.png';
+import landingSectionThree from './landing_section_three.png';
+import landingSectionArgumentMap from './landing_section_four_argument_map.png';
+import landingSectionDecisionTree from './landing_section_four_decision_tree.png';
+import landingSectionNestedList from './landing_section_four_nested_list.png';
+import landingSectionFive from './landing_section_five.png';
 
 import ReactDOM from "react-dom";
 
@@ -768,6 +775,10 @@ class Profile extends Component {
         };
     }
 
+    componentWillMount() {
+        document.body.style.backgroundColor = "#e9ebee";
+    }
+
     componentDidMount() {
         document.title = 'Profile';
         store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
@@ -1022,6 +1033,10 @@ class Home extends Component {
             userId: '',
             numScripts: 0
         };
+    }
+
+    componentWillMount() {
+        document.body.style.backgroundColor = "#e9ebee";
     }
 
     componentDidMount() {
@@ -2499,6 +2514,8 @@ class Editor extends Component{
 
     componentWillMount() {
 
+        document.body.style.backgroundColor = "#e9ebee";
+
         db.collection('scripts').doc(this.props.match.params.scriptId).collection('collaborators').onSnapshot(function (querySnapshot) {
             querySnapshot.forEach(function (doc) {
                 let collaborators = this.state.collaborators;
@@ -2848,9 +2865,9 @@ class Signup extends Component {
 
 
     render() {
-        return <div style={{width: '350px'}}>
+        return <div style={{width: '350px', marginBottom: '20px'}}>
 
-            <div style={{background: '#1565c0', color: 'white', textAlign: 'center', padding: '10px', fontSize: '19px'}}>Signup</div>
+            <div style={{background: 'white', color: '#1565c0', textAlign: 'center', padding: '10px', fontSize: '19px', marginTop: '15px'}}>Signup</div>
             <form style={{width: '100%'}} id="signup" onSubmit={this.handleSignupSubmit.bind(this)}>
 
                 <div style={{paddingTop: '30px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '10px'}}>
@@ -3007,7 +3024,7 @@ class Login extends Component {
 
     render() {
         return <div style={{width: '350px'}}>
-            <div style={{background: '#1565c0', color: 'white', textAlign: 'center', padding: '10px', fontSize: '19px'}}>Login</div>
+            <div style={{background: 'white', color: '#1565c0', textAlign: 'center', padding: '10px', fontSize: '19px', marginTop: '15px'}}>Login</div>
             <form style={{width: '100%'}} id="login" onSubmit={this.handleLoginSubmit.bind(this)}>
                 <div style={{paddingTop: '20px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '10px'}}>
                     <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="text" placeholder='enter email or username' required value={this.state.loginValue}
@@ -3044,6 +3061,10 @@ class Landing extends Component {
         super(props);
     }
 
+    componentWillMount() {
+        document.body.style.backgroundColor = "white";
+    }
+
     componentDidMount() {
         document.title = 'Scrippt';
     }
@@ -3052,7 +3073,84 @@ class Landing extends Component {
         return (
             <div style={{display: 'flex', flex: 1, height: '100vh', flexDirection: 'column'}}>
                 <div style={{ flex: 1, marginTop: '100px'}}>
-                    Landing page
+
+                    <div style={{height: '400px', display: 'flex'}}>
+                    <div style={{flex: 2, display: 'flex', flexDirection: 'column', paddingTop: '75px', paddingLeft: '100px'}}>
+                        <img style={{width: 100, height: 100}} src={landingSectionOne}></img>
+                        <div style={{paddingTop: '20px', fontSize: '20px', width: '400px'}}>
+                            A better way to structure and process your thoughts.
+                        </div>
+                    </div>
+                        <div style={{flex: 1, display: 'flex', justifyContent: 'center', marginRight: '50px', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
+                            <Signup/>
+                        </div>
+                    </div>
+
+
+                    <div style={{height: '250px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+                        <img style={{width: 100, height: 100}} src={landingSectionTwo}></img>
+                        <div style={{paddingTop: '20px', fontSize: '20px', width: '400px'}}>
+                            Focused on streamlining critical thinking
+                        </div>
+                        <div style={{width: '600px', textAlign: 'center', marginTop: '20px'}}>
+                            Offers various formats that are much more efficient
+                            at structuring and processing information
+                            than traditional document formats
+                        </div>
+                    </div>
+
+                    <div style={{height: '600px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+
+                        <img style={{width: 100, height: 100}} src={landingSectionThree}></img>
+                        <div style={{display: 'flex', justifyContent: 'center', paddingTop: '20px', fontSize: '20px', width: '400px'}}>
+                            Create
+                        </div>
+                        <div style={{display: 'flex', flexDirection: 'row'}}>
+                            <div style={{margin: '50px'}}>
+                                <img style={{width: 100, height: 100}} src={landingSectionArgumentMap}></img>
+                                <div>
+                                    argument maps
+                                </div>
+
+                            </div>
+                            <div style={{margin: '50px'}}>
+                                <img style={{width: 100, height: 100}} src={landingSectionDecisionTree}></img>
+                                <div>
+                                    decision trees*
+                                </div>
+
+                            </div>
+                            <div style={{margin: '50px'}}>
+                                <img style={{width: 100, height: 100}} src={landingSectionNestedList}></img>
+                                <div>
+                                    nested lists*
+                                </div>
+
+                            </div>
+                            <div style={{margin: '50px', alignSelf: 'center'}}>
+                                <div>
+                                    and more*
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div>*coming soon</div>
+                    </div>
+
+                    <div style={{height: '400px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+
+                        <img style={{width: 100, height: 100}} src={landingSectionFive}></img>
+                        <div style={{paddingTop: '20px', fontSize: '20px', width: '400px', textAlign: 'center'}}>
+                            Collaborate with others
+                        </div>
+                        <div style={{width: '600px', textAlign: 'center', marginTop: '20px'}}>
+                            Share your scripts with the public or other users and invite them to edit your scripts in a real-time editor.
+                        </div>
+
+
+
+                    </div>
                 </div>
 
                 <div style={{ flex: 0, alignSelf: 'center', marginBottom: '20px'}}>
@@ -3082,6 +3180,11 @@ class NoMatch extends Component {
 }
 
 class Privacy extends Component {
+
+
+    componentWillMount() {
+        document.body.style.backgroundColor = "#e9ebee";
+    }
 
     render() {
         return (
@@ -3190,6 +3293,10 @@ class Privacy extends Component {
 
 
 class Terms extends Component {
+
+    componentWillMount() {
+        document.body.style.backgroundColor = "#e9ebee";
+    }
 
     render() {
         return (
