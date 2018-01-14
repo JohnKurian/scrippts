@@ -3,6 +3,10 @@ body {
   font-family: 'Noto Sans', sans-serif !important;
 }
 
+.none {
+
+}
+
 .EditorContainer {
   text-align: center;
 }

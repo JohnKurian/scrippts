@@ -235,10 +235,13 @@ class Source extends Component {
 
     render() {
         return (
-            <div style={{margin: '100px'}}>
+            <div style={{margin: '20px', display: 'flex', flexDirection: 'column'}}>
+                <div style={{display: 'flex', paddingBottom: '10px'}}>
+                    <i className="material-icons" style={{textDecoration: 'none', color: '#1565c0', fontSize: '24px', marginRight: '3px'}}>link</i>
                 add source
+                </div>
                 <Textarea
-                    style={{resize: 'none', width: '400px'}}
+                    style={{resize: 'none', width: '400px', border: 'solid 2px #1565c0', outline: 'none'}}
                     autoFocus={true}
                     defaultValue={this.props.node.source}
                     onFocus={this.onFocus.bind(this, {})}
@@ -716,7 +719,14 @@ class Node extends Component {
                                                     textAlign: 'left',
                                                     fontSize: '13px'
                                                 }}>
-                                                    {node.source}
+                                                    { node.source.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) ) &&
+                                                    <a style={{display: 'initial', border: 0, padding: 0, textDecoration: 'underline', color: '#1565c0'}} target="_blank" href={node.source}>{node.source}</a>
+                                                    }
+
+
+                                                    { !node.source.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) ) &&
+                                                        node.source
+                                                    }
                                                 </div>
                                             </div>
                                         }
