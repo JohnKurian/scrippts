@@ -988,10 +988,11 @@ class Profile extends Component {
             <div style={{marginTop: '75px', display: 'flex', justifyContent: 'center'}}>
                 <div style={{width: '400px', padding: '20px', display: 'flex', flexDirection: 'column', background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
                     <div style={{alignSelf: 'center', fontSize: '20px', color: '#0d47a1', marginBottom: '25px'}}>profile</div>
-                <div style={{display: 'flex', flexDirection: 'row', padding: '5px'}}>
+
+                    { this.props.user.email && <div style={{display: 'flex', flexDirection: 'row', padding: '5px'}}>
                         <div style={{flex: 1}}>email</div>
                         <div style={{flex: 1}}>{this.props.user.email}</div>
-                    </div>
+                    </div>}
 
                     <div style={{display: 'flex', flexDirection: 'row', padding: '5px'}}>
                     <div style={{flex: 1}}>username</div>
@@ -1649,7 +1650,7 @@ class Header extends Component{
 
     afterOpenModal() {
         // references are now sync'd and can be accessed.
-        this.subtitle.style.color = 'black';
+        // this.subtitle.style.color = 'black';
     }
 
     closeModal() {
@@ -2006,6 +2007,7 @@ class Header extends Component{
                             style={shareModalStyles}
                             contentLabel="Example Modal"
                         >
+                            { !this.props.user.isAnonymous && <div>
                             <div style={{display: 'flex', flex: 1, flexDirection: 'row', marginBottom: '40px'}}>
                                 <h3 ref={subtitle => this.subtitle = subtitle} style={{flex: 1, margin: 0, color: 'black'}}>Share settings</h3>
                                 <a href="javascript:;" onClick={this.closeModal}>
@@ -2057,7 +2059,14 @@ class Header extends Component{
                                 </div> : ''
 
                             }
+                            </div> }
 
+                            { this.props.user.isAnonymous && <div>
+                                sorry, share feature is not available in the anonymous mode
+                            </div>
+
+
+                            }
                         </Modal>
 
                         { Object.keys(this.state.collaborators).length>0 &&
@@ -3150,6 +3159,39 @@ class Landing extends Component {
         document.title = 'Scrippt';
     }
 
+    onAnonymousLoginSubmit() {
+        firebase.auth().signInAnonymously()
+            .then(function(user) {
+                console.log('login:', user.uid.substring(0,20));
+                let username = user.uid.substring(0,15);
+                db.collection("users").doc(user.uid).set({
+                    uid: user.uid,
+                    email: user.email,
+                    emailVerified: user.emailVerified,
+                    photoURL: user.photoURL,
+                    isAnonymous: user.isAnonymous,
+                    displayName: user.displayName,
+                    phoneNumber: user.phoneNumber,
+                    username: username
+                    // providerData: user.providerData
+                })
+                    .then(function() {
+                        console.log("user added to database");
+                    })
+                    .catch(function(error) {
+                        console.error("Error adding document: ", error);
+                    });
+            })
+            .catch(function(error) {
+                console.log('anonymous-error:', error);
+            // Handle Errors here.
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            // ...
+        });
+
+    }
+
     render() {
         return (
             <div style={{display: 'flex', flex: 1, height: '100vh', flexDirection: 'column'}}>
@@ -3162,8 +3204,11 @@ class Landing extends Component {
                             A better way to structure and process your thoughts.
                         </div>
                     </div>
-                        <div style={{flex: 1, display: 'flex', justifyContent: 'center', marginRight: '50px', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
+                        <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', marginRight: '50px', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
                             <Signup/>
+                            <div style={{paddingLeft: '50px', paddingRight: '50px'}}>
+                                <input onClick={this.onAnonymousLoginSubmit.bind(this)} style={{width: '100%', fontSize: '14px', height: '30px', background: 'black', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="submit" value="Login In Anonymously"/>
+                            </div>
                         </div>
                     </div>
 
