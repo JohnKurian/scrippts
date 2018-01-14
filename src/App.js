@@ -1660,8 +1660,8 @@ class Header extends Component{
         let permissionObj = {};
         permissionObj['permission'] = permission;
 
-        // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/share';
-        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/addCollaborator';
+        let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/addCollaborator';
+        // let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/addCollaborator';
 
         let id = username;
         let type = 'username';
@@ -1745,8 +1745,8 @@ class Header extends Component{
 
     removePartner(userId, scriptId, isOwner) {
 
-        // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/share';
-        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/removeCollaborator';
+        let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/removeCollaborator';
+        // let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/removeCollaborator';
 
         let params = "userId=" + userId + "&" + "scriptId=" + scriptId;
 
@@ -2768,8 +2768,8 @@ class Signup extends Component {
         console.log('checking for username...');
 
 
-        // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/share';
-        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/checkUsername';
+        let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/checkUsername';
+        // let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/checkUsername';
 
         let params = "username=" + username;
 
@@ -2965,8 +2965,8 @@ class Login extends Component {
     fetchUserFromUsername(username, password) {
         console.log('checking for username...');
 
-        // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/share';
-        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/fetchUserFromUsername';
+        let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/fetchUserFromUsername';
+        // let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/fetchUserFromUsername';
 
         let params = "username=" + username;
 
@@ -3087,7 +3087,7 @@ class Landing extends Component {
                     </div>
 
 
-                    <div style={{height: '250px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+                    <div style={{height: '300px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
                         <img style={{width: 100, height: 100}} src={landingSectionTwo}></img>
                         <div style={{paddingTop: '20px', fontSize: '20px', width: '400px'}}>
                             Focused on streamlining critical thinking
