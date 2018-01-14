@@ -2,6 +2,8 @@ import React, {Component} from "react";
 import "./App.css";
 import "./Node.css";
 import "./Layout.css";
+import "./Fallacy.css";
+
 import createBrowserHistory from "history/createBrowserHistory";
 
 import argumentLogo from "./argument_icon.png";
@@ -98,6 +100,32 @@ const signupModalStyles = {
         bottom: 0,
         backgroundColor: "rgba(255, 255, 255, 0.75)",
         zIndex: 10000
+    }
+};
+
+
+
+const fallacyModalStyles = {
+    content : {
+        padding: '0px',
+        top                   : '325px',
+        height                : '600px',
+        left                  : '50%',
+        right                 : 'auto',
+        bottom                : 'auto',
+        marginRight           : '-50%',
+        transform             : 'translate(-50%, -50%)',
+        overflow: 'none'
+    },
+    overlay: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(255, 255, 255, 0.75)",
+        zIndex: 10000,
+        overflow: 'none'
     }
 };
 
@@ -295,33 +323,70 @@ class Fallacy extends Component {
     render() {
 
         let fallacies = [
-            {title: 'ad hominem', shortDescription: 'personal attacks'},
-            {title: 'strawman', shortDescription: 'inaccurate representation of the argument'}
-        ]
+            {title: 'strawman', shortDescription: "Misrepresenting someone's argument to make it easier to attack."},
+            {title: 'false cause', shortDescription: "Presuming that a real or perceived relationship between things means that one is the cause of the other."},
+            {title: 'appeal to emotion', shortDescription: 'Manipulating an emotional response in place of a valid or compelling argument.'},
+            {title: 'the fallacy fallacy', shortDescription: "Presuming that because a claim has been poorly argued, or a fallacy has been made, that the claim itself must be wrong."},
+            {title: 'slippery slope', shortDescription: "Asserting that if we allow A to happen, then Z will consequently happen too, therefore A should not happen."},
+            {title: 'ad hominem', shortDescription: "Attacking your opponent's character or personal traits in an attempt to undermine their argument."},
+            {title: 'tu quoque', shortDescription: "Avoiding having to engage with criticism by turning it back on the accuser - answering criticism with criticism."},
+            {title: 'personal incredulity', shortDescription: "Saying that because one finds something difficult to understand that it's therefore not true."},
+            {title: 'special pleading', shortDescription: "Moving the goalposts or making up exceptions when a claim is shown to be false."},
+            {title: 'loaded question', shortDescription: "Asking a question that has a presumption built into it so that it can't be answered without appearing guilty."},
+            {title: 'burden of proof', shortDescription: "Saying that the burden of proof lies not with the person making the claim, but with someone else to disprove."},
+            {title: 'ambiguity', shortDescription: "Using double meanings or ambiguities of language to mislead or misrepresent the truth."},
+
+
+
+            {title: "the gambler's fallacy", shortDescription: "Believing that 'runs' occur to statistically independent phenomena such as roulette wheel spins."},
+            {title: 'bandwagon', shortDescription: "Appealing to popularity or the fact that many people do something as an attempted form of validation."},
+            {title: 'appeal to authority', shortDescription: "Saying that because an authority thinks something, it must therefore be true."},
+            {title: 'composition/division', shortDescription: "Assuming that what's true about one part of something has to be applied to all, or other, parts of it."},
+            {title: 'no true scotsman', shortDescription: "Making what could be called an appeal to purity as a way to dismiss relevant criticisms or flaws of an argument."},
+            {title: 'genetic', shortDescription: "Judging something good or bad on the basis of where it comes from, or from whom it comes."},
+            {title: 'black-or-white', shortDescription: "Where two alternative states are presented as the only possibilities, when in fact more possibilities exist."},
+            {title: 'begging the question', shortDescription: "A circular argument in which the conclusion is included in the premise."},
+            {title: 'appeal to nature', shortDescription: "Making the argument that because something is 'natural' it is therefore valid, justified, inevitable, good, or ideal."},
+            {title: 'anecdotal', shortDescription: "Using personal experience or an isolated example instead of a valid argument, especially to dismiss statistics."},
+            {title: 'the texas sharpshooter', shortDescription: "Cherry-picking data clusters to suit an argument, or finding a pattern to fit a presumption."},
+            {title: 'middle ground', shortDescription: "Saying that a compromise, or middle point, between two extremes is the truth."},
+
+        ];
 
 
         return (
-            <div style={{margin: '100px'}}>
-
-                {this.state.selectedFallacy && <div>
-                    <div>{this.state.selectedFallacy.title}</div>
-                    <div>{this.state.selectedFallacy.shortDescription}</div>
-                    <a href="javascript:;" onClick={this.removeSelectedFallacy.bind(this)}
-                       title="remove fallacy">
-                        <i className="material-icons"
-                           style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>remove_circle</i>
-                    </a>
-                </div>}
-
-                {fallacies.map( fallacy =>
-                    <div key={fallacy.title} style={{cursor: 'pointer'}} onClick={this.onFallacyClick.bind(this, fallacy)}>
-                        <div>{fallacy.title}</div>
-                        <div>{fallacy.shortDescription}</div>
+            <div style={{width: '500px', height: '750px', paddingLeft: '20px', paddingRight: '20px', paddingTop: '20px'}}>
+                <div style={{display: 'flex', paddingBottom: '20px'}}>
+                    <i className="material-icons" style={{textDecoration: 'none', color: 'orange', fontSize: '24px', marginRight: '3px'}}>warning</i>
+                    <div style={{fontWeight: 'bold', fontSize: '18px'}}>report fallacy</div>
+                </div>
+                {
+                    this.state.selectedFallacy &&
+                    <div style={{display: 'flex'}}>
+                        <div style={{padding: '8px'}}>
+                            <a href="javascript:;" onClick={this.removeSelectedFallacy.bind(this)}
+                               title="remove fallacy">
+                                <i className="material-icons"
+                                   style={{textDecoration: 'none', color: '#c62828', fontSize: '25px'}}>remove_circle</i>
+                            </a>
+                        </div>
+                        <div>
+                            <div style={{fontWeight: 'bold', fontSize: '18px'}}>{this.state.selectedFallacy.title}</div>
+                            <div style={{fontSize: '15px'}}>{this.state.selectedFallacy.shortDescription}</div>
+                        </div>
                     </div>
-                )
                 }
 
-            </div>
+                <div style={{overflowY: 'scroll', height: '400px', marginTop: '25px'}}>
+                {fallacies.map( fallacy =>
+                    <div key={fallacy.title} className='fallacy-item' onClick={this.onFallacyClick.bind(this, fallacy)}>
+                        <div style={{fontWeight: 'bold', fontSize: '18px'}}>{fallacy.title}</div>
+                        <div style={{fontSize: '15px'}}>{fallacy.shortDescription}</div>
+                    </div>
+                )}
+                </div>
+
+                </div>
         )
     }
 }
@@ -519,7 +584,12 @@ class Node extends Component {
 
 
     closeFallacyModal() {
+        document.body.style.overflow = "auto";
         this.setState({fallacyModalIsOpen: false})
+    }
+
+    afterOpenFallacyModal() {
+        document.body.style.overflow = "hidden";
     }
 
 
@@ -664,8 +734,9 @@ class Node extends Component {
 
                                     <Modal
                                         isOpen={this.state.fallacyModalIsOpen}
+                                        onAfterOpen={this.afterOpenFallacyModal.bind(this)}
                                         onRequestClose={this.closeFallacyModal.bind(this)}
-                                        style={signupModalStyles}
+                                        style={fallacyModalStyles}
                                         contentLabel="Fallacy Modal"
                                     >
                                         <Fallacy fallacy={node.fallacy}
@@ -2043,7 +2114,7 @@ class Header extends Component{
 
         return (
             <div>
-            <div className='header' style={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+            <div className='header' style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', width: '100vw'}}>
                 <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignContent: 'center'}}>
                 { this.props.user ?
                     (
