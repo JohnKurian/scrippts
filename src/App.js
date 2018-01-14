@@ -240,7 +240,7 @@ class Source extends Component {
                 <Textarea
                     style={{resize: 'none', width: '400px'}}
                     autoFocus={true}
-                    defaultValue={this.props.source}
+                    defaultValue={this.props.node.source}
                     onFocus={this.onFocus.bind(this, {})}
                     onBlur={this.onBlur.bind(this, {})}
                     onChange={this.onChange.bind(this, {})}
@@ -266,7 +266,7 @@ class Fallacy extends Component {
     }
 
     componentDidMount() {
-        this.setState({selectedFallacy: this.props.fallacy})
+        this.setState({selectedFallacy: this.props.node.fallacy})
     }
 
 
@@ -523,12 +523,12 @@ class Node extends Component {
 
 
 
-    onSourceClick() {
-        this.setState({sourceModalIsOpen: true})
+    onSourceClick(node) {
+        this.setState({sourceModalIsOpen: true, sourceSelectedNode: node})
     }
 
-    onFallacyClick() {
-        this.setState({fallacyModalIsOpen: true})
+    onFallacyClick(node) {
+        this.setState({fallacyModalIsOpen: true, fallacySelectedNode: node})
     }
 
     render() {
@@ -621,8 +621,8 @@ class Node extends Component {
                                 <div onMouseEnter={this.onNodeHoveredIn.bind(this, node)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
 
                                     <div style={{display: 'flex'}}>
-                                        <i className="material-icons" onClick={this.onSourceClick.bind(this)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>link</i>
-                                        <i className="material-icons" onClick={this.onFallacyClick.bind(this)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '22px'}}>report_problem</i>
+                                        <i className="material-icons" onClick={this.onSourceClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>link</i>
+                                        <i className="material-icons" onClick={this.onFallacyClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '22px'}}>report_problem</i>
                                     </div>
 
                                     <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
@@ -656,7 +656,7 @@ class Node extends Component {
                                         <Source source={node.source}
                                                 scriptId={this.props.scriptId}
                                                 user={this.props.user}
-                                                node={node}/>
+                                                node={this.state.sourceSelectedNode}/>
                                     </Modal>
 
                                     <Modal
@@ -667,7 +667,7 @@ class Node extends Component {
                                     >
                                         <Fallacy fallacy={node.fallacy}
                                                  scriptId={this.props.scriptId}
-                                                 node={node}
+                                                 node={this.state.fallacySelectedNode}
                                                  user={this.props.user}/>
                                     </Modal>
 
