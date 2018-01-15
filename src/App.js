@@ -405,7 +405,8 @@ class Node extends Component {
             hoveredNode: null,
             selectedNode: null,
             fallacyModalIsOpen: false,
-            sourceModalIsOpen: false
+            sourceModalIsOpen: false,
+            lastUpdated: Date.now()
         };
     }
 
@@ -418,22 +419,23 @@ class Node extends Component {
     onChange = (node, evt) => {
 
         clearTimeout(this.timer);
+        this.setState({lastUpdated: Date.now()});
 
-        this.timer = setTimeout(this.triggerChange.bind(this, node, evt.target.value), 1000);
+        this.timer = setTimeout(this.triggerChange.bind(this, node, evt.target.value, Date.now()), 1000);
 
 
     }
 
 
-    triggerChange(node ,text) {
+    triggerChange(node ,text, updatedTime) {
 
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
             text: text,
-            updatedTime: Date.now()
+            updatedTime: updatedTime
         });
 
         db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.props.scriptId).update({
-            updatedTime: Date.now()
+            updatedTime: updatedTime
         });
 
         db.collection('scripts').doc(this.props.scriptId).update({
@@ -770,6 +772,7 @@ class Node extends Component {
                                             style={{resize: 'none', width: '300px', background: color}}
                                             autoFocus={node.uid === this.state.selectedNode}
                                             defaultValue={node.text}
+                                            value={this.state.lastUpdated < node.updatedTime? node.text: this.defaultValue}
                                             readOnly={!this.props.canEdit}
                                             onFocus={this.onFocus.bind(this, node)}
                                             onBlur={this.onBlur.bind(this, node)}
