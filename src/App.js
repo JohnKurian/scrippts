@@ -18,6 +18,8 @@ import landingSectionDecisionTree from './landing_section_four_decision_tree.png
 import landingSectionNestedList from './landing_section_four_nested_list.png';
 import landingSectionFive from './landing_section_five.png';
 
+import anonymousLogin from './anonymous_login.png';
+
 import ReactDOM from "react-dom";
 
 import {Col, Grid, Row} from "react-flexbox-grid";
@@ -193,15 +195,17 @@ function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComp
 
 // Create a Redux store holding the state of your app.
 // Its API is { subscribe, dispatch, getState }.
-let store = createStore(mainReducer, applyMiddleware(logger));
+// let store = createStore(mainReducer, applyMiddleware(logger));
+
+let store = createStore(mainReducer);
 
 // You can use subscribe() to update the UI in response to state changes.
 // Normally you'd use a view binding library (e.g. React Redux) rather than subscribe() directly.
 // However it can also be handy to persist the current state in the localStorage.
 
-store.subscribe(() =>
-    console.log(store.getState())
-)
+// store.subscribe(() =>
+//     console.log(store.getState())
+// )
 
 
 class Loader extends Component {
@@ -1136,7 +1140,6 @@ class Home extends Component {
     }
 
     createNewScript() {
-        console.log('writing to scripts collection...');
 
         store.dispatch({type: 'CREATE_SCRIPT_INITIALIZED', isScriptCreation: true});
 
@@ -1150,9 +1153,11 @@ class Home extends Component {
             collaborators: [this.props.user.uid]
         })
             .then(function(scriptRef) {
-                console.log("Document written with ID: ", scriptRef.id);
 
-                db.collection('scripts').doc(scriptRef.id).update({uid: scriptRef.id});
+                db.collection('scripts').doc(scriptRef.id).update({uid: scriptRef.id}).then(function (nodeRef) {
+                }).catch(function (err) {
+                    console.log(err)
+                });
 
                 let permissionObj = {};
                 permissionObj['permission'] = 'write';
@@ -1161,46 +1166,71 @@ class Home extends Component {
                 permissionObj['username'] =  this.props.user.username;
                 permissionObj['isOwner'] = true;
 
-                db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj);
+                db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj).then(function (nodeRef) {
+                }).catch(function (err) {
+                });
 
                 db.collection('scripts').doc(scriptRef.id).collection('nodes').add({
                     text: ''
                 })
                     .then(function (nodeRef) {
 
-                        db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id});
+                        var nodeId = nodeRef.id;
+                        var scriptId = scriptRef.id;
 
-                        db.collection('scripts').doc(scriptRef.id).collection('nodes').doc(nodeRef.id).update({
-                            parentUid: null,
-                            relativeToParent: 1,
-                            uid: nodeRef.id,
-                            text: '',
-                            createdTime: Date.now(),
-                            updatedTime: Date.now()
-                        }).then(function (nodeRef) {
-                            console.log('script addition finished 2')
+                        db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id}).then(function (nodeRef) {
+
+
+                            db.collection('scripts').doc(scriptId).collection('nodes').doc(nodeId).update({
+                                parentUid: null,
+                                relativeToParent: 1,
+                                uid: nodeId,
+                                text: '',
+                                createdTime: Date.now(),
+                                updatedTime: Date.now()
+                            }).then(function (nodeRef) {
+
+
+                                db.collection('users').doc(this.props.user.uid).collection('scripts').doc(scriptId).set({
+                                    creator: true,
+                                    collaborator: true,
+                                    forked: false,
+                                    uid: scriptId,
+                                    createdTime: Date.now(),
+                                    updatedTime: Date.now(),
+                                    title: 'Untitled'
+                                }).then(function (nodeRef) {
+
+                                    store.dispatch({type: 'SCRIPT_CREATION_FINISHED', isScriptCreation: false});
+                                    this.props.history.push('/s/' + scriptId);
+                                    window.location.reload();
+
+
+                                }.bind(this)).catch(function (err) {
+                                    console.log(err)
+                                });
+
+
+
+
+                            }.bind(this)).catch(function (err) {
+                                console.log('error in script creation:',err)
+                            });
+
+
+
+
+                        }.bind(this)).catch(function (err) {
+                            console.log(err)
                         });
 
-                        db.collection('users').doc(this.props.user.uid).collection('scripts').doc(scriptRef.id).set({
-                            creator: true,
-                            collaborator: true,
-                            forked: false,
-                            uid: scriptRef.id,
-                            createdTime: Date.now(),
-                            updatedTime: Date.now(),
-                            title: 'Untitled'
-                        });
-
-                        store.dispatch({type: 'CREATE_SCRIPT_FINISHED', isScriptCreation: false});
-                        this.props.history.push('/s/' + scriptRef.id);
-                        window.location.reload();
 
 
                     }.bind(this))
 
             }.bind(this))
             .catch(function(error) {
-                store.dispatch({type: 'CREATE_SCRIPT_FINISHED', isScriptCreation: false});
+                store.dispatch({type: 'SCRIPT_CREATION_FINISHED', isScriptCreation: false});
                 console.error("Error adding document: ", error);
             });
     }
@@ -1315,8 +1345,8 @@ class Home extends Component {
             scriptHeaderFragment = (Object.keys(this.props.scriptHeaders).map(function(key) {
                 // console.log("here", this.props.scriptHeaders.toString());
                 return (
-                    <Col xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
-                        <Link activeStyle={{}} to={SCRIPT_ROUTE(this.props.scriptHeaders[key].uid)} style={{textDecoration: 'none'}} params={{scriptId: this.props.scriptHeaders[key].uid}}>
+                    <Col key={this.props.scriptHeaders[key].uid} xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
+                        <Link to={SCRIPT_ROUTE(this.props.scriptHeaders[key].uid)} style={{textDecoration: 'none'}} params={{scriptId: this.props.scriptHeaders[key].uid}}>
                             <div style={{display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={this.props.scriptHeaders[key].uid}>
                                 <div style={{display: 'flex', flex: 3,width: '100%', alignItems: 'center', justifyContent: 'center'}}>
                                     <div>
@@ -1338,9 +1368,10 @@ class Home extends Component {
                                         </div>
                                     </div>
                                     <div style={{flex: 1, alignSelf: 'center'}}>
-                                        <a href="javascript:;" onClick={this.onScriptDeleteClick.bind(this, this.props.user.uid, this.props.scriptHeaders[key].uid,  this.props.scriptHeaders[key].title)}>
-                                            <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>delete_forever</i>
-                                        </a>
+                                            <i onClick={this.onScriptDeleteClick.bind(this, this.props.user.uid, this.props.scriptHeaders[key].uid,  this.props.scriptHeaders[key].title)}
+                                               className="material-icons"
+                                               style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>
+                                                delete_forever</i>
                                     </div>
                                     <br/>
                                 </div>
@@ -1620,7 +1651,6 @@ class Header extends Component{
 
         if(props.scriptHeaders && this.state.activeScriptId) {
             let scriptList = Object.keys(props.scriptHeaders);
-            console.log('scriptList:', scriptList);
             if (!scriptList.includes(this.state.activeScriptId)) {
                 store.dispatch({type: 'SET_ACTIVE_SCRIPT_ID', activeScriptId: null})
             }
@@ -1936,7 +1966,7 @@ class Header extends Component{
 
             collaborators = (Object.keys(this.state.collaborators).map(function(key) {
                 return (
-                    <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <div key={key} style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
                         <div style={{flex: 1, fontSize: '15px'}}>
                             {this.state.collaborators[key]['username']}
                         </div>
@@ -2225,7 +2255,7 @@ class ScriptList extends Component {
     }
 
     createNewScript() {
-        console.log('writing to scripts collection...');
+        console.log('check it: writing to scripts collection...');
 
         store.dispatch({type: 'CREATE_SCRIPT_INITIALIZED', isScriptCreation: true});
 
@@ -2241,7 +2271,11 @@ class ScriptList extends Component {
             .then(function(scriptRef) {
                 console.log("Document written with ID: ", scriptRef.id);
 
-                db.collection('scripts').doc(scriptRef.id).update({uid: scriptRef.id});
+                db.collection('scripts').doc(scriptRef.id).update({uid: scriptRef.id}).then(function (nodeRef) {
+                    console.log('script id added.')
+                }).catch(function (err) {
+                    console.log(err)
+                });
 
                 let permissionObj = {};
                 permissionObj['permission'] = 'write';
@@ -2250,38 +2284,68 @@ class ScriptList extends Component {
                 permissionObj['username'] =  this.props.user.username;
                 permissionObj['isOwner'] = true;
 
-                db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj);
+                db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj).then(function (nodeRef) {
+                    console.log('collaborators added to /scripts')
+                }).catch(function (err) {
+                    console.log(err)
+                });
 
                 db.collection('scripts').doc(scriptRef.id).collection('nodes').add({
                     text: ''
                 })
                     .then(function (nodeRef) {
 
-                        db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id});
+                        var nodeId = nodeRef.id;
+                        var scriptId = scriptRef.id;
 
-                        db.collection('scripts').doc(scriptRef.id).collection('nodes').doc(nodeRef.id).update({
-                            parentUid: null,
-                            relativeToParent: 1,
-                            uid: nodeRef.id,
-                            text: '',
-                            createdTime: Date.now(),
-                            updatedTime: Date.now()
-                        }).then(function (nodeRef) {
+                        db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id}).then(function (nodeRef) {
+                            console.log('parent node id added to script')
+
+                            console.log('noderef:', nodeRef)
+
+                            db.collection('scripts').doc(scriptId).collection('nodes').doc(nodeId).update({
+                                parentUid: null,
+                                relativeToParent: 1,
+                                uid: nodeId,
+                                text: '',
+                                createdTime: Date.now(),
+                                updatedTime: Date.now()
+                            }).then(function (nodeRef) {
+
+
+                                db.collection('users').doc(this.props.user.uid).collection('scripts').doc(scriptId).set({
+                                    creator: true,
+                                    collaborator: true,
+                                    forked: false,
+                                    uid: scriptId,
+                                    createdTime: Date.now(),
+                                    updatedTime: Date.now(),
+                                    title: 'Untitled'
+                                }).then(function (nodeRef) {
+
+                                    store.dispatch({type: 'SCRIPT_CREATION_FINISHED', isScriptCreation: false});
+                                    this.props.history.push('/s/' + scriptId);
+                                    window.location.reload();
+
+
+                                }.bind(this)).catch(function (err) {
+                                    console.log(err)
+                                });
+
+
+
+
+                            }.bind(this)).catch(function (err) {
+                                console.log('error in script creation:',err)
+                            });
+
+
+
+
+                        }.bind(this)).catch(function (err) {
+                            console.log(err)
                         });
 
-                        db.collection('users').doc(this.props.user.uid).collection('scripts').doc(scriptRef.id).set({
-                            creator: true,
-                            collaborator: true,
-                            forked: false,
-                            uid: scriptRef.id,
-                            createdTime: Date.now(),
-                            updatedTime: Date.now(),
-                            title: 'Untitled'
-                        });
-
-                        store.dispatch({type: 'SCRIPT_CREATION_FINISHED', isScriptCreation: false});
-                        this.props.history.push('/s/' + scriptRef.id);
-                        window.location.reload();
 
 
                     }.bind(this))
@@ -2379,7 +2443,7 @@ class SideBar extends Component{
 
 
     createNewScript() {
-        console.log('writing to scripts collection...');
+        console.log('check it: writing to scripts collection...');
 
         store.dispatch({type: 'CREATE_SCRIPT_INITIALIZED', isScriptCreation: true});
 
@@ -2395,7 +2459,11 @@ class SideBar extends Component{
             .then(function(scriptRef) {
                 console.log("Document written with ID: ", scriptRef.id);
 
-                db.collection('scripts').doc(scriptRef.id).update({uid: scriptRef.id});
+                db.collection('scripts').doc(scriptRef.id).update({uid: scriptRef.id}).then(function (nodeRef) {
+                    console.log('script id added.')
+                }).catch(function (err) {
+                    console.log(err)
+                });
 
                 let permissionObj = {};
                 permissionObj['permission'] = 'write';
@@ -2404,38 +2472,68 @@ class SideBar extends Component{
                 permissionObj['username'] =  this.props.user.username;
                 permissionObj['isOwner'] = true;
 
-                db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj);
+                db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj).then(function (nodeRef) {
+                    console.log('collaborators added to /scripts')
+                }).catch(function (err) {
+                    console.log(err)
+                });
 
                 db.collection('scripts').doc(scriptRef.id).collection('nodes').add({
                     text: ''
                 })
                     .then(function (nodeRef) {
 
-                        db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id});
+                        var nodeId = nodeRef.id;
+                        var scriptId = scriptRef.id;
 
-                        db.collection('scripts').doc(scriptRef.id).collection('nodes').doc(nodeRef.id).update({
-                            parentUid: null,
-                            relativeToParent: 1,
-                            uid: nodeRef.id,
-                            text: '',
-                            createdTime: Date.now(),
-                            updatedTime: Date.now()
-                        }).then(function (nodeRef) {
+                        db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id}).then(function (nodeRef) {
+                            console.log('parent node id added to script')
+
+                            console.log('noderef:', nodeRef)
+
+                            db.collection('scripts').doc(scriptId).collection('nodes').doc(nodeId).update({
+                                parentUid: null,
+                                relativeToParent: 1,
+                                uid: nodeId,
+                                text: '',
+                                createdTime: Date.now(),
+                                updatedTime: Date.now()
+                            }).then(function (nodeRef) {
+
+
+                                db.collection('users').doc(this.props.user.uid).collection('scripts').doc(scriptId).set({
+                                    creator: true,
+                                    collaborator: true,
+                                    forked: false,
+                                    uid: scriptId,
+                                    createdTime: Date.now(),
+                                    updatedTime: Date.now(),
+                                    title: 'Untitled'
+                                }).then(function (nodeRef) {
+
+                                    store.dispatch({type: 'SCRIPT_CREATION_FINISHED', isScriptCreation: false});
+                                    this.props.history.push('/s/' + scriptId);
+                                    window.location.reload();
+
+
+                                }.bind(this)).catch(function (err) {
+                                    console.log(err)
+                                });
+
+
+
+
+                            }.bind(this)).catch(function (err) {
+                                console.log('error in script creation:',err)
+                            });
+
+
+
+
+                        }.bind(this)).catch(function (err) {
+                            console.log(err)
                         });
 
-                        db.collection('users').doc(this.props.user.uid).collection('scripts').doc(scriptRef.id).set({
-                            creator: true,
-                            collaborator: true,
-                            forked: false,
-                            uid: scriptRef.id,
-                            createdTime: Date.now(),
-                            updatedTime: Date.now(),
-                            title: 'Untitled'
-                        });
-
-                        store.dispatch({type: 'SCRIPT_CREATION_FINISHED', isScriptCreation: false});
-                        this.props.history.push('/s/' + scriptRef.id);
-                        window.location.reload();
 
 
                     }.bind(this))
@@ -3056,14 +3154,12 @@ class Login extends Component {
 
 
     fetchUserFromUsername(username, password) {
-        console.log('checking for username...');
 
         let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/fetchUserFromUsername';
         // let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/fetchUserFromUsername';
 
         let params = "username=" + username;
 
-        console.log('Sending request to', helloUserUrl + "?" + params, 'with ID token in Authorization header.');
         var req = new XMLHttpRequest();
         req.onload = function() {
             console.log('onload-username:', req.responseText);
@@ -3088,8 +3184,8 @@ class Login extends Component {
 
             return true;
         }.bind(this);
-        req.onerror = function() {
-            console.log('onerror;', 'error');
+        req.onerror = function(err) {
+            console.log(err);
             this.setState({usernameHasChanged: false, usernameVerified: false, loginInProgress: false, loginError: 'an unexpected error has occured'});
             return -100;
         }.bind(this);
@@ -3210,7 +3306,7 @@ class Landing extends Component {
                         <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', marginRight: '50px', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
                             <Signup/>
                             <div style={{paddingLeft: '50px', paddingRight: '50px'}}>
-                                <input onClick={this.onAnonymousLoginSubmit.bind(this)} style={{width: '100%', fontSize: '14px', height: '30px', background: 'black', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="submit" value="Login In Anonymously"/>
+                                <input onClick={this.onAnonymousLoginSubmit.bind(this)} style={{width: '100%', fontSize: '14px', height: '30px', background: 'black', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="submit" value="Login Anonymously"/>
                             </div>
                         </div>
                     </div>
@@ -3274,7 +3370,7 @@ class Landing extends Component {
                             Collaborate with others
                         </div>
                         <div style={{width: '600px', textAlign: 'center', marginTop: '20px'}}>
-                            Share your scripts with the public or other users and invite them to edit your scripts in a real-time editor.
+                            Share your scripts with the public or other users and invite them to work on your scripts in a real-time editor.
                         </div>
 
 
@@ -3542,13 +3638,11 @@ class App extends Component {
 
                 db.collection("users").doc(user.uid).collection('scripts')
                     .onSnapshot(function(querySnapshot) {
-                        console.log('onsnapshot triggered');
                         let scriptIds = [];
                         querySnapshot.forEach(function(doc) {
                             scriptIds.push(doc.data().uid)
                         });
 
-                        console.log('found ', scriptIds.length, 'scripts');
                         store.dispatch({type: 'SCRIPT_FETCH_COMPLETE', scriptFetchComplete: true, numScripts: scriptIds.length});
 
                         //deleting script headers
