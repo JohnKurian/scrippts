@@ -381,7 +381,7 @@ class Fallacy extends Component {
                     </div>
                 }
 
-                <div style={{overflowY: 'scroll', height: '400px', marginTop: '25px'}}>
+                <div className="fallacy-list">
                 {fallacies.map( fallacy =>
                     <div key={fallacy.title} className='fallacy-item' onClick={this.onFallacyClick.bind(this, fallacy)}>
                         <div style={{fontWeight: 'bold', fontSize: '18px'}}>{fallacy.title}</div>
@@ -1180,6 +1180,7 @@ class Home extends Component {
 
                 db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj).then(function (nodeRef) {
                 }).catch(function (err) {
+                    console.log(err)
                 });
 
                 db.collection('scripts').doc(scriptRef.id).collection('nodes').add({
@@ -2168,7 +2169,7 @@ class Header extends Component{
 
         return (
             <div>
-            <div className='header' style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', width: '100vw'}}>
+            <div className='header' style={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
                 <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignContent: 'center'}}>
                 { this.props.user ?
                     (
@@ -2267,7 +2268,6 @@ class ScriptList extends Component {
     }
 
     createNewScript() {
-        console.log('check it: writing to scripts collection...');
 
         store.dispatch({type: 'CREATE_SCRIPT_INITIALIZED', isScriptCreation: true});
 
@@ -2297,7 +2297,6 @@ class ScriptList extends Component {
                 permissionObj['isOwner'] = true;
 
                 db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj).then(function (nodeRef) {
-                    console.log('collaborators added to /scripts')
                 }).catch(function (err) {
                     console.log(err)
                 });
@@ -2311,9 +2310,7 @@ class ScriptList extends Component {
                         var scriptId = scriptRef.id;
 
                         db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id}).then(function (nodeRef) {
-                            console.log('parent node id added to script')
 
-                            console.log('noderef:', nodeRef)
 
                             db.collection('scripts').doc(scriptId).collection('nodes').doc(nodeId).update({
                                 parentUid: null,
@@ -2455,7 +2452,6 @@ class SideBar extends Component{
 
 
     createNewScript() {
-        console.log('check it: writing to scripts collection...');
 
         store.dispatch({type: 'CREATE_SCRIPT_INITIALIZED', isScriptCreation: true});
 
@@ -2485,7 +2481,6 @@ class SideBar extends Component{
                 permissionObj['isOwner'] = true;
 
                 db.collection('scripts').doc(scriptRef.id).collection('collaborators').doc(this.props.user.uid).set(permissionObj).then(function (nodeRef) {
-                    console.log('collaborators added to /scripts')
                 }).catch(function (err) {
                     console.log(err)
                 });
@@ -2499,9 +2494,7 @@ class SideBar extends Component{
                         var scriptId = scriptRef.id;
 
                         db.collection('scripts').doc(scriptRef.id).update({parentNodeId: nodeRef.id}).then(function (nodeRef) {
-                            console.log('parent node id added to script')
 
-                            console.log('noderef:', nodeRef)
 
                             db.collection('scripts').doc(scriptId).collection('nodes').doc(nodeId).update({
                                 parentUid: null,
@@ -3263,6 +3256,7 @@ class Landing extends Component {
     }
 
     componentWillMount() {
+        window.scrollTo(0,0);
         document.body.style.backgroundColor = "white";
     }
 
@@ -3420,6 +3414,7 @@ class Privacy extends Component {
 
 
     componentWillMount() {
+        window.scrollTo(0,0);
         document.body.style.backgroundColor = "#e9ebee";
     }
 
@@ -3532,6 +3527,7 @@ class Privacy extends Component {
 class Terms extends Component {
 
     componentWillMount() {
+        window.scrollTo(0,0);
         document.body.style.backgroundColor = "#e9ebee";
     }
 
