@@ -460,11 +460,11 @@ class Node extends Component {
         // }
 
 
-        // if(this.state.lastUpdated !== nextState.lastUpdated) {
-        //     console.log('node local update:', nextProps.node.uid);
-        //     return true;
-        // } else
-        //
+        if(this.state.lastUpdated !== nextState.lastUpdated) {
+            console.log('node local update:', nextProps.node.uid);
+            return true;
+        } else
+
             if(this.props.node.updatedTime !== nextProps.node.updatedTime) {
             console.log('node update:', nextProps.node.uid);
             return true;
@@ -754,7 +754,7 @@ class Node extends Component {
             footer = (
                 <div onMouseEnter={this.onNodeHoveredIn.bind(this, node)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
 
-                    <div style={{display: 'flex'}}>
+                    <div style={{display: 'flex', width: '50px'}}>
                         <i className="material-icons" onClick={this.onSourceClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>link</i>
                         <i className="material-icons" onClick={this.onFallacyClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '22px'}}>report_problem</i>
                     </div>
@@ -766,11 +766,13 @@ class Node extends Component {
                         <button style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
                         <button style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
                     </div>
+                    <div style={{display: 'flex', width: '50px', justifyContent: 'flex-end', border: '0px', padding: '0px' }}>
                     { !(node.uid === this.props.parentNodeId) &&
-                    <a style={{display: 'flex', justifyContent: 'flex-end', border: '0px', padding: '0px' }} href="javascript:;" onClick={this.onDeleteNodeClick.bind(this, node)}>
+                    <a style={{padding: 0, border: 'none'}} href="javascript:;" onClick={this.onDeleteNodeClick.bind(this, node)}>
                         <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '21px'}}>delete_forever</i>
                     </a>
                     }
+                    </div>
 
                 </div>
             );
