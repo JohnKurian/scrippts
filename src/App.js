@@ -833,6 +833,7 @@ class Node extends Component {
                                 {(node.children!==undefined && Object.keys(node.children).length > 0) &&
                                 <Node user={this.props.user}
                                       data={node.children}
+                                      siblings={Object.keys(node.children)}
                                       parentNodeId={this.props.parentNodeId}
                                       scriptId={this.props.scriptId}
                                       premiseRelativeValue={currentNodeValue}
@@ -2816,7 +2817,10 @@ class Editor extends Component{
                         <div className={contentClass}>
                             <div className="EditorContainer">
                                 <div className="tree" id="tree">
-                                    <Node user={this.props.user} data={this.state.tree}
+                                    <Node user={this.props.user}
+                                          data={this.state.tree}
+                                          children={this.state.tree[Object.keys(this.state.tree)[0]]? Object.keys(this.state.tree[Object.keys(this.state.tree)[0]]['children']): []}
+                                          siblings={Object.keys(this.state.tree)}
                                           parentNodeId={Object.keys(this.state.tree)[0]}
                                           scriptId={this.props.match.params.scriptId}
                                           premiseRelativeValue={this.state.premiseRelativeValue}
@@ -2838,7 +2842,10 @@ class Editor extends Component{
                                 { this.state.collaborators[this.props.user.uid] &&
                                 <div className="EditorContainer">
                                     <div className="tree" id="tree">
-                                        <Node user={this.props.user} data={this.state.tree}
+                                        <Node user={this.props.user}
+                                              data={this.state.tree}
+                                              children={this.state.tree[Object.keys(this.state.tree)[0]]? Object.keys(this.state.tree[Object.keys(this.state.tree)[0]]['children']): []}
+                                              siblings={Object.keys(this.state.tree)}
                                               parentNodeId={Object.keys(this.state.tree)[0]}
                                               scriptId={this.props.match.params.scriptId}
                                               premiseRelativeValue={this.state.premiseRelativeValue}
@@ -2949,8 +2956,8 @@ class Signup extends Component {
             event.target.setCustomValidity("")
         }
 
-        if(event.target.value.length>20) {
-            event.target.setCustomValidity("username shouldn't be more than 20 characters")
+        if(event.target.value.length>16) {
+            event.target.setCustomValidity("username shouldn't be more than 16 characters")
         } else {
             event.target.setCustomValidity("")
         }
@@ -3549,7 +3556,7 @@ class Terms extends Component {
                     <br/><br/>
                     <h3>Intellectual Property</h3>
 
-                    The Service and its original content, features and functionality are and will remain the exclusive property of Scrippt and its licensors. The Service is protected by copyright, trademark, and other laws of both the India and foreign countries. Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of Scrippt.
+                    The Service and its original content, features and functionality are and will remain the exclusive property of Scrippt and its licensors. The Service is protected by copyright, trademark, and other laws of both India and foreign countries. Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of Scrippt.
 
                     <br/><br/>
                     <h3>Links To Other Web Sites</h3>
