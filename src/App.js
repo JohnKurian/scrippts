@@ -945,7 +945,6 @@ class Fragment extends Component {
                                 {(node.children!==undefined && Object.keys(node.children).length > 0) &&
                                 <Fragment user={this.props.user}
                                           data={node.children}
-                                          siblings={Object.keys(node.children)}
                                           parentNodeId={this.props.parentNodeId}
                                           scriptId={this.props.scriptId}
                                           premiseRelativeValue={currentNodeValue}
@@ -2956,8 +2955,6 @@ class Editor extends Component{
                                     <div className="tree" id="tree">
                                         <Fragment user={this.props.user}
                                                   data={this.state.tree}
-                                                  children={this.state.tree[Object.keys(this.state.tree)[0]]? Object.keys(this.state.tree[Object.keys(this.state.tree)[0]]['children']): []}
-                                                  siblings={Object.keys(this.state.tree)}
                                                   parentNodeId={Object.keys(this.state.tree)[0]}
                                                   scriptId={this.props.match.params.scriptId}
                                                   premiseRelativeValue={this.state.premiseRelativeValue}
