@@ -455,10 +455,33 @@ class Node extends Component {
 }
 
     shouldComponentUpdate(nextProps, nextState) {
-        if(this.shallowCompare(this, nextProps, nextState)) {
-            console.log('update:', nextProps.uid, this.shallowCompare(this, nextProps, nextState));
+        // if(this.shallowCompare(this, nextProps, nextState)) {
+        //     console.log('update:', nextProps.uid, this.shallowCompare(this, nextProps, nextState));
+        // }
+
+
+        // if(this.state.lastUpdated !== nextState.lastUpdated) {
+        //     console.log('node local update:', nextProps.node.uid);
+        //     return true;
+        // } else
+        //
+            if(this.props.node.updatedTime !== nextProps.node.updatedTime) {
+            console.log('node update:', nextProps.node.uid);
+            return true;
+        }else if(this.state.hoveredNode !== nextState.hoveredNode) {
+            console.log('node hover:', nextProps.node.uid);
+            return true;
+        } else if(this.state.sourceModalIsOpen !== nextState.sourceModalIsOpen) {
+            console.log('node source:', nextProps.node.uid);
+            return true;
+        } else if(this.state.fallacyModalIsOpen !== nextState.fallacyModalIsOpen) {
+            console.log('node fallacy:', nextProps.node.uid);
+            return true;
+        } else {
+            return false;
         }
-        return this.shallowCompare(this, nextProps, nextState)
+
+        // return this.shallowCompare(this, nextProps, nextState)
     }
 
 
