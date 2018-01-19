@@ -419,6 +419,49 @@ class Node extends Component {
     }
 
 
+    shallowEqual(objA, objB) {
+    if (objA === objB) {
+        return true;
+    }
+
+    if (typeof objA !== 'object' || objA === null ||
+        typeof objB !== 'object' || objB === null) {
+        return false;
+    }
+
+    var keysA = Object.keys(objA);
+    var keysB = Object.keys(objB);
+
+    if (keysA.length !== keysB.length) {
+        return false;
+    }
+
+    // Test for A's keys different from B.
+    var bHasOwnProperty = hasOwnProperty.bind(objB);
+    for (var i = 0; i < keysA.length; i++) {
+        if (!bHasOwnProperty(keysA[i]) || objA[keysA[i]] !== objB[keysA[i]]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+    shallowCompare(instance, nextProps, nextState) {
+    return (
+        !this.shallowEqual(instance.props, nextProps) ||
+        !this.shallowEqual(instance.state, nextState)
+    );
+}
+
+    shouldComponentUpdate(nextProps, nextState) {
+        if(this.shallowCompare(this, nextProps, nextState)) {
+            console.log('update:', nextProps.uid, this.shallowCompare(this, nextProps, nextState));
+        }
+        return this.shallowCompare(this, nextProps, nextState)
+    }
+
+
 
     onChange = (node, evt) => {
 
@@ -612,9 +655,6 @@ class Node extends Component {
 
     render() {
 
-        if(this.props.data===undefined) {
-            return null;
-        }
 
         let colorMap = {
             '1': '#e8f5e9',
@@ -638,6 +678,212 @@ class Node extends Component {
         let color = '';
         let labelColor = '';
 
+        let node = this.props.node;
+
+        let currentNodeValue = 0;
+        let nodeHeader = null;
+        let saveButton = null;
+
+        if(this.props.premiseRelativeValue!==null||this.props.premiseRelativeValue!==undefined) {
+
+            currentNodeValue = this.props.premiseRelativeValue * node['relativeToParent'];
+            color = colorMap[currentNodeValue];
+            labelColor = labelColorMap[currentNodeValue];
+
+            if(currentNodeValue===0 && this.props.premiseRelativeValue===1) {
+                currentNodeValue = -1;
+            }
+            else if(currentNodeValue===0 && this.props.premiseRelativeValue===-1) {
+                currentNodeValue = 1;
+            }
+        }
+
+        if(node.uid!==this.props.parentNodeId) {
+            nodeHeader = (
+                <p style={{color: labelColor, margin: 0}}>{labelMap[node.relativeToParent]}</p>
+            );
+        }
+
+        if(this.state.showTools) {
+            saveButton = (
+                <div style={{flex: 0}}>
+                    <i data-tip data-for='save' onClick={this.onSaveClick.bind(this, node)} className="material-icons" style={{cursor: 'pointer', color: '#9e9e9e' }}>save</i>
+                    <ReactTooltip id='save' effect='solid'>
+                        <span>Save changes</span>
+                    </ReactTooltip>
+                </div>
+            );
+        }
+
+        let width = this.state.textAreaWidth;
+        let height = this.state.textAreaHeight;
+        if(node['textAreaHeight']!==null && node['textAreaHeight']!==undefined ) {
+            height = node['textAreaHeight'];
+            width = node['textAreaWidth'];
+        }
+
+        let footer = (
+            <div style={{height: '24px'}}>
+            </div>
+        );
+
+        if(this.state.hoveredNode === node.uid && this.props.canEdit) {
+            footer = (
+                <div onMouseEnter={this.onNodeHoveredIn.bind(this, node)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+
+                    <div style={{display: 'flex'}}>
+                        <i className="material-icons" onClick={this.onSourceClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>link</i>
+                        <i className="material-icons" onClick={this.onFallacyClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '22px'}}>report_problem</i>
+                    </div>
+
+                    <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                        <i data-tip='custom show' data-event='click focus' onClick={()=>{ }} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
+                        <ReactTooltip globalEventOff='click' place="bottom" />
+
+                        <button style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
+                        <button style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
+                    </div>
+                    { !(node.uid === this.props.parentNodeId) &&
+                    <a style={{display: 'flex', justifyContent: 'flex-end', border: '0px', padding: '0px' }} href="javascript:;" onClick={this.onDeleteNodeClick.bind(this, node)}>
+                        <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '21px'}}>delete_forever</i>
+                    </a>
+                    }
+
+                </div>
+            );
+        }
+
+
+
+        return (
+            <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+
+                <Modal
+                    isOpen={this.state.sourceModalIsOpen}
+                    onRequestClose={this.closeSourceModal.bind(this)}
+                    style={signupModalStyles}
+                    contentLabel="Source Modal"
+                >
+                    <Source source={this.props.node.source}
+                            scriptId={this.props.scriptId}
+                            user={this.props.user}
+                            node={this.state.sourceSelectedNode}/>
+                </Modal>
+
+                <Modal
+                    isOpen={this.state.fallacyModalIsOpen}
+                    onAfterOpen={this.afterOpenFallacyModal.bind(this)}
+                    onRequestClose={this.closeFallacyModal.bind(this)}
+                    style={fallacyModalStyles}
+                    contentLabel="Fallacy Modal"
+                >
+                    <Fallacy fallacy={this.props.node.fallacy}
+                             scriptId={this.props.scriptId}
+                             node={this.state.fallacySelectedNode}
+                             user={this.props.user}/>
+                </Modal>
+
+                {/*<div className="circle"></div>*/}
+                <div onMouseEnter={this.onNodeEnter.bind(this, this.props.node)} onMouseLeave={this.onNodeLeave.bind(this, this.props.node)} style={{
+                    background: 'white',
+                    paddingLeft: '10px',
+                    paddingRight: '10px',
+                    paddingTop: '10px',
+                    paddingBottom: '3px',
+                    borderRadius: '6px',
+                    boxShadow: '1px 1px 4px rgba(0,0,0,.3)',
+                    zIndex: '100'
+                }}>
+                    <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+                        <div style={{flex: 1}}>
+                            {nodeHeader}
+                        </div>
+                        {/*{saveButton}*/}
+
+                    </div>
+
+                    <Textarea
+                        id={this.props.node.uid}
+                        key={this.props.node.uid}
+                        style={{resize: 'none', width: '300px', background: color}}
+                        autoFocus={this.props.node.uid === this.state.selectedNode}
+                        defaultValue={this.props.node.text}
+                        value={this.state.lastUpdated < this.props.node.updatedTime? this.props.node.text: this.defaultValue}
+                        readOnly={!this.props.canEdit}
+                        onFocus={this.onFocus.bind(this, this.props.node)}
+                        onBlur={this.onBlur.bind(this, this.props.node)}
+                        onChange={this.onChange.bind(this, this.props.node)}
+                        onClick={this.onTextAreaClick.bind(this, this.props.node)}
+                    />
+
+
+                    {this.props.node.source &&
+                    <div style={{display: 'flex'}}>
+                        <i className="material-icons" style={{textDecoration: 'none', color: '#1976d2', fontSize: '24px', marginRight: '3px'}}>link</i>
+                        <div
+                            style={{
+                                padding: '3px',
+                                width: '270px',
+                                wordWrap: 'break-word',
+                                whiteSpace: 'pre-wrap',
+                                textAlign: 'left',
+                                fontSize: '13px'
+                            }}>
+                            { this.props.node.source.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) ) &&
+                            <a style={{display: 'initial', border: 0, padding: 0, textDecoration: 'underline', color: '#1565c0'}} target="_blank" href={this.props.node.source}>{this.props.node.source}</a>
+                            }
+
+
+                            { !this.props.node.source.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) ) &&
+                            this.props.node.source
+                            }
+                        </div>
+                    </div>
+                    }
+
+                    {this.props.node.fallacy &&
+                    <div style={{display: 'flex'}}>
+                        <i className="material-icons" style={{textDecoration: 'none', color: 'orange', fontSize: '24px', marginRight: '3px'}}>warning</i>
+                        <div
+                            style={{
+                                padding: '3px',
+                                width: '270px',
+                                wordWrap: 'break-word',
+                                whiteSpace: 'pre-wrap',
+                                textAlign: 'left',
+                                fontSize: '13px'
+                            }}>
+                            {this.props.node.fallacy.title}
+                        </div>
+                    </div>
+                    }
+
+                    {footer}
+
+                </div>
+            </div>
+        )
+    }
+
+
+
+}
+
+class Fragment extends Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+
+        };
+    }
+
+
+    render() {
+
+        if(this.props.data===undefined) {
+            return null;
+        }
 
 
         return (
@@ -649,195 +895,38 @@ class Node extends Component {
                         let node = this.props.data[key];
 
                         let currentNodeValue = 0;
-                        let nodeHeader = null;
-                        let saveButton = null;
+
 
                         if(this.props.premiseRelativeValue!==null||this.props.premiseRelativeValue!==undefined) {
 
                             currentNodeValue = this.props.premiseRelativeValue * node['relativeToParent'];
-                            color = colorMap[currentNodeValue];
-                            labelColor = labelColorMap[currentNodeValue];
 
                             if(currentNodeValue===0 && this.props.premiseRelativeValue===1) {
-                             currentNodeValue = -1;
+                                currentNodeValue = -1;
                             }
                             else if(currentNodeValue===0 && this.props.premiseRelativeValue===-1) {
                                 currentNodeValue = 1;
                             }
                         }
 
-                        if(node.uid!==this.props.parentNodeId) {
-                            nodeHeader = (
-                                    <p style={{color: labelColor, margin: 0}}>{labelMap[node.relativeToParent]}</p>
-                            );
-                        }
-
-                        if(this.state.showTools) {
-                            saveButton = (
-                            <div style={{flex: 0}}>
-                                <i data-tip data-for='save' onClick={this.onSaveClick.bind(this, node)} className="material-icons" style={{cursor: 'pointer', color: '#9e9e9e' }}>save</i>
-                            <ReactTooltip id='save' effect='solid'>
-                                <span>Save changes</span>
-                            </ReactTooltip>
-                            </div>
-                            );
-                        }
-
-                        let width = this.state.textAreaWidth;
-                        let height = this.state.textAreaHeight;
-                        if(node['textAreaHeight']!==null && node['textAreaHeight']!==undefined ) {
-                            height = node['textAreaHeight'];
-                            width = node['textAreaWidth'];
-                        }
-
-                        let footer = (
-                            <div style={{height: '24px'}}>
-                            </div>
-                        );
-
-                        if(this.state.hoveredNode === node.uid && this.props.canEdit) {
-                            footer = (
-                                <div onMouseEnter={this.onNodeHoveredIn.bind(this, node)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-
-                                    <div style={{display: 'flex'}}>
-                                        <i className="material-icons" onClick={this.onSourceClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>link</i>
-                                        <i className="material-icons" onClick={this.onFallacyClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '22px'}}>report_problem</i>
-                                    </div>
-
-                                    <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                                        <i data-tip='custom show' data-event='click focus' onClick={()=>{ }} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
-                                        <ReactTooltip globalEventOff='click' place="bottom" />
-
-                                        <button style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
-                                        <button style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
-                                    </div>
-                                    { !(node.uid === this.props.parentNodeId) &&
-                                        <a style={{display: 'flex', justifyContent: 'flex-end', border: '0px', padding: '0px' }} href="javascript:;" onClick={this.onDeleteNodeClick.bind(this, node)}>
-                                        <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '21px'}}>delete_forever</i>
-                                        </a>
-                                    }
-
-                                </div>
-                            );
-                        }
-
 
                         return (
                             <li key={node.uid}>
-                                <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
-
-                                    <Modal
-                                        isOpen={this.state.sourceModalIsOpen}
-                                        onRequestClose={this.closeSourceModal.bind(this)}
-                                        style={signupModalStyles}
-                                        contentLabel="Source Modal"
-                                    >
-                                        <Source source={node.source}
-                                                scriptId={this.props.scriptId}
-                                                user={this.props.user}
-                                                node={this.state.sourceSelectedNode}/>
-                                    </Modal>
-
-                                    <Modal
-                                        isOpen={this.state.fallacyModalIsOpen}
-                                        onAfterOpen={this.afterOpenFallacyModal.bind(this)}
-                                        onRequestClose={this.closeFallacyModal.bind(this)}
-                                        style={fallacyModalStyles}
-                                        contentLabel="Fallacy Modal"
-                                    >
-                                        <Fallacy fallacy={node.fallacy}
-                                                 scriptId={this.props.scriptId}
-                                                 node={this.state.fallacySelectedNode}
-                                                 user={this.props.user}/>
-                                    </Modal>
-
-                                    {/*<div className="circle"></div>*/}
-                                    <div onMouseEnter={this.onNodeEnter.bind(this, node)} onMouseLeave={this.onNodeLeave.bind(this, node)} style={{
-                                        background: 'white',
-                                        paddingLeft: '10px',
-                                        paddingRight: '10px',
-                                        paddingTop: '10px',
-                                        paddingBottom: '3px',
-                                        borderRadius: '6px',
-                                        boxShadow: '1px 1px 4px rgba(0,0,0,.3)',
-                                        zIndex: '100'
-                                    }}>
-                                        <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
-                                            <div style={{flex: 1}}>
-                                            {nodeHeader}
-                                            </div>
-                                            {/*{saveButton}*/}
-
-                                        </div>
-
-                                        <Textarea
-                                            id={node.uid}
-                                            key={node.uid}
-                                            style={{resize: 'none', width: '300px', background: color}}
-                                            autoFocus={node.uid === this.state.selectedNode}
-                                            defaultValue={node.text}
-                                            value={this.state.lastUpdated < node.updatedTime? node.text: this.defaultValue}
-                                            readOnly={!this.props.canEdit}
-                                            onFocus={this.onFocus.bind(this, node)}
-                                            onBlur={this.onBlur.bind(this, node)}
-                                            onChange={this.onChange.bind(this, node)}
-                                            onClick={this.onTextAreaClick.bind(this, node)}
-                                        />
-
-
-                                        {node.source &&
-                                            <div style={{display: 'flex'}}>
-                                                <i className="material-icons" style={{textDecoration: 'none', color: '#1976d2', fontSize: '24px', marginRight: '3px'}}>link</i>
-                                                <div
-                                                    style={{
-                                                    padding: '3px',
-                                                    width: '270px',
-                                                    wordWrap: 'break-word',
-                                                    whiteSpace: 'pre-wrap',
-                                                    textAlign: 'left',
-                                                    fontSize: '13px'
-                                                }}>
-                                                    { node.source.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) ) &&
-                                                    <a style={{display: 'initial', border: 0, padding: 0, textDecoration: 'underline', color: '#1565c0'}} target="_blank" href={node.source}>{node.source}</a>
-                                                    }
-
-
-                                                    { !node.source.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) ) &&
-                                                        node.source
-                                                    }
-                                                </div>
-                                            </div>
-                                        }
-
-                                        {node.fallacy &&
-                                        <div style={{display: 'flex'}}>
-                                            <i className="material-icons" style={{textDecoration: 'none', color: 'orange', fontSize: '24px', marginRight: '3px'}}>warning</i>
-                                            <div
-                                                style={{
-                                                    padding: '3px',
-                                                    width: '270px',
-                                                    wordWrap: 'break-word',
-                                                    whiteSpace: 'pre-wrap',
-                                                    textAlign: 'left',
-                                                    fontSize: '13px'
-                                                }}>
-                                                {node.fallacy.title}
-                                            </div>
-                                        </div>
-                                        }
-
-                                        {footer}
-
-                                    </div>
-                                </div>
-                                {(node.children!==undefined && Object.keys(node.children).length > 0) &&
-                                <Node user={this.props.user}
-                                      data={node.children}
-                                      siblings={Object.keys(node.children)}
-                                      parentNodeId={this.props.parentNodeId}
+                                <Node node={node}
+                                      uid={node.uid}
                                       scriptId={this.props.scriptId}
-                                      premiseRelativeValue={currentNodeValue}
-                                      canEdit={this.props.canEdit}/>}
+                                      user={this.props.user}
+                                      premiseRelativeValue={this.props.premiseRelativeValue}
+                                      parentNodeId={this.props.parentNodeId}
+                                      canEdit={this.props.canEdit}/>
+                                {(node.children!==undefined && Object.keys(node.children).length > 0) &&
+                                <Fragment user={this.props.user}
+                                          data={node.children}
+                                          siblings={Object.keys(node.children)}
+                                          parentNodeId={this.props.parentNodeId}
+                                          scriptId={this.props.scriptId}
+                                          premiseRelativeValue={currentNodeValue}
+                                          canEdit={this.props.canEdit}/>}
                             </li>
                         )
                     }.bind(this))
@@ -2817,14 +2906,14 @@ class Editor extends Component{
                         <div className={contentClass}>
                             <div className="EditorContainer">
                                 <div className="tree" id="tree">
-                                    <Node user={this.props.user}
-                                          data={this.state.tree}
-                                          children={this.state.tree[Object.keys(this.state.tree)[0]]? Object.keys(this.state.tree[Object.keys(this.state.tree)[0]]['children']): []}
-                                          siblings={Object.keys(this.state.tree)}
-                                          parentNodeId={Object.keys(this.state.tree)[0]}
-                                          scriptId={this.props.match.params.scriptId}
-                                          premiseRelativeValue={this.state.premiseRelativeValue}
-                                          canEdit={false}/>
+                                    <Fragment user={this.props.user}
+                                              data={this.state.tree}
+                                              children={this.state.tree[Object.keys(this.state.tree)[0]]? Object.keys(this.state.tree[Object.keys(this.state.tree)[0]]['children']): []}
+                                              siblings={Object.keys(this.state.tree)}
+                                              parentNodeId={Object.keys(this.state.tree)[0]}
+                                              scriptId={this.props.match.params.scriptId}
+                                              premiseRelativeValue={this.state.premiseRelativeValue}
+                                              canEdit={false}/>
 
                                 </div>
                             </div>
@@ -2842,14 +2931,14 @@ class Editor extends Component{
                                 { this.state.collaborators[this.props.user.uid] &&
                                 <div className="EditorContainer">
                                     <div className="tree" id="tree">
-                                        <Node user={this.props.user}
-                                              data={this.state.tree}
-                                              children={this.state.tree[Object.keys(this.state.tree)[0]]? Object.keys(this.state.tree[Object.keys(this.state.tree)[0]]['children']): []}
-                                              siblings={Object.keys(this.state.tree)}
-                                              parentNodeId={Object.keys(this.state.tree)[0]}
-                                              scriptId={this.props.match.params.scriptId}
-                                              premiseRelativeValue={this.state.premiseRelativeValue}
-                                              canEdit={this.state.collaborators[this.props.user.uid]['isOwner'] || (this.state.collaborators[this.props.user.uid]['permission'] === 'write')}/>
+                                        <Fragment user={this.props.user}
+                                                  data={this.state.tree}
+                                                  children={this.state.tree[Object.keys(this.state.tree)[0]]? Object.keys(this.state.tree[Object.keys(this.state.tree)[0]]['children']): []}
+                                                  siblings={Object.keys(this.state.tree)}
+                                                  parentNodeId={Object.keys(this.state.tree)[0]}
+                                                  scriptId={this.props.match.params.scriptId}
+                                                  premiseRelativeValue={this.state.premiseRelativeValue}
+                                                  canEdit={this.state.collaborators[this.props.user.uid]['isOwner'] || (this.state.collaborators[this.props.user.uid]['permission'] === 'write')}/>
 
                                     </div>
                                 </div>
