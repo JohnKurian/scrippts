@@ -1506,33 +1506,41 @@ class Home extends Component {
                 initFragment = null;
             }
 
-            scriptHeaderFragment = (Object.keys(this.props.scriptHeaders).map(function(key) {
-                // console.log("here", this.props.scriptHeaders.toString());
+            let timeIndexedScriptList = Object.keys(this.props.scriptHeaders)
+                .reduce((obj, objKey) => {
+                    obj[this.props.scriptHeaders[objKey].updatedTime] = this.props.scriptHeaders[objKey];
+                    return obj;
+                }, {});
+
+
+            let intTimeArray = Object.keys(timeIndexedScriptList).map(stringTime => parseInt(stringTime));
+            let sortedObj = intTimeArray.sort((a, b) => b - a);
+
+            scriptHeaderFragment = (sortedObj.map(function(key) {
                 return (
-                    <Col key={this.props.scriptHeaders[key].uid} xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
-                        <Link to={SCRIPT_ROUTE(this.props.scriptHeaders[key].uid)} style={{textDecoration: 'none'}} params={{scriptId: this.props.scriptHeaders[key].uid}}>
-                            <div style={{display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={this.props.scriptHeaders[key].uid}>
+                    <Col key={timeIndexedScriptList[key].uid} xs={12} sm={3} md={2} lg={1}  style={{marginBottom: '80px', marginLeft: '80px', marginRight: '80px'}}>
+                        <Link to={SCRIPT_ROUTE(timeIndexedScriptList[key].uid)} style={{textDecoration: 'none'}} params={{scriptId: timeIndexedScriptList[key].uid}}>
+                            <div style={{display: 'flex', flexDirection: 'column', alignItems:"center",justifyContent:"center", width: 200, height: 225, background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}} key={timeIndexedScriptList[key].uid}>
                                 <div style={{display: 'flex', flex: 3,width: '100%', alignItems: 'center', justifyContent: 'center'}}>
                                     <div>
                                     <img style={{width: 80, height: 80}} src={argumentLogo}></img>
                                     </div>
                                 </div>
-                                {/*{this.props.scriptHeaders[id]['uid']}*/}
 
                                 <div style={{display: 'flex', flex: 1, flexDirection: 'row', width: '100%'}}>
                                     <div style={{display: 'flex', flexDirection: 'column', flex: 5, marginLeft: '15px'}}>
                                         <div style={{marginBottom: '4px', width: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '15px', fontWeight: '600', color: '#373737'}}>
-                                        {this.props.scriptHeaders[key].title}
+                                        {timeIndexedScriptList[key].title}
                                         </div>
                                         <div style={{display: 'flex', flexDirection: 'row'}}>
                                             <img style={{width: 20, height: 20, marginRight: '3px'}} src={argumentLogo}></img>
                                             <div style={{fontSize: '10.5px', fontWeight: '300', color: '#373737'}}>
-                                                updated {this.timeSince(this.props.scriptHeaders[key].updatedTime)} ago
+                                                updated {this.timeSince(timeIndexedScriptList[key].updatedTime)} ago
                                             </div>
                                         </div>
                                     </div>
                                     <div style={{flex: 1, alignSelf: 'center'}}>
-                                            <i onClick={this.onScriptDeleteClick.bind(this, this.props.user.uid, this.props.scriptHeaders[key].uid,  this.props.scriptHeaders[key].title)}
+                                            <i onClick={this.onScriptDeleteClick.bind(this, this.props.user.uid, timeIndexedScriptList[key].uid,  timeIndexedScriptList[key].title)}
                                                className="material-icons"
                                                style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>
                                                 delete_forever</i>
