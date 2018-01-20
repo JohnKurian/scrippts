@@ -252,7 +252,8 @@ class Source extends Component {
     triggerChange(source) {
 
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(this.props.node['uid']).update({
-            source: source
+            source: source,
+            updatedTime: Date.now()
         });
 
         db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.props.scriptId).update({
@@ -460,22 +461,18 @@ class Node extends Component {
         // }
 
 
-        if(this.state.lastUpdated !== nextState.lastUpdated) {
-            console.log('node local update:', nextProps.node.uid);
-            return true;
-        } else
+        // if(this.state.lastUpdated !== nextState.lastUpdated) {
+        //     console.log('node local update:', nextProps.node.uid);
+        //     return true;
+        // } else
 
             if(this.props.node.updatedTime !== nextProps.node.updatedTime) {
-            console.log('node update:', nextProps.node.uid);
             return true;
         }else if(this.state.hoveredNode !== nextState.hoveredNode) {
-            console.log('node hover:', nextProps.node.uid);
             return true;
         } else if(this.state.sourceModalIsOpen !== nextState.sourceModalIsOpen) {
-            console.log('node source:', nextProps.node.uid);
             return true;
         } else if(this.state.fallacyModalIsOpen !== nextState.fallacyModalIsOpen) {
-            console.log('node fallacy:', nextProps.node.uid);
             return true;
         } else {
             return false;
@@ -491,7 +488,7 @@ class Node extends Component {
         clearTimeout(this.timer);
         this.setState({lastUpdated: Date.now()});
 
-        this.timer = setTimeout(this.triggerChange.bind(this, node, evt.target.value, Date.now()), 1000);
+        this.timer = setTimeout(this.triggerChange.bind(this, node, evt.target.value, Date.now()), 2000);
 
 
     }
@@ -901,6 +898,46 @@ class Fragment extends Component {
         this.state = {
 
         };
+    }
+
+
+    shallowEqual(objA, objB) {
+        if (objA === objB) {
+            return true;
+        }
+
+        if (typeof objA !== 'object' || objA === null ||
+            typeof objB !== 'object' || objB === null) {
+            return false;
+        }
+
+        var keysA = Object.keys(objA);
+        var keysB = Object.keys(objB);
+
+        if (keysA.length !== keysB.length) {
+            return false;
+        }
+
+        // Test for A's keys different from B.
+        var bHasOwnProperty = hasOwnProperty.bind(objB);
+        for (var i = 0; i < keysA.length; i++) {
+            if (!bHasOwnProperty(keysA[i]) || objA[keysA[i]] !== objB[keysA[i]]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    shallowCompare(instance, nextProps, nextState) {
+        return (
+            !this.shallowEqual(instance.props, nextProps) ||
+            !this.shallowEqual(instance.state, nextState)
+        );
+    }
+
+    shouldComponentUpdate(nextProps, nextState) {
+        return this.shallowCompare(this, nextProps, nextState);
     }
 
 
