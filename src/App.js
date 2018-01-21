@@ -2776,6 +2776,10 @@ class Editor extends Component{
         super(props);
         this.state = {
             tree: {},
+            flatTree: {},
+            childPosition: 0,
+            childrenLength: 0,
+            highlightedNode: undefined,
             premiseNode: "",
             premiseRelativeValue: 1,
             centerLock: true,
@@ -2866,10 +2870,167 @@ class Editor extends Component{
         }
     }
 
+    checkKey(e) {
+
+    e = e || window.event;
+
+    if (e.keyCode == '38') {
+        // up arrow
+        console.log('up:');
+
+        Element.prototype.documentOffsetTop = function () {
+            return this.offsetTop + ( this.offsetParent ? this.offsetParent.documentOffsetTop() : 0 );
+        };
+
+        if(!this.state.highlightedNode) {
+            console.log('default:');
+            document.getElementById( this.state.premiseNode ).scrollIntoView(false);
+            this.setState({highlightedNode: this.state.premiseNode});
+            return;
+        }
+
+        if(this.state.highlightedNode === this.state.premiseNode) {
+            return;
+        }
+
+        console.log('doc:',document.getElementById( this.state.flatTree[this.state.highlightedNode].parentUid ));
+
+        // var top = document.getElementById( this.state.premiseNode ).documentOffsetTop() - ( window.innerHeight / 2 );
+        // console.log(top)
+
+        document.getElementById( this.state.flatTree[this.state.highlightedNode].parentUid ).scrollIntoView(false);
+        this.setState({highlightedNode: this.state.flatTree[this.state.highlightedNode].parentUid })
+
+    }
+    else if (e.keyCode == '40') {
+        // down arrow
+        if(!this.state.highlightedNode) {
+            console.log('default:');
+            document.getElementById( this.state.premiseNode ).scrollIntoView(false);
+            this.setState({highlightedNode: this.state.premiseNode});
+            return;
+        }
+
+        if(!this.state.flatTree[this.state.highlightedNode].children) {
+            return;
+        }
+
+
+        console.log(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0])
+        document.getElementById(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0] ).scrollIntoView(false);
+        this.setState({
+            highlightedNode: Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0],
+            childPosition: 0,
+            childrenLength: Object.keys(this.state.flatTree[this.state.highlightedNode].children).length
+        });
+
+    }
+    else if (e.keyCode == '37') {
+        // left arrow
+
+        if(!this.state.highlightedNode) {
+            console.log('default:');
+            document.getElementById( this.state.premiseNode ).scrollIntoView(false);
+            this.setState({highlightedNode: this.state.premiseNode});
+            return;
+        }
+        if(this.state.childrenLength === 0) {
+            return;
+        }
+
+        if(this.state.childPosition === 0) {
+            return;
+        }
+
+        if(!this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid]){
+            console.log('hit');
+            return;
+        }
+
+        if(!this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children){
+            console.log('hit');
+            return;
+        }
+
+        console.log('left:', Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1])
+        document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1] ).scrollIntoView(false);
+        this.setState({
+            highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1],
+            childPosition: this.state.childPosition - 1,
+            childrenLength: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children).length
+        });
+
+    }
+    else if (e.keyCode == '39') {
+        // right arrow
+
+        if(!this.state.highlightedNode) {
+            console.log('default:');
+            document.getElementById( this.state.premiseNode ).scrollIntoView(false);
+            this.setState({highlightedNode: this.state.premiseNode});
+            return;
+        }
+
+        console.log(this.state.childPosition, this.state.childrenLength);
+
+        if(this.state.childrenLength === 0) {
+            return;
+        }
+
+        if(this.state.childPosition === this.state.childrenLength - 1) {
+            return;
+        }
+
+
+        if(!this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid]){
+            console.log('hit');
+            return;
+        }
+
+        if(!this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children){
+            console.log('hit1');
+            return;
+        }
+
+
+
+        console.log('right:', Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1])
+        document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1] ).scrollIntoView(false);
+        this.setState({
+            highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1],
+            childPosition: this.state.childPosition+1,
+            childrenLength: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children).length
+        });
+    }
+
+
+    else if (e.keyCode == '13') {
+        //enter
+
+        if(this.state.highlightedNode) {
+            e.preventDefault();
+            document.getElementById(this.state.highlightedNode).focus();
+        }
+
+    }
+
+
+    else if (e.keyCode == '27') {
+        //esc
+
+        if(this.state.highlightedNode) {
+            document.getElementById(this.state.highlightedNode).blur();
+        }
+
+    }
+
+}
+
 
     componentWillMount() {
 
         document.body.style.backgroundColor = "#e9ebee";
+        document.onkeydown = this.checkKey.bind(this);
 
         db.collection('scripts').doc(this.props.match.params.scriptId).collection('collaborators').onSnapshot(function (querySnapshot) {
             querySnapshot.forEach(function (doc) {
@@ -2916,7 +3077,7 @@ class Editor extends Component{
                             var tree = {};
                             tree[this.state.premiseNode] = this.convertFlatObjectToTree(tempTree)[this.state.premiseNode];
                             this.setState({premiseRelativeValue: tree[this.state.premiseNode]['relativeToParent']});
-                            this.setState({tree: tree})
+                            this.setState({tree: tree, flatTree: tempTree})
 
                         } else {
                             console.log("No such script");
