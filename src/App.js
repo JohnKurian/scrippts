@@ -664,8 +664,15 @@ class Node extends Component {
         this.setState({sourceModalIsOpen: true})
     }
 
+    afterOpenSourceModal() {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: false});
+        document.body.style.overflow = "hidden";
+    }
+
 
     closeSourceModal() {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: true});
+        document.body.style.overflow = "auto";
         this.setState({sourceModalIsOpen: false})
     }
 
@@ -675,11 +682,13 @@ class Node extends Component {
 
 
     closeFallacyModal() {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: true});
         document.body.style.overflow = "auto";
         this.setState({fallacyModalIsOpen: false})
     }
 
     afterOpenFallacyModal() {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: false});
         document.body.style.overflow = "hidden";
     }
 
@@ -804,6 +813,7 @@ class Node extends Component {
 
                 <Modal
                     isOpen={this.state.sourceModalIsOpen}
+                    onAfterOpen={this.afterOpenSourceModal.bind(this)}
                     onRequestClose={this.closeSourceModal.bind(this)}
                     style={signupModalStyles}
                     contentLabel="Source Modal"
@@ -1881,11 +1891,13 @@ class Header extends Component{
 
     afterOpenModal() {
         store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: false});
+        document.body.style.overflow = "hidden";
         // references are now sync'd and can be accessed.
         // this.subtitle.style.color = 'black';
     }
 
     closeModal() {
+        document.body.style.overflow = "auto";
         store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: true});
         this.setState({modalIsOpen: false, shareModalMessage: '', shareUsernameField: ''});
     }
