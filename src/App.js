@@ -531,7 +531,6 @@ class Node extends Component {
 
 
     onTextAreaClick(node, evt) {
-
         this.props.setHighlightedNode(node.uid);
         this.props.setHotkeysEnabledFlag(false);
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
@@ -551,6 +550,8 @@ class Node extends Component {
 
 
     onFocus(node, evt) {
+        this.props.setHighlightedNode(node.uid);
+        this.props.setHotkeysEnabledFlag(false);
         this.setState({showTools: true, selectedNode: node.uid});
     }
 
@@ -3173,7 +3174,6 @@ class Editor extends Component{
                     return;
                 }
 
-                console.log(this.state.childPosition, this.state.childrenLength);
 
                 if (this.state.childrenLength === 0) {
                     return;
