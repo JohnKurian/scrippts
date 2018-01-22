@@ -172,7 +172,7 @@ var db = firebase.firestore();
 export const auth = firebase.auth;
 
 
-function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComplete: false, numScripts: 0, isScriptCreation: false, highlightedNode: ''}, action) {
+function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComplete: false, numScripts: 0, isScriptCreation: false, highlightedNode: '', hotkeysEnabled: true}, action) {
     switch (action.type) {
 
         case 'SET_ACTIVE_SCRIPT_ID':
@@ -189,6 +189,8 @@ function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComp
             return {...state, numScripts: action.numScripts};
         case 'SET_HIGHLIGHTED_NODE':
             return {...state, highlightedNode: action.highlightedNode};
+        case 'SET_HOTKEYS_ENABLED_FLAG':
+            return {...state, hotkeysEnabled: action.hotkeysEnabled};
         default:
             return state
     }
@@ -531,6 +533,7 @@ class Node extends Component {
     onTextAreaClick(node, evt) {
 
         this.props.setHighlightedNode(node.uid);
+        this.props.setHotkeysEnabledFlag(false);
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
             textAreaWidth: evt.target.style.width,
             textAreaHeight: evt.target.style.height
@@ -552,6 +555,7 @@ class Node extends Component {
     }
 
     onBlur(node, evt) {
+        this.props.setHotkeysEnabledFlag(true);
         this.setState({showTools: true,  selectedNode: null})
     }
 
@@ -999,6 +1003,7 @@ class Fragment extends Component {
                                       premiseRelativeValue={this.props.premiseRelativeValue}
                                       parentNodeId={this.props.parentNodeId}
                                       setHighlightedNode={this.props.setHighlightedNode}
+                                      setHotkeysEnabledFlag={this.props.setHotkeysEnabledFlag}
                                       canEdit={this.props.canEdit}/>
                                 {(node.children!==undefined && Object.keys(node.children).length > 0) &&
                                 <Fragment user={this.props.user}
@@ -1007,6 +1012,7 @@ class Fragment extends Component {
                                           scriptId={this.props.scriptId}
                                           premiseRelativeValue={currentNodeValue}
                                           setHighlightedNode={this.props.setHighlightedNode}
+                                          setHotkeysEnabledFlag={this.props.setHotkeysEnabledFlag}
                                           canEdit={this.props.canEdit}/>}
                             </li>
                         )
@@ -1874,11 +1880,13 @@ class Header extends Component{
     }
 
     afterOpenModal() {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: false});
         // references are now sync'd and can be accessed.
         // this.subtitle.style.color = 'black';
     }
 
     closeModal() {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: true});
         this.setState({modalIsOpen: false, shareModalMessage: '', shareUsernameField: ''});
     }
 
@@ -1997,6 +2005,15 @@ class Header extends Component{
         if (keycode  === 13) { //Enter key's keycode
             evt.preventDefault();
         }
+    }
+
+    onTitleFocus(evt) {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: false});
+    }
+
+
+    onTitleBlur(evt) {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: true});
     }
 
     onChange = (evt) => {
@@ -2214,6 +2231,8 @@ class Header extends Component{
                               ref="title" onInput={this.onChange.bind(this)}
                               onKeyPress={this.onTitleHitEnter.bind(this)}
                               contentEditable={isEditable}
+                              onFocus={this.onTitleFocus.bind(this)}
+                              onBlur={this.onTitleBlur.bind(this)}
                               style={{padding: '5px',
                                   minWidth: '50px',
                                   maxWidth: '500px',
@@ -2806,7 +2825,8 @@ class Editor extends Component{
             scriptDoesNotExist: false,
             insufficientPermission: false,
             checkingForPermission: false,
-            collaborators: {}
+            collaborators: {},
+            hotkeysEnabled: true
         };
 
         this.handleScroll = this.handleScroll.bind(this);
@@ -2855,6 +2875,11 @@ class Editor extends Component{
 
     componentDidMount() {
 
+        store.subscribe(() => {
+                this.setState({hotkeysEnabled: store.getState().hotkeysEnabled})
+            }
+        )
+
 
         if(this.state.centerLock) {
 
@@ -2896,324 +2921,335 @@ class Editor extends Component{
 
     checkKey(e) {
 
-    e = e || window.event;
-    if(this.state.centerLock) {
-        this.setState({centerLock: false});
-    }
-
-    if (e.keyCode == '38') {
-        // up arrow
-        console.log('up:');
-
-        Element.prototype.documentOffsetTop = function () {
-            return this.offsetTop + ( this.offsetParent ? this.offsetParent.documentOffsetTop() : 0 );
-        };
-
-        if(!this.state.highlightedNode) {
-            console.log('default:');
-
-            let el = document.getElementById(this.state.premiseNode);
-            let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-            let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-
-
-            let bodyRect = document.body.getBoundingClientRect(),
-                elemRect = el.getBoundingClientRect(),
-                offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
-                offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
-
-
-
-            console.log(offsetLeft, offsetTop);
-            window.scrollTo(offsetLeft, offsetTop);
-
-
-            store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
-            this.setState({highlightedNode: this.state.premiseNode});
-            return;
+        e = e || window.event;
+        if(this.state.centerLock) {
+            this.setState({centerLock: false});
         }
 
-        if(this.state.highlightedNode === this.state.premiseNode) {
-            return;
+        if(this.state.hotkeysEnabled) {
+
+
+            if (e.keyCode == '38') {
+                e.preventDefault();
+                // up arrow
+
+                Element.prototype.documentOffsetTop = function () {
+                    return this.offsetTop + ( this.offsetParent ? this.offsetParent.documentOffsetTop() : 0 );
+                };
+
+                if (!this.state.highlightedNode) {
+
+                    let el = document.getElementById(this.state.premiseNode);
+                    let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                    let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+                    let bodyRect = document.body.getBoundingClientRect(),
+                        elemRect = el.getBoundingClientRect(),
+                        offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
+                        offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
+
+
+                    window.scrollTo(offsetLeft, offsetTop);
+
+
+                    store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
+                    this.setState({highlightedNode: this.state.premiseNode});
+                    return;
+                }
+
+                if (this.state.highlightedNode === this.state.premiseNode) {
+                    return;
+                }
+
+                if (!document.getElementById(this.state.flatTree[this.state.highlightedNode].parentUid)) {
+                    return;
+                }
+
+                let el = document.getElementById(this.state.flatTree[this.state.highlightedNode].parentUid);
+                let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+                var bodyRect = document.body.getBoundingClientRect(),
+                    elemRect = el.getBoundingClientRect(),
+                    offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
+                    offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
+
+
+                window.scrollTo(offsetLeft, offsetTop);
+                // window.scrollTo({top: offsetTop, left: offsetLeft, behavior: 'smooth'});
+
+
+                let nextNodeId = this.state.flatTree[this.state.highlightedNode].parentUid;
+                let parentId = this.state.flatTree[nextNodeId].parentUid;
+
+                let childPosition = 0;
+                let childrenLength = 0;
+                if (this.state.flatTree[parentId]) {
+                    let parentChildren = Object.keys(this.state.flatTree[parentId].children);
+                    childPosition = parentChildren.indexOf(nextNodeId);
+                    childrenLength = Object.keys(this.state.flatTree[parentId].children).length;
+                }
+
+                store.dispatch({
+                    type: 'SET_HIGHLIGHTED_NODE',
+                    highlightedNode: this.state.flatTree[this.state.highlightedNode].parentUid
+                });
+                this.setState({
+                    highlightedNode: this.state.flatTree[this.state.highlightedNode].parentUid,
+                    childPosition: childPosition,
+                    childrenLength: childrenLength
+                });
+
+            }
+            else if (e.keyCode == '40') {
+                e.preventDefault();
+                // down arrow
+                if (!this.state.highlightedNode) {
+
+                    let el = document.getElementById(this.state.premiseNode);
+                    let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                    let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+                    let bodyRect = document.body.getBoundingClientRect(),
+                        elemRect = el.getBoundingClientRect(),
+                        offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
+                        offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
+
+
+                    window.scrollTo(offsetLeft, offsetTop);
+
+                    store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
+                    this.setState({highlightedNode: this.state.premiseNode});
+                    return;
+                }
+
+                if (!this.state.flatTree[this.state.highlightedNode].children) {
+                    return;
+                }
+
+                if (!document.getElementById(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0])) {
+                    return;
+                }
+
+
+                let el = document.getElementById(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0]);
+                let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+                let bodyRect = document.body.getBoundingClientRect(),
+                    elemRect = el.getBoundingClientRect(),
+                    offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
+                    offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
+
+
+                window.scrollTo(offsetLeft, offsetTop);
+
+                //
+                // console.log(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0])
+                // document.getElementById(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0] ).scrollIntoView(false);
+
+                store.dispatch({
+                    type: 'SET_HIGHLIGHTED_NODE',
+                    highlightedNode: Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0]
+                });
+                this.setState({
+                    highlightedNode: Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0],
+                    childPosition: 0,
+                    childrenLength: Object.keys(this.state.flatTree[this.state.highlightedNode].children).length
+                });
+
+            }
+            else if (e.keyCode == '37') {
+                e.preventDefault();
+                // left arrow
+
+                if (!this.state.highlightedNode) {
+
+                    let el = document.getElementById(this.state.premiseNode);
+                    let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                    let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+                    let bodyRect = document.body.getBoundingClientRect(),
+                        elemRect = el.getBoundingClientRect(),
+                        offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
+                        offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
+
+
+                    window.scrollTo(offsetLeft, offsetTop);
+
+                    store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
+                    this.setState({highlightedNode: this.state.premiseNode});
+                    return;
+                }
+                if (this.state.childrenLength === 0) {
+                    return;
+                }
+
+                if (this.state.childPosition === 0) {
+                    return;
+                }
+
+                if (!this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid]) {
+                    console.log('hit');
+                    return;
+                }
+
+                if (!this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children) {
+                    console.log('hit');
+                    return;
+                }
+
+
+                if (!document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1])) {
+                    return;
+                }
+
+
+                let el = document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1]);
+                let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+                let bodyRect = document.body.getBoundingClientRect(),
+                    elemRect = el.getBoundingClientRect(),
+                    offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
+                    offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
+
+
+                window.scrollTo(offsetLeft, offsetTop);
+
+                // document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1] ).scrollIntoView(false);
+
+                store.dispatch({
+                    type: 'SET_HIGHLIGHTED_NODE',
+                    highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1]
+                });
+                this.setState({
+                    highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1],
+                    childPosition: this.state.childPosition - 1,
+                    childrenLength: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children).length
+                });
+
+            }
+            else if (e.keyCode == '39') {
+                e.preventDefault();
+                // right arrow
+
+                if (!this.state.highlightedNode) {
+
+                    let el = document.getElementById(this.state.premiseNode);
+                    let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                    let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+                    let bodyRect = document.body.getBoundingClientRect(),
+                        elemRect = el.getBoundingClientRect(),
+                        offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
+                        offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
+
+
+                    window.scrollTo(offsetLeft, offsetTop);
+
+
+                    store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
+                    this.setState({highlightedNode: this.state.premiseNode});
+                    return;
+                }
+
+                console.log(this.state.childPosition, this.state.childrenLength);
+
+                if (this.state.childrenLength === 0) {
+                    return;
+                }
+
+                if (this.state.childPosition === this.state.childrenLength - 1) {
+                    return;
+                }
+
+
+                if (!this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid]) {
+                    return;
+                }
+
+                if (!this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children) {
+                    return;
+                }
+
+                if (!document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1])) {
+                    return;
+                }
+
+                let el = document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1]);
+                let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+                let bodyRect = document.body.getBoundingClientRect(),
+                    elemRect = el.getBoundingClientRect(),
+                    offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
+                    offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
+
+
+                window.scrollTo(offsetLeft, offsetTop);
+
+
+                // document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1] ).scrollIntoView(false);
+
+                store.dispatch({
+                    type: 'SET_HIGHLIGHTED_NODE',
+                    highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1]
+                });
+                this.setState({
+                    highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1],
+                    childPosition: this.state.childPosition + 1,
+                    childrenLength: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children).length
+                });
+            }
+
+
+            else if (e.keyCode == '13') {
+                //enter
+
+                if (this.state.highlightedNode) {
+                    e.preventDefault();
+                    this.setState({hotkeysEnabled: false});
+                    document.getElementById(this.state.highlightedNode).focus();
+                }
+
+            }
+
+
+            else if (e.keyCode == '27') {
+                //esc
+
+                if (this.state.highlightedNode) {
+                    this.setState({hotkeysEnabled: true});
+                    document.getElementById(this.state.highlightedNode).blur();
+                }
+
+            }
+
         }
+        else {
+            if (e.keyCode == '27') {
+                //esc
 
-        if(!document.getElementById( this.state.flatTree[this.state.highlightedNode].parentUid )) {
-            return;
+                if (this.state.highlightedNode) {
+                    this.setState({hotkeysEnabled: true});
+                    document.getElementById(this.state.highlightedNode).blur();
+                }
+
+            }
         }
-
-        let el = document.getElementById( this.state.flatTree[this.state.highlightedNode].parentUid );
-        let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-        let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-
-
-        var bodyRect = document.body.getBoundingClientRect(),
-            elemRect = el.getBoundingClientRect(),
-            offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
-            offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
-
-
-
-        console.log(offsetLeft, offsetTop);
-        window.scrollTo(offsetLeft, offsetTop);
-        // window.scrollTo({top: offsetTop, left: offsetLeft, behavior: 'smooth'});
-
-
-        let nextNodeId = this.state.flatTree[this.state.highlightedNode].parentUid;
-        let parentId = this.state.flatTree[nextNodeId].parentUid;
-
-        let childPosition = 0;
-        let childrenLength = 0;
-        if(this.state.flatTree[parentId]) {
-            let parentChildren = Object.keys(this.state.flatTree[parentId].children);
-            childPosition = parentChildren.indexOf(nextNodeId);
-            childrenLength = Object.keys(this.state.flatTree[parentId].children).length;
-        }
-
-        store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.flatTree[this.state.highlightedNode].parentUid });
-        this.setState({highlightedNode: this.state.flatTree[this.state.highlightedNode].parentUid, childPosition: childPosition, childrenLength: childrenLength });
-
-    }
-    else if (e.keyCode == '40') {
-        // down arrow
-        if(!this.state.highlightedNode) {
-            console.log('default:');
-
-            let el = document.getElementById(this.state.premiseNode);
-            let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-            let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-
-
-            let bodyRect = document.body.getBoundingClientRect(),
-                elemRect = el.getBoundingClientRect(),
-                offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
-                offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
-
-
-
-            console.log(offsetLeft, offsetTop);
-            window.scrollTo(offsetLeft, offsetTop);
-
-            store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
-            this.setState({highlightedNode: this.state.premiseNode});
-            return;
-        }
-
-        if(!this.state.flatTree[this.state.highlightedNode].children) {
-            return;
-        }
-
-        if(!document.getElementById(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0])) {
-            return;
-        }
-
-
-        let el = document.getElementById(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0] );
-        let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-        let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-
-
-        let bodyRect = document.body.getBoundingClientRect(),
-            elemRect = el.getBoundingClientRect(),
-            offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
-            offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
-
-
-
-        console.log(offsetLeft, offsetTop);
-        window.scrollTo(offsetLeft, offsetTop);
-
-        //
-        // console.log(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0])
-        // document.getElementById(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0] ).scrollIntoView(false);
-
-        store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0]});
-        this.setState({
-            highlightedNode: Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0],
-            childPosition: 0,
-            childrenLength: Object.keys(this.state.flatTree[this.state.highlightedNode].children).length
-        });
-
-    }
-    else if (e.keyCode == '37') {
-        // left arrow
-
-        if(!this.state.highlightedNode) {
-            console.log('default:');
-
-            let el = document.getElementById(this.state.premiseNode);
-            let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-            let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-
-
-            let bodyRect = document.body.getBoundingClientRect(),
-                elemRect = el.getBoundingClientRect(),
-                offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
-                offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
-
-
-
-            console.log(offsetLeft, offsetTop);
-            window.scrollTo(offsetLeft, offsetTop);
-
-            store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
-            this.setState({highlightedNode: this.state.premiseNode});
-            return;
-        }
-        if(this.state.childrenLength === 0) {
-            return;
-        }
-
-        if(this.state.childPosition === 0) {
-            return;
-        }
-
-        if(!this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid]){
-            console.log('hit');
-            return;
-        }
-
-        if(!this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children){
-            console.log('hit');
-            return;
-        }
-
-
-        if(!document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1] )) {
-            return;
-        }
-
-
-        let el = document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1] );
-        let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-        let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-
-
-        let bodyRect = document.body.getBoundingClientRect(),
-            elemRect = el.getBoundingClientRect(),
-            offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
-            offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
-
-
-
-        console.log(offsetLeft, offsetTop);
-        window.scrollTo(offsetLeft, offsetTop);
-
-        console.log('left:', Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1])
-        // document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1] ).scrollIntoView(false);
-
-        store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1] });
-        this.setState({
-            highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1],
-            childPosition: this.state.childPosition - 1,
-            childrenLength: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children).length
-        });
-
-    }
-    else if (e.keyCode == '39') {
-        // right arrow
-
-        if(!this.state.highlightedNode) {
-            console.log('default:');
-
-            let el = document.getElementById(this.state.premiseNode);
-            let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-            let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-
-
-            let bodyRect = document.body.getBoundingClientRect(),
-                elemRect = el.getBoundingClientRect(),
-                offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
-                offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
-
-
-
-            console.log(offsetLeft, offsetTop);
-            window.scrollTo(offsetLeft, offsetTop);
-
-
-            store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
-            this.setState({highlightedNode: this.state.premiseNode});
-            return;
-        }
-
-        console.log(this.state.childPosition, this.state.childrenLength);
-
-        if(this.state.childrenLength === 0) {
-            return;
-        }
-
-        if(this.state.childPosition === this.state.childrenLength - 1) {
-            return;
-        }
-
-
-        if(!this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid]){
-            console.log('hit');
-            return;
-        }
-
-        if(!this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children){
-            console.log('hit1');
-            return;
-        }
-
-        if(!document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1] )) {
-            return;
-        }
-
-        let el = document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1] );
-        let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-        let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-
-
-        let bodyRect = document.body.getBoundingClientRect(),
-            elemRect = el.getBoundingClientRect(),
-            offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
-            offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
-
-
-
-        console.log(offsetLeft, offsetTop);
-        window.scrollTo(offsetLeft, offsetTop);
-
-
-
-        console.log('right:', Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1])
-        // document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1] ).scrollIntoView(false);
-
-        store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1] });
-        this.setState({
-            highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1],
-            childPosition: this.state.childPosition+1,
-            childrenLength: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children).length
-        });
-    }
-
-
-    else if (e.keyCode == '13') {
-        //enter
-
-        if(this.state.highlightedNode) {
-            e.preventDefault();
-            document.getElementById(this.state.highlightedNode).focus();
-        }
-
-    }
-
-
-    else if (e.keyCode == '27') {
-        //esc
-
-        if(this.state.highlightedNode) {
-            document.getElementById(this.state.highlightedNode).blur();
-        }
-
-    }
 
     }
 
     setHighlightedNode(nodeUid) {
-        console.log('node set');
 
         let nextNodeId = nodeUid;
         let parentId = this.state.flatTree[nextNodeId].parentUid;
@@ -3230,6 +3266,10 @@ class Editor extends Component{
 
         store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: nodeUid});
         this.setState({highlightedNode: nodeUid, childPosition: childPosition, childrenLength: childrenLength});
+    }
+
+    setHotkeysEnabledFlag(flag) {
+        this.setState({hotkeysEnabled: flag});
     }
 
 
@@ -3351,6 +3391,7 @@ class Editor extends Component{
                                               scriptId={this.props.match.params.scriptId}
                                               premiseRelativeValue={this.state.premiseRelativeValue}
                                               setHighlightedNode={this.setHighlightedNode.bind(this)}
+                                              setHotkeysEnabledFlag={this.setHotkeysEnabledFlag.bind(this)}
                                               canEdit={false}/>
 
                                 </div>
@@ -3375,6 +3416,7 @@ class Editor extends Component{
                                                   scriptId={this.props.match.params.scriptId}
                                                   premiseRelativeValue={this.state.premiseRelativeValue}
                                                   setHighlightedNode={this.setHighlightedNode.bind(this)}
+                                                  setHotkeysEnabledFlag={this.setHotkeysEnabledFlag.bind(this)}
                                                   canEdit={this.state.collaborators[this.props.user.uid]['isOwner'] || (this.state.collaborators[this.props.user.uid]['permission'] === 'write')}/>
 
                                     </div>
