@@ -172,7 +172,7 @@ var db = firebase.firestore();
 export const auth = firebase.auth;
 
 
-function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComplete: false, numScripts: 0, isScriptCreation: false}, action) {
+function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComplete: false, numScripts: 0, isScriptCreation: false, highlightedNode: ''}, action) {
     switch (action.type) {
 
         case 'SET_ACTIVE_SCRIPT_ID':
@@ -187,6 +187,8 @@ function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComp
             return {...state, isScriptCreation: false};
         case 'SCRIPT_NUM_UPDATE':
             return {...state, numScripts: action.numScripts};
+        case 'SET_HIGHLIGHTED_NODE':
+            return {...state, highlightedNode: action.highlightedNode};
         default:
             return state
     }
@@ -411,12 +413,24 @@ class Node extends Component {
             selectedNode: null,
             fallacyModalIsOpen: false,
             sourceModalIsOpen: false,
-            lastUpdated: Date.now()
+            lastUpdated: Date.now(),
+            highlighted: false
         };
     }
 
     componentWillMount(props) {
         this.timer = null;
+    }
+
+    componentDidMount() {
+        store.subscribe(() => {
+            if(!this.state.highlighted && (store.getState().highlightedNode === this.props.node.uid)) {
+                this.setState({highlighted: true})
+            }
+            if(this.state.highlighted && !(store.getState().highlightedNode === this.props.node.uid)) {
+                this.setState({highlighted: false})
+            }
+        })
     }
 
 
@@ -474,7 +488,10 @@ class Node extends Component {
             return true;
         } else if(this.state.fallacyModalIsOpen !== nextState.fallacyModalIsOpen) {
             return true;
-        } else {
+        } else if(this.state.highlighted !== nextState.highlighted) {
+                return true;
+            }
+            else {
             return false;
         }
 
@@ -513,6 +530,7 @@ class Node extends Component {
 
     onTextAreaClick(node, evt) {
 
+        this.props.setHighlightedNode(node.uid);
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node['uid']).update({
             textAreaWidth: evt.target.style.width,
             textAreaHeight: evt.target.style.height
@@ -813,7 +831,7 @@ class Node extends Component {
                     paddingTop: '10px',
                     paddingBottom: '3px',
                     borderRadius: '6px',
-                    boxShadow: '1px 1px 4px rgba(0,0,0,.3)',
+                    boxShadow: (this.state.highlighted? '2px 2px 6px #03a9f4': '1px 1px 4px rgba(0,0,0,.3)'),
                     zIndex: '100'
                 }}>
                     <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
@@ -980,6 +998,7 @@ class Fragment extends Component {
                                       user={this.props.user}
                                       premiseRelativeValue={this.props.premiseRelativeValue}
                                       parentNodeId={this.props.parentNodeId}
+                                      setHighlightedNode={this.props.setHighlightedNode}
                                       canEdit={this.props.canEdit}/>
                                 {(node.children!==undefined && Object.keys(node.children).length > 0) &&
                                 <Fragment user={this.props.user}
@@ -987,6 +1006,7 @@ class Fragment extends Component {
                                           parentNodeId={this.props.parentNodeId}
                                           scriptId={this.props.scriptId}
                                           premiseRelativeValue={currentNodeValue}
+                                          setHighlightedNode={this.props.setHighlightedNode}
                                           canEdit={this.props.canEdit}/>}
                             </li>
                         )
@@ -2865,7 +2885,11 @@ class Editor extends Component{
 
                 let calculatedLeftScroll = leftOffset - Math.max(viewportWidth/2) + Math.max(elementWidth/2);
 
-                window.scrollTo(calculatedLeftScroll, 0);
+
+
+                if(calculatedLeftScroll>50) {
+                    window.scrollTo(calculatedLeftScroll, 0);
+                }
             }
         }
     }
@@ -2873,6 +2897,9 @@ class Editor extends Component{
     checkKey(e) {
 
     e = e || window.event;
+    if(this.state.centerLock) {
+        this.setState({centerLock: false});
+    }
 
     if (e.keyCode == '38') {
         // up arrow
@@ -2884,7 +2911,24 @@ class Editor extends Component{
 
         if(!this.state.highlightedNode) {
             console.log('default:');
-            document.getElementById( this.state.premiseNode ).scrollIntoView(false);
+
+            let el = document.getElementById(this.state.premiseNode);
+            let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+            let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+            let bodyRect = document.body.getBoundingClientRect(),
+                elemRect = el.getBoundingClientRect(),
+                offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
+                offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
+
+
+
+            console.log(offsetLeft, offsetTop);
+            window.scrollTo(offsetLeft, offsetTop);
+
+
+            store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
             this.setState({highlightedNode: this.state.premiseNode});
             return;
         }
@@ -2893,20 +2937,63 @@ class Editor extends Component{
             return;
         }
 
-        console.log('doc:',document.getElementById( this.state.flatTree[this.state.highlightedNode].parentUid ));
+        if(!document.getElementById( this.state.flatTree[this.state.highlightedNode].parentUid )) {
+            return;
+        }
 
-        // var top = document.getElementById( this.state.premiseNode ).documentOffsetTop() - ( window.innerHeight / 2 );
-        // console.log(top)
+        let el = document.getElementById( this.state.flatTree[this.state.highlightedNode].parentUid );
+        let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+        let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
-        document.getElementById( this.state.flatTree[this.state.highlightedNode].parentUid ).scrollIntoView(false);
-        this.setState({highlightedNode: this.state.flatTree[this.state.highlightedNode].parentUid })
+
+        var bodyRect = document.body.getBoundingClientRect(),
+            elemRect = el.getBoundingClientRect(),
+            offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
+            offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
+
+
+
+        console.log(offsetLeft, offsetTop);
+        window.scrollTo(offsetLeft, offsetTop);
+        // window.scrollTo({top: offsetTop, left: offsetLeft, behavior: 'smooth'});
+
+
+        let nextNodeId = this.state.flatTree[this.state.highlightedNode].parentUid;
+        let parentId = this.state.flatTree[nextNodeId].parentUid;
+
+        let childPosition = 0;
+        let childrenLength = 0;
+        if(this.state.flatTree[parentId]) {
+            let parentChildren = Object.keys(this.state.flatTree[parentId].children);
+            childPosition = parentChildren.indexOf(nextNodeId);
+            childrenLength = Object.keys(this.state.flatTree[parentId].children).length;
+        }
+
+        store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.flatTree[this.state.highlightedNode].parentUid });
+        this.setState({highlightedNode: this.state.flatTree[this.state.highlightedNode].parentUid, childPosition: childPosition, childrenLength: childrenLength });
 
     }
     else if (e.keyCode == '40') {
         // down arrow
         if(!this.state.highlightedNode) {
             console.log('default:');
-            document.getElementById( this.state.premiseNode ).scrollIntoView(false);
+
+            let el = document.getElementById(this.state.premiseNode);
+            let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+            let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+            let bodyRect = document.body.getBoundingClientRect(),
+                elemRect = el.getBoundingClientRect(),
+                offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
+                offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
+
+
+
+            console.log(offsetLeft, offsetTop);
+            window.scrollTo(offsetLeft, offsetTop);
+
+            store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
             this.setState({highlightedNode: this.state.premiseNode});
             return;
         }
@@ -2915,9 +3002,31 @@ class Editor extends Component{
             return;
         }
 
+        if(!document.getElementById(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0])) {
+            return;
+        }
 
-        console.log(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0])
-        document.getElementById(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0] ).scrollIntoView(false);
+
+        let el = document.getElementById(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0] );
+        let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+        let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+        let bodyRect = document.body.getBoundingClientRect(),
+            elemRect = el.getBoundingClientRect(),
+            offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
+            offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
+
+
+
+        console.log(offsetLeft, offsetTop);
+        window.scrollTo(offsetLeft, offsetTop);
+
+        //
+        // console.log(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0])
+        // document.getElementById(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0] ).scrollIntoView(false);
+
+        store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0]});
         this.setState({
             highlightedNode: Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0],
             childPosition: 0,
@@ -2930,7 +3039,23 @@ class Editor extends Component{
 
         if(!this.state.highlightedNode) {
             console.log('default:');
-            document.getElementById( this.state.premiseNode ).scrollIntoView(false);
+
+            let el = document.getElementById(this.state.premiseNode);
+            let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+            let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+            let bodyRect = document.body.getBoundingClientRect(),
+                elemRect = el.getBoundingClientRect(),
+                offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
+                offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
+
+
+
+            console.log(offsetLeft, offsetTop);
+            window.scrollTo(offsetLeft, offsetTop);
+
+            store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
             this.setState({highlightedNode: this.state.premiseNode});
             return;
         }
@@ -2952,8 +3077,31 @@ class Editor extends Component{
             return;
         }
 
+
+        if(!document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1] )) {
+            return;
+        }
+
+
+        let el = document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1] );
+        let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+        let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+        let bodyRect = document.body.getBoundingClientRect(),
+            elemRect = el.getBoundingClientRect(),
+            offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
+            offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
+
+
+
+        console.log(offsetLeft, offsetTop);
+        window.scrollTo(offsetLeft, offsetTop);
+
         console.log('left:', Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1])
-        document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1] ).scrollIntoView(false);
+        // document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1] ).scrollIntoView(false);
+
+        store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1] });
         this.setState({
             highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1],
             childPosition: this.state.childPosition - 1,
@@ -2966,7 +3114,24 @@ class Editor extends Component{
 
         if(!this.state.highlightedNode) {
             console.log('default:');
-            document.getElementById( this.state.premiseNode ).scrollIntoView(false);
+
+            let el = document.getElementById(this.state.premiseNode);
+            let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+            let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+            let bodyRect = document.body.getBoundingClientRect(),
+                elemRect = el.getBoundingClientRect(),
+                offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
+                offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
+
+
+
+            console.log(offsetLeft, offsetTop);
+            window.scrollTo(offsetLeft, offsetTop);
+
+
+            store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
             this.setState({highlightedNode: this.state.premiseNode});
             return;
         }
@@ -2992,10 +3157,31 @@ class Editor extends Component{
             return;
         }
 
+        if(!document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1] )) {
+            return;
+        }
+
+        let el = document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1] );
+        let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+        let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+        let bodyRect = document.body.getBoundingClientRect(),
+            elemRect = el.getBoundingClientRect(),
+            offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight/2),
+            offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth/2) + 150;
+
+
+
+        console.log(offsetLeft, offsetTop);
+        window.scrollTo(offsetLeft, offsetTop);
+
 
 
         console.log('right:', Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1])
-        document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1] ).scrollIntoView(false);
+        // document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1] ).scrollIntoView(false);
+
+        store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1] });
         this.setState({
             highlightedNode: Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1],
             childPosition: this.state.childPosition+1,
@@ -3024,7 +3210,28 @@ class Editor extends Component{
 
     }
 
-}
+    }
+
+    setHighlightedNode(nodeUid) {
+        console.log('node set');
+
+        let nextNodeId = nodeUid;
+        let parentId = this.state.flatTree[nextNodeId].parentUid;
+
+        let childPosition = 0;
+        let childrenLength = 0;
+        if(this.state.flatTree[parentId]) {
+            let parentChildren = Object.keys(this.state.flatTree[parentId].children);
+            childPosition = parentChildren.indexOf(nextNodeId);
+            childrenLength = Object.keys(this.state.flatTree[parentId].children).length;
+        }
+
+
+
+        store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: nodeUid});
+        this.setState({highlightedNode: nodeUid, childPosition: childPosition, childrenLength: childrenLength});
+    }
+
 
 
     componentWillMount() {
@@ -3143,6 +3350,7 @@ class Editor extends Component{
                                               parentNodeId={Object.keys(this.state.tree)[0]}
                                               scriptId={this.props.match.params.scriptId}
                                               premiseRelativeValue={this.state.premiseRelativeValue}
+                                              setHighlightedNode={this.setHighlightedNode.bind(this)}
                                               canEdit={false}/>
 
                                 </div>
@@ -3166,6 +3374,7 @@ class Editor extends Component{
                                                   parentNodeId={Object.keys(this.state.tree)[0]}
                                                   scriptId={this.props.match.params.scriptId}
                                                   premiseRelativeValue={this.state.premiseRelativeValue}
+                                                  setHighlightedNode={this.setHighlightedNode.bind(this)}
                                                   canEdit={this.state.collaborators[this.props.user.uid]['isOwner'] || (this.state.collaborators[this.props.user.uid]['permission'] === 'write')}/>
 
                                     </div>
