@@ -39,6 +39,9 @@ import Textarea from "react-textarea-autosize";
 var firebase = require("firebase");
 require("firebase/firestore");
 
+// console.log = function() {}
+// console.error = function() {}
+
 const customStyles = {
     content : {
         top                   : '33%',
@@ -784,27 +787,42 @@ class Node extends Component {
                 <div onMouseEnter={this.onNodeHoveredIn.bind(this, node)} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
 
                     <div style={{display: 'flex', width: '50px'}}>
-                        <i className="material-icons" onClick={this.onSourceClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>link</i>
-                        <i className="material-icons" onClick={this.onFallacyClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '22px'}}>report_problem</i>
+                        <i data-tip data-for='source' className="material-icons" onClick={this.onSourceClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>link</i>
+                        <ReactTooltip id="source">Add a source</ReactTooltip>
+                        <i data-tip data-for='fallacy' className="material-icons" onClick={this.onFallacyClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '22px'}}>report_problem</i>
+                        <ReactTooltip id="fallacy">Report a fallacy on this claim</ReactTooltip>
                     </div>
 
                     <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                         <i data-tip='custom show' data-event='click focus' onClick={()=>{ }} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
                         <ReactTooltip globalEventOff='click' place="bottom" />
 
-                        <button style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
-                        <button style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
+                        <button data-tip data-for='but' style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
+                        <ReactTooltip id="but">Add a statement that opposes this claim</ReactTooltip>
+                        <button data-tip data-for='because' style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
+                        <ReactTooltip id="because">Add a statement that supports this claim</ReactTooltip>
                     </div>
                     <div style={{display: 'flex', width: '50px', justifyContent: 'flex-end', border: '0px', padding: '0px' }}>
                     { !(node.uid === this.props.parentNodeId) &&
-                    <a style={{padding: 0, border: 'none'}} href="javascript:;" onClick={this.onDeleteNodeClick.bind(this, node)}>
+                    <a data-tip data-for='remove' style={{padding: 0, border: 'none'}} href="javascript:;" onClick={this.onDeleteNodeClick.bind(this, node)}>
                         <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '21px'}}>delete_forever</i>
+                        <ReactTooltip id="remove">Remove node(will also remove all the nodes below it)</ReactTooltip>
                     </a>
                     }
                     </div>
 
                 </div>
             );
+        }
+
+        let textAreaPlaceholder = '';
+
+        if(node.uid === this.props.parentNodeId) {
+            textAreaPlaceholder = 'Add the base premise of the argument';
+        } else if(node['relativeToParent'] === 1) {
+            textAreaPlaceholder = 'Add a statement that supports the above claim';
+        } else if(node['relativeToParent'] === -1) {
+            textAreaPlaceholder = 'Add a statement that opposes the above claim';
         }
 
 
@@ -860,6 +878,7 @@ class Node extends Component {
                     <Textarea
                         id={this.props.node.uid}
                         key={this.props.node.uid}
+                        placeholder={textAreaPlaceholder}
                         style={{resize: 'none', width: '300px', background: color}}
                         autoFocus={this.props.node.uid === this.state.selectedNode}
                         defaultValue={this.props.node.text}
@@ -2241,7 +2260,8 @@ class Header extends Component{
                 <div style={{display: 'flex', flex: 1, flexDirection: 'row',  alignItems: 'center', justifyContent: 'center'}}>
 
                     <div style={{display: 'flex', flex: 1,  alignItems: 'center', justifyContent: 'center'}}>
-                        <span suppressContentEditableWarning={true}
+                        <span data-tip data-for='title'
+                              suppressContentEditableWarning={true}
                               ref="title" onInput={this.onChange.bind(this)}
                               onKeyPress={this.onTitleHitEnter.bind(this)}
                               contentEditable={isEditable}
@@ -2254,7 +2274,9 @@ class Header extends Component{
                                   overflow: 'hidden',
                                   whiteSpace: 'nowrap'}}>
                             {this.state.title}
-                            </span>
+                        </span>
+                        <ReactTooltip id="title">Edit title</ReactTooltip>
+
                     </div>
 
                     <div style={{flex: 0, marginRight: '32px'}}>
@@ -2328,7 +2350,7 @@ class Header extends Component{
                         </Modal>
 
                         { Object.keys(this.state.collaborators).length>0 &&
-                            <div onClick={this.openModal} style={{
+                            <div data-tip data-for='share' onClick={this.openModal} style={{
                                 padding: '8px',
                                 borderRadius: '2px',
                                 borderColor: '#1565c0',
@@ -2344,6 +2366,7 @@ class Header extends Component{
                                 <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '12px'}}>
                                     Share
                                 </div>
+                                <ReactTooltip id="share">Share settings</ReactTooltip>
                             </div>
                         }
 
