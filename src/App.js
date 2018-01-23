@@ -1826,11 +1826,14 @@ class Header extends Component{
             if(store.getState().activeScriptId) {
 
                 db.collection('scripts').doc(store.getState().activeScriptId).collection('collaborators').onSnapshot(function (querySnapshot) {
-                        querySnapshot.forEach(function (doc) {
-                            let collaborators = this.state.collaborators;
-                            collaborators[doc.id] = doc.data();
-                            this.setState({collaborators: collaborators})
-                        }.bind(this));
+                    let collaborators = {};
+                    querySnapshot.forEach(function (doc) {
+                        collaborators[doc.id] = doc.data();
+
+                    }.bind(this));
+
+                    this.setState({collaborators: collaborators})
+
                     }.bind(this), function(error){
                     console.log('header collab fetch error:', error)
                 });
@@ -1996,10 +1999,8 @@ class Header extends Component{
         let params = "id=" + id + "&" + "type=" + type + "&" + "scriptId=" + activeScriptId + "&" + "accessLevel=" + permission;
 
         firebase.auth().currentUser.getToken().then(function(token) {
-            console.log('Sending request to', helloUserUrl + "?" + params, 'with ID token in Authorization header.');
             var req = new XMLHttpRequest();
             req.onload = function() {
-                console.log('onload;', req.responseText);
                 this.setState({shareModalMessage: JSON.parse(req.responseText).msg})
             }.bind(this);
             req.onerror = function() {
