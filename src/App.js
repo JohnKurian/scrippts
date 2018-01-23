@@ -112,7 +112,7 @@ const signupModalStyles = {
 const noteModalStyles = {
     content : {
         padding: '0px',
-        top                   : '33%',
+        top                   : '50%',
         left                  : '50%',
         right                 : 'auto',
         bottom                : 'auto',
@@ -135,14 +135,12 @@ const noteModalStyles = {
 const fallacyModalStyles = {
     content : {
         padding: '0px',
-        top                   : '325px',
-        height                : '600px',
+        top                   : '50%',
         left                  : '50%',
         right                 : 'auto',
         bottom                : 'auto',
         marginRight           : '-50%',
         transform             : 'translate(-50%, -50%)',
-        overflow: 'none'
     },
     overlay: {
         position: "fixed",
@@ -152,7 +150,6 @@ const fallacyModalStyles = {
         bottom: 0,
         backgroundColor: "rgba(255, 255, 255, 0.75)",
         zIndex: 10000,
-        overflow: 'none'
     }
 };
 
@@ -303,7 +300,7 @@ class Source extends Component {
                 add source
                 </div>
                 <Textarea
-                    style={{resize: 'none', width: '400px', border: 'solid 2px #1565c0', outline: 'none'}}
+                    style={{resize: 'none', width: '400px', border: 'solid 1px #1565c0', outline: 'none', borderRadius: '0px'}}
                     autoFocus={true}
                     defaultValue={this.props.node.source}
                     onFocus={this.onFocus.bind(this, {})}
@@ -389,7 +386,7 @@ class Fallacy extends Component {
 
 
         return (
-            <div style={{width: '500px', height: '750px', paddingLeft: '20px', paddingRight: '20px', paddingTop: '20px'}}>
+            <div style={{width: '500px', padding: '20px'}}>
                 <div style={{display: 'flex', paddingBottom: '20px'}}>
                     <i className="material-icons" style={{textDecoration: 'none', color: 'orange', fontSize: '24px', marginRight: '3px'}}>warning</i>
                     <div style={{fontWeight: 'bold', fontSize: '18px'}}>report fallacy</div>
@@ -427,7 +424,17 @@ class Fallacy extends Component {
 
 class Note extends Component {
 
+    constructor(props) {
+        super(props);
+        this.state = {
+        };
+    }
+
     onTextAreaClick(node, evt) {
+
+    }
+
+    componentDidMount() {
 
     }
 
@@ -463,14 +470,16 @@ class Note extends Component {
 
     render() {
         return (
-            <div style={{display: 'flex', flexDirection: 'column'}}>
+            <div style={{display: 'flex', flexDirection: 'column', padding: '20px'}}>
                 <div style={{display: 'flex', paddingBottom: '10px'}}>
                     <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>note</i>
                     add note
                 </div>
                 <Textarea
-                    style={{resize: 'none', width: '400px', border: 'solid 1px rgb(117, 117, 117)', outline: 'none', borderRadius: '0px'}}
+                    style={{resize: 'none', width: '500px', border: 'solid 1px rgb(117, 117, 117)', outline: 'none', borderRadius: '0px'}}
                     autoFocus={true}
+                    minRows={6}
+                    maxRows={20}
                     defaultValue={this.props.script.note}
                     onFocus={this.onFocus.bind(this, {})}
                     onBlur={this.onBlur.bind(this, {})}
