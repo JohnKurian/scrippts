@@ -109,6 +109,28 @@ const signupModalStyles = {
 };
 
 
+const noteModalStyles = {
+    content : {
+        padding: '0px',
+        top                   : '33%',
+        left                  : '50%',
+        right                 : 'auto',
+        bottom                : 'auto',
+        marginRight           : '-50%',
+        transform             : 'translate(-50%, -50%)'
+    },
+    overlay: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(255, 255, 255, 0.75)",
+        zIndex: 10000
+    }
+};
+
+
 
 const fallacyModalStyles = {
     content : {
@@ -402,6 +424,66 @@ class Fallacy extends Component {
         )
     }
 }
+
+class Note extends Component {
+
+    onTextAreaClick(node, evt) {
+
+    }
+
+
+    onFocus(node, evt) {
+    }
+
+    onBlur(node, evt) {
+    }
+
+    onChange = (node, evt) => {
+
+        clearTimeout(this.timer);
+
+        this.timer = setTimeout(this.triggerChange.bind(this, evt.target.value), 1000);
+
+
+    }
+
+
+    triggerChange(note) {
+
+        db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.props.scriptId).update({
+            updatedTime: Date.now()
+        });
+
+        db.collection('scripts').doc(this.props.scriptId).update({
+            note: note,
+            updatedTime: Date.now()
+        });
+    }
+
+
+    render() {
+        return (
+            <div style={{display: 'flex', flexDirection: 'column'}}>
+                <div style={{display: 'flex', paddingBottom: '10px'}}>
+                    <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>note</i>
+                    add note
+                </div>
+                <Textarea
+                    style={{resize: 'none', width: '400px', border: 'solid 1px rgb(117, 117, 117)', outline: 'none', borderRadius: '0px'}}
+                    autoFocus={true}
+                    defaultValue={this.props.script.note}
+                    onFocus={this.onFocus.bind(this, {})}
+                    onBlur={this.onBlur.bind(this, {})}
+                    onChange={this.onChange.bind(this, {})}
+                    onClick={this.onTextAreaClick.bind(this, {})}
+                />
+            </div>
+        )
+    }
+}
+
+
+
 
 class Node extends Component {
 
@@ -1806,6 +1888,7 @@ class Header extends Component{
             loaderModalIsOpen: false,
             loginModalIsOpen: false,
             signupModalIsOpen: false,
+            noteModalIsOpen: false,
             activeScriptId: null,
             title: '',
             collaborators: {},
@@ -2163,6 +2246,23 @@ class Header extends Component{
         this.props.history.push('/');
     }
 
+    onAddNoteClick() {
+        this.setState({noteModalIsOpen: true});
+    }
+
+    afterOpenNoteModal() {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: false});
+        document.body.style.overflow = "hidden";
+        // references are now sync'd and can be accessed.
+        // this.subtitle.style.color = 'black';
+    }
+
+    closeNoteModal() {
+        document.body.style.overflow = "auto";
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: true});
+        this.setState({noteModalIsOpen: false});
+    }
+
     render() {
 
         const loaderStyles = {
@@ -2276,6 +2376,38 @@ class Header extends Component{
                             {this.state.title}
                         </span>
                         <ReactTooltip id="title">Edit title</ReactTooltip>
+
+                        { Object.keys(this.state.collaborators).length > 0 && this.props.scriptHeaders && this.state.activeScriptId &&
+                        <a data-tip data-for='note' style={{
+                            padding: 0,
+                            border: 'none',
+                            display: 'flex',
+                            marginLeft: '15px',
+                            textDecoration: 'none',
+                            outline: 'none'
+                        }} href="javascript:;" onClick={this.onAddNoteClick.bind(this)}>
+                            <i className="material-icons"
+                               style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px'}}>note</i>
+                            <ReactTooltip id="note">Add note</ReactTooltip>
+                        </a>
+
+                        }
+
+                        { Object.keys(this.state.collaborators).length > 0 && this.props.scriptHeaders && this.state.activeScriptId &&
+                        <Modal
+                            isOpen={this.state.noteModalIsOpen}
+                            onAfterOpen={this.afterOpenNoteModal}
+                            onRequestClose={this.closeNoteModal.bind(this)}
+                            style={noteModalStyles}
+                            contentLabel="Note Modal"
+                        >
+                            <Note note={this.props.scriptHeaders[this.state.activeScriptId]['note']}
+                                  script={this.props.scriptHeaders[this.state.activeScriptId]}
+                                  scriptId={this.state.activeScriptId}
+                                  user={this.props.user}/>
+                        </Modal>
+                        }
+
 
                     </div>
 
