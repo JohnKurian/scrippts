@@ -265,8 +265,8 @@ class Source extends Component {
 
     fetchUrlMetadata(url) {
 
-        // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/fetchUrlMetadata';
-        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/fetchUrlMetadata';
+        let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/fetchUrlMetadata';
+        // let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/fetchUrlMetadata';
 
         let params = "url=" + url;
 
@@ -315,7 +315,7 @@ class Source extends Component {
     triggerChange(source) {
 
         if(source.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) )) {
-            this.fetchUrlMetadata(source);
+            // this.fetchUrlMetadata(source);
         }
 
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(this.props.node['uid']).update({
@@ -921,9 +921,9 @@ class Node extends Component {
 
                     <div style={{display: 'flex', width: '50px'}}>
                         <i data-tip data-for='source' className="material-icons" onClick={this.onSourceClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>link</i>
-                        <ReactTooltip id="source">Add a source</ReactTooltip>
+                        <ReactTooltip id="source"  effect='solid'>Add a source</ReactTooltip>
                         <i data-tip data-for='fallacy' className="material-icons" onClick={this.onFallacyClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '22px'}}>report_problem</i>
-                        <ReactTooltip id="fallacy">Report a fallacy on this claim</ReactTooltip>
+                        <ReactTooltip id="fallacy"  effect='solid'>Report a fallacy on this claim</ReactTooltip>
                     </div>
 
                     <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
@@ -931,15 +931,15 @@ class Node extends Component {
                         <ReactTooltip globalEventOff='click' place="bottom" />
 
                         <button data-tip data-for='but' style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
-                        <ReactTooltip id="but">Add a statement that opposes this claim</ReactTooltip>
+                        <ReactTooltip id="but"  effect='solid'>Add a statement that opposes this claim</ReactTooltip>
                         <button data-tip data-for='because' style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
-                        <ReactTooltip id="because">Add a statement that supports this claim</ReactTooltip>
+                        <ReactTooltip id="because"  effect='solid'>Add a statement that supports this claim</ReactTooltip>
                     </div>
                     <div style={{display: 'flex', width: '50px', justifyContent: 'flex-end', border: '0px', padding: '0px' }}>
                     { !(node.uid === this.props.parentNodeId) &&
                     <a data-tip data-for='remove' style={{padding: 0, border: 'none'}} href="javascript:;" onClick={this.onDeleteNodeClick.bind(this, node)}>
                         <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '21px'}}>delete_forever</i>
-                        <ReactTooltip id="remove">Remove node</ReactTooltip>
+                        <ReactTooltip id="remove"  effect='solid'>Remove node</ReactTooltip>
                     </a>
                     }
                     </div>
@@ -1036,10 +1036,10 @@ class Node extends Component {
                                 fontSize: '13px'
                             }}>
                             { this.props.node.source.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) ) &&
-                                <div>
-                                    <img style={{paddingRight: '3px', verticalAlign: 'middle'}} src={'https://www.google.com/s2/favicons?domain=' + this.props.node.source}/>
-                                    <a data-tip data-for='source_link' style={{display: 'initial', border: 0, padding: 0, textDecoration: 'underline', color: '#1565c0'}} target="_blank" href={this.props.node.source}>{this.props.node.sourceMetadata.title? this.props.node.sourceMetadata.title: this.props.node.source}</a>
-                                    <ReactTooltip id='source_link' effect='solid'>
+                                <div style={{display: 'flex'}}>
+                                    <img style={{paddingTop: '2px', paddingRight: '3px', verticalAlign: 'middle', width: '16px', height: '16px'}} src={'https://www.google.com/s2/favicons?domain=' + this.props.node.source}/>
+                                    <a data-tip data-for={'source_link' + this.props.node.uid} style={{width: '280px', display: 'initial', border: 0, padding: 0, textDecoration: 'underline', color: '#1565c0'}} target="_blank" href={this.props.node.source}>{this.props.node.sourceMetadata? this.props.node.sourceMetadata.title: this.props.node.source}</a>
+                                    <ReactTooltip id={'source_link' + this.props.node.uid} effect='solid'>
                                         <span>{this.props.node.source}</span>
                                     </ReactTooltip>
                                 </div>
@@ -1069,8 +1069,8 @@ class Node extends Component {
                                 textAlign: 'left',
                                 fontSize: '13px'
                             }}>
-                            <span data-tip data-for='fallacy-description' style={{fontWeight: 'bold'}}>fallacy reported:</span> {this.props.node.fallacy.title}
-                            <ReactTooltip id='fallacy-description' effect='solid'>
+                            <span data-tip data-for={'fallacy-description' + this.props.node.uid} style={{fontWeight: 'bold'}}>fallacy reported:</span> {this.props.node.fallacy.title}
+                            <ReactTooltip id={'fallacy-description' + this.props.node.uid} effect='solid'>
                                 <span>{this.props.node.fallacy.shortDescription}</span>
                             </ReactTooltip>
                         </div>
@@ -2438,7 +2438,7 @@ class Header extends Component{
                                   whiteSpace: 'nowrap'}}>
                             {this.state.title}
                         </span>
-                        <ReactTooltip id="title">Edit title</ReactTooltip>
+                        <ReactTooltip id="title"  effect='solid'>Edit title</ReactTooltip>
 
                         { Object.keys(this.state.collaborators).length > 0 && this.props.scriptHeaders && this.state.activeScriptId &&
                         <a data-tip data-for='note' style={{
@@ -2451,7 +2451,7 @@ class Header extends Component{
                         }} href="javascript:;" onClick={this.onAddNoteClick.bind(this)}>
                             <i className="material-icons"
                                style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px'}}>note</i>
-                            <ReactTooltip id="note">Add note</ReactTooltip>
+                            <ReactTooltip id="note" effect='solid'>Add note</ReactTooltip>
                         </a>
 
                         }
@@ -2561,7 +2561,7 @@ class Header extends Component{
                                 <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '12px'}}>
                                     Share
                                 </div>
-                                <ReactTooltip id="share">Share settings</ReactTooltip>
+                                <ReactTooltip id="share" effect='solid'>Share settings</ReactTooltip>
                             </div>
                         }
 
