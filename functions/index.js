@@ -7,6 +7,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser')();
 const cors = require('cors')({origin: true});
 const app = express();
+var metafetch = require('metafetch');
 
 // Create and Deploy Your First Cloud Functions
 // https://firebase.google.com/docs/functions/write-firebase-functions
@@ -204,6 +205,22 @@ app.get('/fetchUserFromUsername', (req, res) => {
             res.send({code: 2, msg: 'error: username check failed'});
         });
 });
+
+
+app.get('/fetchUrlMetadata', (req, res) => {
+
+    metafetch.fetch(req.query['url'], function(err, meta) {
+        if(err) {
+            res.send({code: -1, msg: 'error: url check failed'});
+        } else {
+            res.send({code: 1, responseObj: meta});
+        }
+    });
+
+});
+
+
+
 
 // This HTTPS endpoint can only be accessed by your Firebase Users.
 // Requests need to be authorized by providing an `Authorization` HTTP header

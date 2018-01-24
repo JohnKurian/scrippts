@@ -263,6 +263,43 @@ class Source extends Component {
     onBlur(node, evt) {
     }
 
+    fetchUrlMetadata(url) {
+
+        // let helloUserUrl = 'https://us-central1-argument-app.cloudfunctions.net/app/fetchUrlMetadata';
+        let helloUserUrl = 'http://localhost:5000/argument-app/us-central1/app/fetchUrlMetadata';
+
+        let params = "url=" + url;
+
+        firebase.auth().currentUser.getToken().then(function(token) {
+            var req = new XMLHttpRequest();
+            req.onload = function() {
+                if(JSON.parse(req.responseText).code===1) {
+                    console.log('url:', JSON.parse(req.responseText).responseObj);
+
+                    db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(this.props.node['uid']).update({
+                        sourceMetadata: JSON.parse(req.responseText).responseObj,
+                        updatedTime: Date.now()
+                    });
+
+                    return true;
+                }
+
+                else if(JSON.parse(req.responseText).code===-1) {
+                    console.log('url metadata error')
+                }
+
+                return true;
+            }.bind(this);
+            req.onerror = function(err) {
+                console.log(err);
+                return -100;
+            }.bind(this);
+            req.open('GET', helloUserUrl + "?" + params, true);
+            req.setRequestHeader('Authorization', 'Bearer ' + token);
+            req.send();
+        }.bind(this));
+    }
+
     onChange = (node, evt) => {
 
         this.setState({source: evt.target.value})
@@ -276,6 +313,10 @@ class Source extends Component {
 
 
     triggerChange(source) {
+
+        if(source.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) )) {
+            this.fetchUrlMetadata(source);
+        }
 
         db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(this.props.node['uid']).update({
             source: source,
@@ -295,9 +336,9 @@ class Source extends Component {
     render() {
         return (
             <div style={{margin: '20px', display: 'flex', flexDirection: 'column'}}>
-                <div style={{display: 'flex', paddingBottom: '10px'}}>
+                <div style={{display: 'flex', paddingBottom: '10px', fontWeight: 'bold'}}>
                     <i className="material-icons" style={{textDecoration: 'none', color: '#1565c0', fontSize: '24px', marginRight: '3px'}}>link</i>
-                add source
+                Add source
                 </div>
                 <Textarea
                     style={{resize: 'none', width: '400px', border: 'solid 1px #1565c0', outline: 'none', borderRadius: '0px'}}
@@ -471,10 +512,10 @@ class Note extends Component {
     render() {
         return (
             <div style={{display: 'flex', flexDirection: 'column', padding: '20px'}}>
-                <div style={{display: 'flex', paddingBottom: '10px'}}>
+                <h3 style={{display: 'flex', paddingBottom: '10px', margin: '0px'}}>
                     <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>note</i>
-                    add note
-                </div>
+                    Add note
+                </h3>
                 <Textarea
                     style={{resize: 'none', width: '500px', border: 'solid 1px rgb(117, 117, 117)', outline: 'none', borderRadius: '0px'}}
                     autoFocus={true}
@@ -509,6 +550,7 @@ class Node extends Component {
             selectedNode: null,
             fallacyModalIsOpen: false,
             sourceModalIsOpen: false,
+            removeNodeModalIsOpen: false,
             lastUpdated: Date.now(),
             highlighted: false
         };
@@ -897,7 +939,7 @@ class Node extends Component {
                     { !(node.uid === this.props.parentNodeId) &&
                     <a data-tip data-for='remove' style={{padding: 0, border: 'none'}} href="javascript:;" onClick={this.onDeleteNodeClick.bind(this, node)}>
                         <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '21px'}}>delete_forever</i>
-                        <ReactTooltip id="remove">Remove node(will also remove all the nodes below it)</ReactTooltip>
+                        <ReactTooltip id="remove">Remove node</ReactTooltip>
                     </a>
                     }
                     </div>
@@ -984,23 +1026,32 @@ class Node extends Component {
 
                     {this.props.node.source &&
                     <div style={{display: 'flex'}}>
-                        <i className="material-icons" style={{textDecoration: 'none', color: '#1976d2', fontSize: '24px', marginRight: '3px'}}>link</i>
                         <div
                             style={{
                                 padding: '3px',
-                                width: '270px',
+                                width: '300px',
                                 wordWrap: 'break-word',
                                 whiteSpace: 'pre-wrap',
                                 textAlign: 'left',
                                 fontSize: '13px'
                             }}>
                             { this.props.node.source.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) ) &&
-                            <a style={{display: 'initial', border: 0, padding: 0, textDecoration: 'underline', color: '#1565c0'}} target="_blank" href={this.props.node.source}>{this.props.node.source}</a>
+                                <div>
+                                    <img style={{paddingRight: '3px', verticalAlign: 'middle'}} src={'https://www.google.com/s2/favicons?domain=' + this.props.node.source}/>
+                                    <a data-tip data-for='source_link' style={{display: 'initial', border: 0, padding: 0, textDecoration: 'underline', color: '#1565c0'}} target="_blank" href={this.props.node.source}>{this.props.node.sourceMetadata.title? this.props.node.sourceMetadata.title: this.props.node.source}</a>
+                                    <ReactTooltip id='source_link' effect='solid'>
+                                        <span>{this.props.node.source}</span>
+                                    </ReactTooltip>
+                                </div>
+
                             }
 
 
                             { !this.props.node.source.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) ) &&
-                            this.props.node.source
+                            <div>
+                                <i className="material-icons" style={{verticalAlign: 'middle', textDecoration: 'none', color: '#1976d2', fontSize: '24px', marginRight: '3px'}}>link</i>
+                                {this.props.node.source}
+                            </div>
                             }
                         </div>
                     </div>
@@ -1018,7 +1069,10 @@ class Node extends Component {
                                 textAlign: 'left',
                                 fontSize: '13px'
                             }}>
-                            {this.props.node.fallacy.title}
+                            <span data-tip data-for='fallacy-description' style={{fontWeight: 'bold'}}>fallacy reported:</span> {this.props.node.fallacy.title}
+                            <ReactTooltip id='fallacy-description' effect='solid'>
+                                <span>{this.props.node.fallacy.shortDescription}</span>
+                            </ReactTooltip>
                         </div>
                     </div>
                     }
