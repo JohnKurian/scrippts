@@ -7,32 +7,29 @@ import "./Fallacy.css";
 import createBrowserHistory from "history/createBrowserHistory";
 
 import argumentLogo from "./argument_icon.png";
-import scripptLogo from './scrippt_logo_40px.png';
+import scripptLogo from "./scrippt_logo_40px.png";
 
 import shareIcon from "./share_icon.png";
-import landingSectionOne from './landing_section_one.png';
-import landingSectionTwo from './landing_section_two.png';
-import landingSectionThree from './landing_section_three.png';
-import landingSectionArgumentMap from './landing_section_four_argument_map.png';
-import landingSectionDecisionTree from './landing_section_four_decision_tree.png';
-import landingSectionNestedList from './landing_section_four_nested_list.png';
-import landingSectionFive from './landing_section_five.png';
-
-import anonymousLogin from './anonymous_login.png';
+import landingSectionOne from "./landing_section_one.png";
+import landingSectionTwo from "./landing_section_two.png";
+import landingSectionThree from "./landing_section_three.png";
+import landingSectionArgumentMap from "./landing_section_four_argument_map.png";
+import landingSectionDecisionTree from "./landing_section_four_decision_tree.png";
+import landingSectionNestedList from "./landing_section_four_nested_list.png";
+import landingSectionFive from "./landing_section_five.png";
 
 import ReactDOM from "react-dom";
 
 import {Col, Grid, Row} from "react-flexbox-grid";
 
-import {applyMiddleware, createStore} from "redux";
-import logger from "redux-logger";
+import {createStore} from "redux";
 
-import {BrowserRouter, Link, Route, Switch, withRouter, Redirect} from "react-router-dom";
+import {BrowserRouter, Link, Redirect, Route, Switch, withRouter} from "react-router-dom";
 
 import Modal from "react-modal";
 
 import ReactTooltip from "react-tooltip";
-import Toggle from 'react-toggle'
+import Toggle from "react-toggle";
 
 import Textarea from "react-textarea-autosize";
 
@@ -532,6 +529,81 @@ class Note extends Component {
     }
 }
 
+class DeleteNode extends Component {
+
+    constructor(props, context) {
+        super(props, context);
+        this.state = {
+            deleteNodeInProgress: false,
+            error: ''
+        };
+    }
+
+
+    onDeleteNodeClick(userId, scriptId, node, closeDeleteNode, evt) {
+
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node.parentUid).get().then(function(doc) {
+            evt.preventDefault();
+            this.setState({deleteNodeInProgress: true});
+            if (doc.exists) {
+                console.log("Document data:", doc.data().children);
+                let children = doc.data()['children'];
+                delete children[node.uid];
+                console.log(children);
+
+                db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node.parentUid).update({
+                    children: children
+                }).then(function (result) {
+                    console.log('update completed successfully:', result);
+                    closeDeleteNode();
+                }).catch(function (err) {
+                    console.log(err);
+                });
+
+
+            } else {
+                console.log("No such document!");
+            }
+        }.bind(this)).catch(function(error) {
+            console.log("Error getting document:", error);
+        });
+
+
+
+        //delete node
+        //delete all children
+    }
+
+
+
+    render() {
+        return (
+            <div style={{width: '350px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px'}}>
+                <div style={{margin: '15px'}}>Are you sure you want to delete this node?
+                    <br/>
+                    Warning: will also delete all the nodes underneath it
+                </div>
+
+                <div style={{display: 'flex', flexDirection: 'row'}}>
+                    <button onClick={this.onDeleteNodeClick.bind(this, this.props.userId, this.props.scriptId, this.props.node, this.props.closeDeleteNode)} style={{margin: '10px', borderRadius: '10px', width: '64px', fontSize: '14px', height: '30px', background: '#b71c1c', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} >confirm</button>
+                    <button onClick={this.props.closeDeleteNode} style={{margin: '10px', borderRadius: '10px', width: '64px', fontSize: '14px', height: '30px', background: 'white', borderColor: 'black', color: 'black',cursor: 'pointer' }} >cancel</button>
+                </div>
+                {this.state.deleteNodeInProgress && <div style={{display: 'flex', justifyContent: 'center', paddingLeft: '50px', paddingRight: '50px', marginTop: '5px'}}>
+                    <svg className="spinner" width="30px" height="30px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+                        <circle className="path" fill="none" strokeWidth="6" strokeLinecap="round" cx="33" cy="33" r="30"/>
+                    </svg>
+                </div>}
+
+                <div>
+                    {this.state.error}
+                </div>
+
+            </div>
+        )
+    }
+
+
+}
 
 
 
@@ -552,7 +624,8 @@ class Node extends Component {
             sourceModalIsOpen: false,
             removeNodeModalIsOpen: false,
             lastUpdated: Date.now(),
-            highlighted: false
+            highlighted: false,
+            deleteNodeModalIsOpen: false
         };
     }
 
@@ -627,6 +700,9 @@ class Node extends Component {
         } else if(this.state.fallacyModalIsOpen !== nextState.fallacyModalIsOpen) {
             return true;
         } else if(this.state.highlighted !== nextState.highlighted) {
+                return true;
+            }
+            else if(this.state.deleteNodeModalIsOpen !== nextState.deleteNodeModalIsOpen) {
                 return true;
             }
             else {
@@ -831,6 +907,24 @@ class Node extends Component {
 
 
 
+    openDeleteNodeModal() {
+        this.setState({deleteNodeModalIsOpen: true})
+    }
+
+    afterOpenDeleteNodeModal() {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: false});
+        document.body.style.overflow = "hidden";
+    }
+
+
+    closeDeleteNodeModal() {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: true});
+        document.body.style.overflow = "auto";
+        this.setState({deleteNodeModalIsOpen: false})
+    }
+
+
+
 
 
     onSourceClick(node) {
@@ -937,7 +1031,7 @@ class Node extends Component {
                     </div>
                     <div style={{display: 'flex', width: '50px', justifyContent: 'flex-end', border: '0px', padding: '0px' }}>
                     { !(node.uid === this.props.parentNodeId) &&
-                    <a data-tip data-for='remove' style={{padding: 0, border: 'none'}} href="javascript:;" onClick={this.onDeleteNodeClick.bind(this, node)}>
+                    <a data-tip data-for='remove' style={{padding: 0, border: 'none'}} href="javascript:;" onClick={this.openDeleteNodeModal.bind(this, node)}>
                         <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '21px'}}>delete_forever</i>
                         <ReactTooltip id="remove"  effect='solid'>Remove node</ReactTooltip>
                     </a>
@@ -974,6 +1068,17 @@ class Node extends Component {
                             scriptId={this.props.scriptId}
                             user={this.props.user}
                             node={this.state.sourceSelectedNode}/>
+                </Modal>
+
+
+                <Modal
+                    isOpen={this.state.deleteNodeModalIsOpen}
+                    onAfterOpen={this.afterOpenDeleteNodeModal.bind(this)}
+                    onRequestClose={this.closeDeleteNodeModal.bind(this)}
+                    style={signupModalStyles}
+                    contentLabel="Delete Node Modal"
+                >
+                    <DeleteNode scriptId={this.props.scriptId} userId={this.props.user.uid} node={this.props.node} closeDeleteNode={this.closeDeleteNodeModal.bind(this)} />
                 </Modal>
 
                 <Modal
