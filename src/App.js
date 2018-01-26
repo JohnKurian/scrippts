@@ -1218,8 +1218,17 @@ class Node extends Component {
 
                 </div>
             </div>
-                { this.props.areChildrenHidden[this.props.node.uid] && <div>
-                    nodes collapsed
+                { this.props.areChildrenHidden[this.props.node.uid] && <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                    <div className="vertical-line" style={{height: '30px'}}></div>
+                    <div data-tip data-for={'collapsed-node' + this.props.node.uid}
+                         className="circleBase type3"
+                         style={{cursor: 'pointer'}}
+                         onClick={this.props.showChildren(this.props.node.uid)}>
+                        <i className="material-icons" style={{textDecoration: 'none', color: '#757575', fontSize: '30px'}}>add</i>
+                    </div>
+                    <ReactTooltip id={'collapsed-node' + this.props.node.uid} effect='solid'>
+                        <span>open the collapsed nodes</span>
+                    </ReactTooltip>
                 </div>}
             </div>
         )
@@ -1281,17 +1290,35 @@ class Fragment extends Component {
         return this.shallowCompare(this, nextProps, nextState);
     }
 
+    componentDidUpdate(prevProps, prevState) {
+        if(!this.shallowEqual(this.state.hideChildren, prevState.hideChildren)) {
+            let el = document.getElementById(store.getState().highlightedNode);
+            let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+            let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+
+            let bodyRect = document.body.getBoundingClientRect(),
+                elemRect = el.getBoundingClientRect(),
+                offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
+                offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
+
+
+            window.scrollTo(offsetLeft, offsetTop);
+        }
+
+    }
+
     hideChildren(nodeId) {
         return function() {
-            this.setState({hideChildren: {...this.state.hideChildren, [nodeId]: true}});
             this.props.setHighlightedNode(nodeId);
+            this.setState({hideChildren: {...this.state.hideChildren, [nodeId]: true}});
         }.bind(this)
     }
 
     showChildren(nodeId) {
         return function() {
-            this.setState({hideChildren: {...this.state.hideChildren, [nodeId]: false}});
             this.props.setHighlightedNode(nodeId);
+            this.setState({hideChildren: {...this.state.hideChildren, [nodeId]: false}});
         }.bind(this)
     }
 
@@ -1344,6 +1371,7 @@ class Fragment extends Component {
                                 {(node.children!==undefined && Object.keys(node.children).length > 0 && !this.state.hideChildren[node.uid]) &&
                                 <Fragment user={this.props.user}
                                           data={node.children}
+                                          relativeParentNode={node}
                                           parentNodeId={this.props.parentNodeId}
                                           scriptId={this.props.scriptId}
                                           premiseRelativeValue={currentNodeValue}
