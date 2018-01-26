@@ -1275,7 +1275,7 @@ class Fragment extends Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        if(this.state.hideChildren !== nextState.hideChildren) {
+        if(!this.shallowEqual(this.state.hideChildren, nextState.hideChildren)) {
             return true;
         }
         return this.shallowCompare(this, nextProps, nextState);
@@ -1283,13 +1283,15 @@ class Fragment extends Component {
 
     hideChildren(nodeId) {
         return function() {
-            this.setState({hideChildren: {...this.state.hideChildren, [nodeId]: true}})
+            this.setState({hideChildren: {...this.state.hideChildren, [nodeId]: true}});
+            this.props.setHighlightedNode(nodeId);
         }.bind(this)
     }
 
     showChildren(nodeId) {
         return function() {
-            this.setState({hideChildren: {[nodeId]: false}})
+            this.setState({hideChildren: {...this.state.hideChildren, [nodeId]: false}});
+            this.props.setHighlightedNode(nodeId);
         }.bind(this)
     }
 
