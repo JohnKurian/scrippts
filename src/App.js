@@ -776,6 +776,7 @@ class Node extends Component {
     }
 
     onAddClick(node, contentionType, evt) {
+        this.props.setHighlightedNode(node.uid);
 
         //attach child node to flat object
 
@@ -796,6 +797,7 @@ class Node extends Component {
             contentionType: contentionType,
             relativeToParent: relativeToParent[contentionType],
             text: '',
+            hideChildren: false,
             createdTime: Date.now(),
             updatedTime: Date.now()
         })
@@ -931,10 +933,12 @@ class Node extends Component {
 
 
     onSourceClick(node) {
+        this.props.setHighlightedNode(node.uid);
         this.setState({sourceModalIsOpen: true, sourceSelectedNode: node})
     }
 
     onFallacyClick(node) {
+        this.props.setHighlightedNode(node.uid);
         this.setState({fallacyModalIsOpen: true, fallacySelectedNode: node})
     }
 
@@ -1283,6 +1287,10 @@ class Fragment extends Component {
         );
     }
 
+    componentWillReceiveProps(nextProps) {
+        this.setState({hideChildren: nextProps.hideChildren});
+    }
+
     shouldComponentUpdate(nextProps, nextState) {
         if(!this.shallowEqual(this.state.hideChildren, nextState.hideChildren)) {
             return true;
@@ -1292,24 +1300,29 @@ class Fragment extends Component {
 
     componentDidUpdate(prevProps, prevState) {
         if(!this.shallowEqual(this.state.hideChildren, prevState.hideChildren)) {
-            let el = document.getElementById(store.getState().highlightedNode);
-            let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-            let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+            if(store.getState().highlightedNode) {
+                let el = document.getElementById(store.getState().highlightedNode);
+                let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
 
-            let bodyRect = document.body.getBoundingClientRect(),
-                elemRect = el.getBoundingClientRect(),
-                offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
-                offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
+                let bodyRect = document.body.getBoundingClientRect(),
+                    elemRect = el.getBoundingClientRect(),
+                    offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
+                    offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
 
 
-            window.scrollTo(offsetLeft, offsetTop);
+                window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'smooth'});
+            }
         }
 
     }
 
     hideChildren(nodeId) {
         return function() {
+            db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(nodeId).update({
+                hideChildren: true
+            });
             this.props.setHighlightedNode(nodeId);
             this.setState({hideChildren: {...this.state.hideChildren, [nodeId]: true}});
         }.bind(this)
@@ -1317,6 +1330,9 @@ class Fragment extends Component {
 
     showChildren(nodeId) {
         return function() {
+            db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(nodeId).update({
+                hideChildren: false
+            });
             this.props.setHighlightedNode(nodeId);
             this.setState({hideChildren: {...this.state.hideChildren, [nodeId]: false}});
         }.bind(this)
@@ -1371,6 +1387,7 @@ class Fragment extends Component {
                                 {(node.children!==undefined && Object.keys(node.children).length > 0 && !this.state.hideChildren[node.uid]) &&
                                 <Fragment user={this.props.user}
                                           data={node.children}
+                                          hideChildren={this.state.hideChildren}
                                           relativeParentNode={node}
                                           parentNodeId={this.props.parentNodeId}
                                           scriptId={this.props.scriptId}
@@ -1740,6 +1757,7 @@ class Home extends Component {
                                 relativeToParent: 1,
                                 uid: nodeId,
                                 text: '',
+                                hideChildren: false,
                                 createdTime: Date.now(),
                                 updatedTime: Date.now()
                             }).then(function (nodeRef) {
@@ -2936,6 +2954,7 @@ class ScriptList extends Component {
                                 relativeToParent: 1,
                                 uid: nodeId,
                                 text: '',
+                                hideChildren: false,
                                 createdTime: Date.now(),
                                 updatedTime: Date.now()
                             }).then(function (nodeRef) {
@@ -3120,6 +3139,7 @@ class SideBar extends Component{
                                 relativeToParent: 1,
                                 uid: nodeId,
                                 text: '',
+                                hideChildren: false,
                                 createdTime: Date.now(),
                                 updatedTime: Date.now()
                             }).then(function (nodeRef) {
@@ -3743,8 +3763,18 @@ class Editor extends Component{
 
                             var tree = {};
                             tree[this.state.premiseNode] = this.convertFlatObjectToTree(tempTree)[this.state.premiseNode];
-                            this.setState({premiseRelativeValue: tree[this.state.premiseNode]['relativeToParent']});
-                            this.setState({tree: tree, flatTree: tempTree})
+                            let hideChildren = Object.keys(tempTree)
+                                .reduce((obj, objKey) => {
+                                obj[objKey] = tempTree[objKey].hideChildren;
+                                return obj;
+                                }, {});
+
+
+                            this.setState({
+                                premiseRelativeValue: tree[this.state.premiseNode]['relativeToParent'],
+                                tree: tree,
+                                flatTree: tempTree,
+                                hideChildren: hideChildren});
 
                         } else {
                             console.log("No such script");
@@ -3805,6 +3835,7 @@ class Editor extends Component{
                                 <div className="tree" id="tree">
                                     <Fragment user={this.props.user}
                                               data={this.state.tree}
+                                              hideChildren={this.state.hideChildren}
                                               children={this.state.tree[Object.keys(this.state.tree)[0]]? Object.keys(this.state.tree[Object.keys(this.state.tree)[0]]['children']): []}
                                               siblings={Object.keys(this.state.tree)}
                                               parentNodeId={Object.keys(this.state.tree)[0]}
@@ -3832,6 +3863,7 @@ class Editor extends Component{
                                     <div className="tree" id="tree">
                                         <Fragment user={this.props.user}
                                                   data={this.state.tree}
+                                                  hideChildren={this.state.hideChildren}
                                                   parentNodeId={Object.keys(this.state.tree)[0]}
                                                   scriptId={this.props.match.params.scriptId}
                                                   premiseRelativeValue={this.state.premiseRelativeValue}
