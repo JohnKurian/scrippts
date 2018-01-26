@@ -705,6 +705,9 @@ class Node extends Component {
             else if(this.state.deleteNodeModalIsOpen !== nextState.deleteNodeModalIsOpen) {
                 return true;
             }
+            else if(this.props.areChildrenHidden[this.props.node.uid] !== nextProps.areChildrenHidden[this.props.node.uid]) {
+                return true;
+            }
             else {
             return false;
         }
@@ -1021,8 +1024,6 @@ class Node extends Component {
                     </div>
 
                     <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                        <i data-tip='custom show' data-event='click focus' onClick={()=>{ }} className="material-icons" style={{ cursor: 'pointer', color: '#9e9e9e' }}>add_circle</i>
-                        <ReactTooltip globalEventOff='click' place="bottom" />
 
                         <button data-tip data-for='but' style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
                         <ReactTooltip id="but"  effect='solid'>Add a statement that opposes this claim</ReactTooltip>
@@ -1030,12 +1031,42 @@ class Node extends Component {
                         <ReactTooltip id="because"  effect='solid'>Add a statement that supports this claim</ReactTooltip>
                     </div>
                     <div style={{display: 'flex', width: '50px', justifyContent: 'flex-end', border: '0px', padding: '0px' }}>
-                    { !(node.uid === this.props.parentNodeId) &&
-                    <a data-tip data-for='remove' style={{padding: 0, border: 'none'}} href="javascript:;" onClick={this.openDeleteNodeModal.bind(this, node)}>
-                        <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '21px'}}>delete_forever</i>
-                        <ReactTooltip id="remove"  effect='solid'>Remove node</ReactTooltip>
-                    </a>
-                    }
+
+                        { node.children && <div>
+                            {Object.keys(node.children).length > 0 &&
+                            <a data-tip data-for='expand' style={{padding: 0, border: 'none'}} href="javascript:;"
+                               onClick={this.props.showChildren(this.props.node.uid)}>
+                                <i className="material-icons"
+                                   style={{
+                                       textDecoration: 'none',
+                                       color: 'rgb(117, 117, 117)',
+                                       fontSize: '21px'
+                                   }}>add</i>
+                                <ReactTooltip id="expand" effect='solid'>Expand</ReactTooltip>
+                            </a>
+                        }
+
+                        { Object.keys(node.children).length>0 &&
+                            <a data-tip data-for='collapse' style={{padding: 0, border: 'none'}} href="javascript:;"
+                            onClick={this.props.hideChildren(this.props.node.uid)}>
+                            <i className="material-icons" style={{
+                            textDecoration: 'none',
+                            color: 'rgb(117, 117, 117)',
+                            fontSize: '21px'
+                        }}>remove</i>
+                            <ReactTooltip id="collapse" effect='solid'>Collapse</ReactTooltip>
+                            </a>
+
+                        }
+                        </div>
+                        }
+
+                        { !(node.uid === this.props.parentNodeId) &&
+                        <a data-tip data-for='remove' style={{padding: 0, border: 'none', marginLeft: '5px'}} href="javascript:;" onClick={this.openDeleteNodeModal.bind(this, node)}>
+                            <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '21px'}}>delete_forever</i>
+                            <ReactTooltip id="remove"  effect='solid'>Remove node</ReactTooltip>
+                        </a>
+                        }
                     </div>
 
                 </div>
@@ -1055,6 +1086,7 @@ class Node extends Component {
 
 
         return (
+            <div>
             <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
 
                 <Modal
@@ -1186,6 +1218,10 @@ class Node extends Component {
 
                 </div>
             </div>
+                { this.props.areChildrenHidden[this.props.node.uid] && <div>
+                    nodes collapsed
+                </div>}
+            </div>
         )
     }
 
@@ -1198,7 +1234,7 @@ class Fragment extends Component {
     constructor(props) {
         super(props);
         this.state = {
-
+            hideChildren: {}
         };
     }
 
@@ -1239,7 +1275,22 @@ class Fragment extends Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
+        if(this.state.hideChildren !== nextState.hideChildren) {
+            return true;
+        }
         return this.shallowCompare(this, nextProps, nextState);
+    }
+
+    hideChildren(nodeId) {
+        return function() {
+            this.setState({hideChildren: {...this.state.hideChildren, [nodeId]: true}})
+        }.bind(this)
+    }
+
+    showChildren(nodeId) {
+        return function() {
+            this.setState({hideChildren: {[nodeId]: false}})
+        }.bind(this)
     }
 
 
@@ -1284,8 +1335,11 @@ class Fragment extends Component {
                                       parentNodeId={this.props.parentNodeId}
                                       setHighlightedNode={this.props.setHighlightedNode}
                                       setHotkeysEnabledFlag={this.props.setHotkeysEnabledFlag}
+                                      hideChildren={this.hideChildren.bind(this)}
+                                      showChildren={this.showChildren.bind(this)}
+                                      areChildrenHidden={this.state.hideChildren}
                                       canEdit={this.props.canEdit}/>
-                                {(node.children!==undefined && Object.keys(node.children).length > 0) &&
+                                {(node.children!==undefined && Object.keys(node.children).length > 0 && !this.state.hideChildren[node.uid]) &&
                                 <Fragment user={this.props.user}
                                           data={node.children}
                                           parentNodeId={this.props.parentNodeId}
