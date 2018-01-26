@@ -797,7 +797,7 @@ class Node extends Component {
             contentionType: contentionType,
             relativeToParent: relativeToParent[contentionType],
             text: '',
-            hideChildren: false,
+            hideChildren: {[this.props.user.uid]: false},
             createdTime: Date.now(),
             updatedTime: Date.now()
         })
@@ -1092,43 +1092,45 @@ class Node extends Component {
         return (
             <div>
             <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+                { this.props.user && <div>
+                    <Modal
+                        isOpen={this.state.sourceModalIsOpen}
+                        onAfterOpen={this.afterOpenSourceModal.bind(this)}
+                        onRequestClose={this.closeSourceModal.bind(this)}
+                        style={signupModalStyles}
+                        contentLabel="Source Modal"
+                    >
+                        <Source source={this.props.node.source}
+                                scriptId={this.props.scriptId}
+                                user={this.props.user}
+                                node={this.state.sourceSelectedNode}/>
+                    </Modal>
 
-                <Modal
-                    isOpen={this.state.sourceModalIsOpen}
-                    onAfterOpen={this.afterOpenSourceModal.bind(this)}
-                    onRequestClose={this.closeSourceModal.bind(this)}
-                    style={signupModalStyles}
-                    contentLabel="Source Modal"
-                >
-                    <Source source={this.props.node.source}
-                            scriptId={this.props.scriptId}
-                            user={this.props.user}
-                            node={this.state.sourceSelectedNode}/>
-                </Modal>
 
-
-                <Modal
+                    < Modal
                     isOpen={this.state.deleteNodeModalIsOpen}
                     onAfterOpen={this.afterOpenDeleteNodeModal.bind(this)}
                     onRequestClose={this.closeDeleteNodeModal.bind(this)}
                     style={signupModalStyles}
                     contentLabel="Delete Node Modal"
-                >
+                    >
                     <DeleteNode scriptId={this.props.scriptId} userId={this.props.user.uid} node={this.props.node} closeDeleteNode={this.closeDeleteNodeModal.bind(this)} />
-                </Modal>
+                    </Modal>
 
-                <Modal
+                    <Modal
                     isOpen={this.state.fallacyModalIsOpen}
                     onAfterOpen={this.afterOpenFallacyModal.bind(this)}
                     onRequestClose={this.closeFallacyModal.bind(this)}
                     style={fallacyModalStyles}
                     contentLabel="Fallacy Modal"
-                >
+                    >
                     <Fallacy fallacy={this.props.node.fallacy}
-                             scriptId={this.props.scriptId}
-                             node={this.state.fallacySelectedNode}
-                             user={this.props.user}/>
-                </Modal>
+                    scriptId={this.props.scriptId}
+                    node={this.state.fallacySelectedNode}
+                    user={this.props.user}/>
+                    </Modal>
+                </div>
+                }
 
                 {/*<div className="circle"></div>*/}
                 <div onMouseEnter={this.onNodeEnter.bind(this, this.props.node)} onMouseLeave={this.onNodeLeave.bind(this, this.props.node)} style={{
@@ -1321,7 +1323,7 @@ class Fragment extends Component {
     hideChildren(nodeId) {
         return function() {
             db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(nodeId).update({
-                hideChildren: true
+                hideChildren: {[this.props.user.uid]: true}
             });
             this.props.setHighlightedNode(nodeId);
             this.setState({hideChildren: {...this.state.hideChildren, [nodeId]: true}});
@@ -1331,7 +1333,7 @@ class Fragment extends Component {
     showChildren(nodeId) {
         return function() {
             db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(nodeId).update({
-                hideChildren: false
+                hideChildren: {[this.props.user.uid]: false}
             });
             this.props.setHighlightedNode(nodeId);
             this.setState({hideChildren: {...this.state.hideChildren, [nodeId]: false}});
@@ -1757,7 +1759,7 @@ class Home extends Component {
                                 relativeToParent: 1,
                                 uid: nodeId,
                                 text: '',
-                                hideChildren: false,
+                                hideChildren: {[this.props.user.uid]: false},
                                 createdTime: Date.now(),
                                 updatedTime: Date.now()
                             }).then(function (nodeRef) {
@@ -2954,7 +2956,7 @@ class ScriptList extends Component {
                                 relativeToParent: 1,
                                 uid: nodeId,
                                 text: '',
-                                hideChildren: false,
+                                hideChildren: {[this.props.user.uid]: false},
                                 createdTime: Date.now(),
                                 updatedTime: Date.now()
                             }).then(function (nodeRef) {
@@ -3139,7 +3141,7 @@ class SideBar extends Component{
                                 relativeToParent: 1,
                                 uid: nodeId,
                                 text: '',
-                                hideChildren: false,
+                                hideChildren: {[this.props.user.uid]: false},
                                 createdTime: Date.now(),
                                 updatedTime: Date.now()
                             }).then(function (nodeRef) {
@@ -3765,8 +3767,13 @@ class Editor extends Component{
                             tree[this.state.premiseNode] = this.convertFlatObjectToTree(tempTree)[this.state.premiseNode];
                             let hideChildren = Object.keys(tempTree)
                                 .reduce((obj, objKey) => {
-                                obj[objKey] = tempTree[objKey].hideChildren;
-                                return obj;
+                                if(this.props.user) {
+                                    obj[objKey] = !!tempTree[objKey]['hideChildren'][this.props.user.uid];
+                                } else {
+                                    obj[objKey] = false;
+                                }
+                                    return obj;
+
                                 }, {});
 
 
