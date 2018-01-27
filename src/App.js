@@ -22,7 +22,8 @@ import ReactDOM from "react-dom";
 
 import {Col, Grid, Row} from "react-flexbox-grid";
 
-import {createStore} from "redux";
+import {applyMiddleware, createStore} from "redux";
+import logger from "redux-logger";
 
 import {BrowserRouter, Link, Redirect, Route, Switch, withRouter} from "react-router-dom";
 
@@ -191,7 +192,7 @@ var db = firebase.firestore();
 export const auth = firebase.auth;
 
 
-function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComplete: false, numScripts: 0, isScriptCreation: false, highlightedNode: '', hotkeysEnabled: true}, action) {
+function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComplete: false, numScripts: 0, isScriptCreation: false, highlightedNode: '', hotkeysEnabled: true, copiedNode: {}}, action) {
     switch (action.type) {
 
         case 'SET_ACTIVE_SCRIPT_ID':
@@ -210,6 +211,8 @@ function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComp
             return {...state, highlightedNode: action.highlightedNode};
         case 'SET_HOTKEYS_ENABLED_FLAG':
             return {...state, hotkeysEnabled: action.hotkeysEnabled};
+        case 'SET_COPIED_NODE':
+            return {...state, copiedNode: action.copiedNode};
         default:
             return state
     }
@@ -942,6 +945,26 @@ class Node extends Component {
         this.setState({fallacyModalIsOpen: true, fallacySelectedNode: node})
     }
 
+    copySubtree(node) {
+        console.log('1:', node);
+        store.dispatch({type: 'SET_COPIED_NODE', copiedNode: node});
+    }
+
+    pasteSubtree(node) {
+        let copiedNode = store.getState().copiedNode;
+        console.log('node.uid', node.uid);
+        console.log('copiedxxx:', copiedNode);
+        copiedNode['parentUid'] = node.parentUid;
+        copiedNode['relativeToParent'] = node.relativeToParent;
+
+        let childObj = {};
+        childObj['children.' + copiedNode.uid] = true;
+        console.log('copied:', copiedNode.uid);
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node.parentUid).update(childObj);
+    }
+
+
+
     render() {
 
 
@@ -987,10 +1010,134 @@ class Node extends Component {
             }
         }
 
-        if(node.uid!==this.props.parentNodeId) {
+        nodeHeader = (
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '20px'}}>
+                <div style={{
+                    display: 'flex',
+                    width: '60px',
+                    justifyContent: 'flex-start',
+                    border: '0px',
+                    padding: '0px'
+                }}>
+                </div>
+                <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                </div>
+                <div style={{
+                    display: 'flex',
+                    width: '60px',
+                    justifyContent: 'flex-end',
+                    border: '0px',
+                    padding: '0px'
+                }}>
+                </div>
+            </div>
+        )
+
+        if (node.uid !== this.props.parentNodeId) {
             nodeHeader = (
-                <p style={{color: labelColor, margin: 0}}>{labelMap[node.relativeToParent]}</p>
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                    <div style={{
+                        display: 'flex',
+                        width: '60px',
+                        justifyContent: 'flex-start',
+                        border: '0px',
+                        padding: '0px'
+                    }}>
+                    </div>
+                    <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                        <p style={{color: labelColor, margin: 0}}>{labelMap[node.relativeToParent]}</p>
+                    </div>
+                    <div style={{
+                        display: 'flex',
+                        width: '60px',
+                        justifyContent: 'flex-end',
+                        border: '0px',
+                        padding: '0px'
+                    }}>
+                    </div>
+                </div>
             );
+        }
+
+
+        if(this.state.hoveredNode === node.uid && this.props.canEdit) {
+            if (node.uid !== this.props.parentNodeId) {
+                nodeHeader = (
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                        <div style={{
+                            display: 'flex',
+                            width: '60px',
+                            justifyContent: 'flex-start',
+                            border: '0px',
+                            padding: '0px'
+                        }}>
+                        </div>
+                        <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                            <p style={{color: labelColor, margin: 0}}>{labelMap[node.relativeToParent]}</p>
+                        </div>
+                        <div style={{
+                            display: 'flex',
+                            width: '60px',
+                            justifyContent: 'flex-end',
+                            border: '0px',
+                            padding: '0px'
+                        }}>
+                            {/*<i data-tip data-for='copy' className="material-icons" onClick={this.copySubtree.bind(this, node)} style={{*/}
+                                {/*cursor: 'pointer',*/}
+                                {/*textDecoration: 'none',*/}
+                                {/*color: 'rgb(117, 117, 117)',*/}
+                                {/*fontSize: '18px'*/}
+                            {/*}}>content_copy</i>*/}
+                            {/*<ReactTooltip id="copy" effect='solid'>Copy subtree</ReactTooltip>*/}
+                            {/*<i data-tip data-for='paste' className="material-icons" onClick={this.pasteSubtree.bind(this, node)} style={{*/}
+                                {/*cursor: 'pointer',*/}
+                                {/*textDecoration: 'none',*/}
+                                {/*color: 'rgb(117, 117, 117)',*/}
+                                {/*fontSize: '18px'*/}
+                            {/*}}>content_paste</i>*/}
+                            {/*<ReactTooltip id="paste" effect='solid'>Paste subtree</ReactTooltip>*/}
+                        </div>
+                    </div>
+                );
+            }
+            else {
+                nodeHeader = (
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                        <div style={{
+                            display: 'flex',
+                            width: '60px',
+                            justifyContent: 'flex-start',
+                            border: '0px',
+                            padding: '0px'
+                        }}>
+                        </div>
+                        <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '18px'}}>
+                        </div>
+                        <div style={{
+                            display: 'flex',
+                            width: '60px',
+                            justifyContent: 'flex-end',
+                            border: '0px',
+                            padding: '0px',
+                        }}>
+                            {/*<i data-tip data-for='copy' className="material-icons" onClick={this.copySubtree.bind(this, node)} style={{*/}
+                                {/*cursor: 'pointer',*/}
+                                {/*textDecoration: 'none',*/}
+                                {/*color: 'rgb(117, 117, 117)',*/}
+                                {/*fontSize: '18px'*/}
+                            {/*}}>content_copy</i>*/}
+                            {/*<ReactTooltip id="copy" effect='solid'>Copy subtree</ReactTooltip>*/}
+                            {/*<i data-tip data-for='paste' className="material-icons" onClick={this.pasteSubtree.bind(this, node)} style={{*/}
+                                {/*cursor: 'pointer',*/}
+                                {/*textDecoration: 'none',*/}
+                                {/*color: 'rgb(117, 117, 117)',*/}
+                                {/*fontSize: '18px'*/}
+                            {/*}}>content_paste</i>*/}
+                            {/*<ReactTooltip id="paste" effect='solid'>Paste subtree</ReactTooltip>*/}
+                        </div>
+                    </div>
+                )
+            }
         }
 
         if(this.state.showTools) {
@@ -1307,14 +1454,15 @@ class Fragment extends Component {
                 let viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
                 let viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
+                if(document.body && el) {
+                    let bodyRect = document.body.getBoundingClientRect(),
+                        elemRect = el.getBoundingClientRect(),
+                        offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
+                        offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
 
-                let bodyRect = document.body.getBoundingClientRect(),
-                    elemRect = el.getBoundingClientRect(),
-                    offsetTop = elemRect.top + window.scrollY - Math.max(viewportHeight / 2),
-                    offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
 
-
-                window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'smooth'});
+                    window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'smooth'});
+                }
             }
         }
 
