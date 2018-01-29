@@ -126,3 +126,19 @@ textarea{
     height: 100%;
     float: left;
 }
+
+
+.node-id {
+    background: white;
+    color: #657786;
+    border-radius:6px;
+    margin-bottom: 4px;
+    font-size: 9px;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+.node-image {
+    max-width: 300px;
+    height: auto;
+}

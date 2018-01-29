@@ -608,6 +608,76 @@ class DeleteNode extends Component {
 
 }
 
+class NodeImage extends Component {
+
+    onTextAreaClick(node, evt) {
+
+    }
+
+
+
+    onFocus(node, evt) {
+    }
+
+    onBlur(node, evt) {
+    }
+
+
+    onChange = (node, evt) => {
+
+        this.setState({image: evt.target.value});
+
+        clearTimeout(this.timer);
+
+        this.timer = setTimeout(this.triggerChange.bind(this, evt.target.value), 1000);
+
+
+    }
+
+
+    triggerChange(image) {
+
+        if(image.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) )) {
+            // this.fetchUrlMetadata(source);
+        }
+
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(this.props.node['uid']).update({
+            image: image,
+            updatedTime: Date.now()
+        });
+
+        db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.props.scriptId).update({
+            updatedTime: Date.now()
+        });
+
+        db.collection('scripts').doc(this.props.scriptId).update({
+            updatedTime: Date.now()
+        });
+    }
+
+
+    render() {
+        return (
+            <div style={{margin: '20px', display: 'flex', flexDirection: 'column'}}>
+                <div style={{display: 'flex', paddingBottom: '10px', fontWeight: 'bold'}}>
+                    <i className="material-icons" style={{textDecoration: 'none', color: '#1565c0', fontSize: '24px', marginRight: '3px'}}>image</i>
+                    Add image URL
+                </div>
+                <Textarea
+                    style={{resize: 'none', width: '400px', border: 'solid 1px #1565c0', outline: 'none', borderRadius: '0px'}}
+                    autoFocus={true}
+                    defaultValue={this.props.node.image}
+                    onFocus={this.onFocus.bind(this, {})}
+                    onBlur={this.onBlur.bind(this, {})}
+                    onChange={this.onChange.bind(this, {})}
+                    onClick={this.onTextAreaClick.bind(this, {})}
+                />
+            </div>
+        )
+    }
+}
+
+
 
 
 class Node extends Component {
@@ -628,7 +698,9 @@ class Node extends Component {
             removeNodeModalIsOpen: false,
             lastUpdated: Date.now(),
             highlighted: false,
-            deleteNodeModalIsOpen: false
+            deleteNodeModalIsOpen: false,
+            nodeImageModalIsOpen: false,
+            nodeImageSelectedNode: null
         };
     }
 
@@ -706,6 +778,10 @@ class Node extends Component {
                 return true;
             }
             else if(this.state.deleteNodeModalIsOpen !== nextState.deleteNodeModalIsOpen) {
+                return true;
+            }
+
+            else if(this.state.nodeImageModalIsOpen !== nextState.nodeImageModalIsOpen) {
                 return true;
             }
             else if(this.props.areChildrenHidden[this.props.node.uid] !== nextProps.areChildrenHidden[this.props.node.uid]) {
@@ -931,6 +1007,17 @@ class Node extends Component {
         this.setState({deleteNodeModalIsOpen: false})
     }
 
+    closeNodeImageModal() {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: true});
+        document.body.style.overflow = "auto";
+        this.setState({nodeImageModalIsOpen: false})
+    }
+
+    afterOpenNodeImageModal() {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: false});
+        document.body.style.overflow = "hidden";
+    }
+
 
 
 
@@ -943,6 +1030,11 @@ class Node extends Component {
     onFallacyClick(node) {
         this.props.setHighlightedNode(node.uid);
         this.setState({fallacyModalIsOpen: true, fallacySelectedNode: node})
+    }
+
+    onNodeImageClick(node) {
+        this.props.setHighlightedNode(node.uid);
+        this.setState({nodeImageModalIsOpen: true, nodeImageSelectedNode: node})
     }
 
     copySubtree(node) {
@@ -1019,6 +1111,7 @@ class Node extends Component {
                     border: '0px',
                     padding: '0px'
                 }}>
+                    {/*<span className='node-id'>{node.uid}</span>*/}
                 </div>
                 <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                 </div>
@@ -1043,6 +1136,7 @@ class Node extends Component {
                         border: '0px',
                         padding: '0px'
                     }}>
+                        {/*<span className='node-id'>{node.uid}</span>*/}
                     </div>
                     <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                         <p style={{color: labelColor, margin: 0}}>{labelMap[node.relativeToParent]}</p>
@@ -1071,6 +1165,7 @@ class Node extends Component {
                             border: '0px',
                             padding: '0px'
                         }}>
+                            {/*<span className='node-id'>{node.uid}</span>*/}
                         </div>
                         <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                             <p style={{color: labelColor, margin: 0}}>{labelMap[node.relativeToParent]}</p>
@@ -1110,6 +1205,7 @@ class Node extends Component {
                             border: '0px',
                             padding: '0px'
                         }}>
+                            {/*<span className='node-id'>{node.uid}</span>*/}
                         </div>
                         <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '18px'}}>
                         </div>
@@ -1172,6 +1268,8 @@ class Node extends Component {
                         <ReactTooltip id="source"  effect='solid'>Add a source</ReactTooltip>
                         <i data-tip data-for='fallacy' className="material-icons" onClick={this.onFallacyClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '22px'}}>report_problem</i>
                         <ReactTooltip id="fallacy"  effect='solid'>Report a fallacy on this claim</ReactTooltip>
+                        <i data-tip data-for='image' className="material-icons" onClick={this.onNodeImageClick.bind(this, node)} style={{cursor: 'pointer', textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '22px', marginLeft: '2px'}}>image</i>
+                        <ReactTooltip id="image"  effect='solid'>Add an image</ReactTooltip>
                     </div>
 
                     <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
@@ -1215,7 +1313,7 @@ class Node extends Component {
                         { !(node.uid === this.props.parentNodeId) &&
                         <a data-tip data-for='remove' style={{padding: 0, border: 'none', marginLeft: '5px'}} href="javascript:;" onClick={this.openDeleteNodeModal.bind(this, node)}>
                             <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '21px'}}>delete_forever</i>
-                            <ReactTooltip id="remove"  effect='solid'>Remove node</ReactTooltip>
+                            <ReactTooltip id="remove"  effect='solid'><span style={{fontSize: '12px'}}>Remove node</span></ReactTooltip>
                         </a>
                         }
                     </div>
@@ -1276,6 +1374,20 @@ class Node extends Component {
                     node={this.state.fallacySelectedNode}
                     user={this.props.user}/>
                     </Modal>
+
+
+                    <Modal
+                        isOpen={this.state.nodeImageModalIsOpen}
+                        onAfterOpen={this.afterOpenNodeImageModal.bind(this)}
+                        onRequestClose={this.closeNodeImageModal.bind(this)}
+                        style={fallacyModalStyles}
+                        contentLabel="Node image Modal"
+                    >
+                        <NodeImage imgUrl={this.props.node.image}
+                                 scriptId={this.props.scriptId}
+                                 node={this.state.nodeImageSelectedNode}
+                                 user={this.props.user}/>
+                    </Modal>
                 </div>
                 }
 
@@ -1312,6 +1424,19 @@ class Node extends Component {
                         onChange={this.onChange.bind(this, this.props.node)}
                         onClick={this.onTextAreaClick.bind(this, this.props.node)}
                     />
+                    { this.props.node.image &&
+                    <div>
+                        <a style={{
+                            padding: '0px',
+                            border: 'none',
+                            textDecoration: 'none',
+                            outline: 'none'
+                        }}
+                           target="_blank" href={this.props.node.image}>
+                            <img className="node-image" src={this.props.node.image}/>
+                        </a>
+                    </div>
+                    }
 
 
                     {this.props.node.source &&
