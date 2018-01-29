@@ -1496,7 +1496,7 @@ class Node extends Component {
 
                 </div>
             </div>
-                { this.props.areChildrenHidden[this.props.node.uid] && <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                { (this.props.areChildrenHidden[this.props.node.uid] || this.props.node.hideChildren[this.props.user.uid]) && <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
                     <div className="vertical-line" style={{height: '30px'}}></div>
                     <div data-tip data-for={'collapsed-node' + this.props.node.uid}
                          className="circleBase type3"
@@ -1659,7 +1659,7 @@ class Fragment extends Component {
                                       showChildren={this.showChildren.bind(this)}
                                       areChildrenHidden={this.state.hideChildren}
                                       canEdit={this.props.canEdit}/>
-                                {(node.children!==undefined && Object.keys(node.children).length > 0 && !this.state.hideChildren[node.uid]) &&
+                                {(node.children!==undefined && Object.keys(node.children).length > 0 && (!this.state.hideChildren[node.uid]) && !node.hideChildren[this.props.user.uid]) &&
                                 <Fragment user={this.props.user}
                                           data={node.children}
                                           hideChildren={this.state.hideChildren}
