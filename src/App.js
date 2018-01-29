@@ -1282,7 +1282,7 @@ class Node extends Component {
                     <div style={{display: 'flex', width: '50px', justifyContent: 'flex-end', border: '0px', padding: '0px' }}>
 
                         { node.children && <div>
-                            {Object.keys(node.children).length > 0 &&
+                            {(Object.keys(node.children).length > 0 && node.hideChildren[this.props.user.uid]) &&
                             <a data-tip data-for='expand' style={{padding: 0, border: 'none'}} href="javascript:;"
                                onClick={this.props.showChildren(this.props.node.uid)}>
                                 <i className="material-icons"
@@ -1295,7 +1295,7 @@ class Node extends Component {
                             </a>
                         }
 
-                        { Object.keys(node.children).length>0 &&
+                            {(Object.keys(node.children).length > 0 && !node.hideChildren[this.props.user.uid]) &&
                             <a data-tip data-for='collapse' style={{padding: 0, border: 'none'}} href="javascript:;"
                             onClick={this.props.hideChildren(this.props.node.uid)}>
                             <i className="material-icons" style={{
@@ -1425,7 +1425,7 @@ class Node extends Component {
                         onClick={this.onTextAreaClick.bind(this, this.props.node)}
                     />
                     { this.props.node.image &&
-                    <div>
+                    <div style={{display: 'flex', justifyContent: 'center'}}>
                         <a style={{
                             padding: '0px',
                             border: 'none',
