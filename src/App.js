@@ -1729,13 +1729,15 @@ class Fragment extends Component {
                             }
                         }
 
+                        let user = this.props.user || {uid: 0};
+
 
                         return (
                             <li key={node.uid}>
                                 <Node node={node}
                                       uid={node.uid}
                                       scriptId={this.props.scriptId}
-                                      user={this.props.user}
+                                      user={user}
                                       premiseRelativeValue={this.props.premiseRelativeValue}
                                       parentNodeId={this.props.parentNodeId}
                                       setHighlightedNode={this.props.setHighlightedNode}
@@ -1744,8 +1746,8 @@ class Fragment extends Component {
                                       showChildren={this.showChildren.bind(this)}
                                       areChildrenHidden={this.state.hideChildren}
                                       canEdit={this.props.canEdit}/>
-                                {(node.children!==undefined && Object.keys(node.children).length > 0 && (!this.state.hideChildren[node.uid]) && !node.hideChildren[this.props.user.uid]) &&
-                                <Fragment user={this.props.user}
+                                {(node.children!==undefined && Object.keys(node.children).length > 0 && (!this.state.hideChildren[node.uid]) && !node.hideChildren[user.uid]) &&
+                                <Fragment user={user}
                                           data={node.children}
                                           hideChildren={this.state.hideChildren}
                                           relativeParentNode={node}
@@ -2527,7 +2529,8 @@ class Header extends Component{
             shareModalMessage: '',
             timer: null,
             forgotPasswordModalIsOpen: false,
-            isConnected: true
+            isConnected: true,
+            collabListenerSet: false
         };
 
         this.openModal = this.openModal.bind(this);
@@ -2555,8 +2558,8 @@ class Header extends Component{
         store.subscribe(() => {
             this.setState({activeScriptId: store.getState().activeScriptId, title: store.getState().title, loaderModalIsOpen: store.getState().isScriptCreation})
 
-            if(store.getState().activeScriptId) {
-
+            if(store.getState().activeScriptId && !this.state.collabListenerSet && this.props.user) {
+                this.setState({collabListenerSet: true});
                 db.collection('scripts').doc(store.getState().activeScriptId).collection('collaborators').onSnapshot(function (querySnapshot) {
                     let collaborators = {};
                     querySnapshot.forEach(function (doc) {
