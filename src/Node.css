@@ -142,3 +142,27 @@ textarea{
     max-width: 320px;
     height: auto;
 }
+
+.node-contention-type-header {
+    background: white;
+    border: 0;
+    font-size: 15px;
+}
+
+.node-contention-type-header:hover {
+    cursor: pointer;
+}
+
+.node-contention-type-header:focus {
+    outline: none;
+}
+
+
+.node-contention-type-header::-ms-expand {
+    display: none;
+}
+
+.node-contention-type-header{
+    -webkit-appearance: none;
+    appearance: none;
+}

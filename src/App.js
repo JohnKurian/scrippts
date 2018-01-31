@@ -700,7 +700,8 @@ class Node extends Component {
             highlighted: false,
             deleteNodeModalIsOpen: false,
             nodeImageModalIsOpen: false,
-            nodeImageSelectedNode: null
+            nodeImageSelectedNode: null,
+            contentionType: null
         };
     }
 
@@ -787,6 +788,16 @@ class Node extends Component {
             else if(this.props.areChildrenHidden[this.props.node.uid] !== nextProps.areChildrenHidden[this.props.node.uid]) {
                 return true;
             }
+            else if(this.state.contentionType !== nextState.contentionType) {
+            return true;
+        }
+        else if(this.props.premiseRelativeValue !== nextProps.premiseRelativeValue) {
+            return true;
+        }
+        else if(this.props.node.relativeToParent !== nextProps.node.relativeToParent) {
+                return true;
+            }
+
             else {
             return false;
         }
@@ -1037,22 +1048,42 @@ class Node extends Component {
         this.setState({nodeImageModalIsOpen: true, nodeImageSelectedNode: node})
     }
 
-    copySubtree(node) {
-        console.log('1:', node);
+    cutSubtree(node) {
         store.dispatch({type: 'SET_COPIED_NODE', copiedNode: node});
     }
 
     pasteSubtree(node) {
         let copiedNode = store.getState().copiedNode;
-        console.log('node.uid', node.uid);
-        console.log('copiedxxx:', copiedNode);
         copiedNode['parentUid'] = node.parentUid;
         copiedNode['relativeToParent'] = node.relativeToParent;
 
         let childObj = {};
         childObj['children.' + copiedNode.uid] = true;
         console.log('copied:', copiedNode.uid);
-        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node.parentUid).update(childObj);
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node.parentUid).update(childObj).then(function (result) {
+            store.dispatch({type: 'SET_COPIED_NODE', copiedNode: null});
+        }).catch(function (err) {
+            console.log(err);
+        });
+    }
+
+    handleContentionTypeChange(evt) {
+        console.log(evt.target.value);
+        this.setState({contentionType: parseInt(evt.target.value)});
+
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(this.props.node.uid).update({
+            relativeToParent: parseInt(evt.target.value)
+        });
+
+
+        db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.props.scriptId).update({
+            updatedTime: Date.now()
+        });
+
+        db.collection('scripts').doc(this.props.scriptId).update({
+            updatedTime: Date.now()
+        });
+
     }
 
 
@@ -1088,18 +1119,12 @@ class Node extends Component {
         let nodeHeader = null;
         let saveButton = null;
 
-        if(this.props.premiseRelativeValue!==null||this.props.premiseRelativeValue!==undefined) {
+        if(this.props.premiseRelativeValue) {
 
-            currentNodeValue = this.props.premiseRelativeValue * node['relativeToParent'];
+            currentNodeValue = parseInt(this.props.premiseRelativeValue) * parseInt(node['relativeToParent']);
             color = colorMap[currentNodeValue];
             labelColor = labelColorMap[currentNodeValue];
 
-            if(currentNodeValue===0 && this.props.premiseRelativeValue===1) {
-                currentNodeValue = -1;
-            }
-            else if(currentNodeValue===0 && this.props.premiseRelativeValue===-1) {
-                currentNodeValue = 1;
-            }
         }
 
         nodeHeader = (
@@ -1111,7 +1136,7 @@ class Node extends Component {
                     border: '0px',
                     padding: '0px'
                 }}>
-                    {/*<span className='node-id'>{node.uid}</span>*/}
+                    <span className='node-id'>{node.uid}</span>
                 </div>
                 <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                 </div>
@@ -1136,10 +1161,16 @@ class Node extends Component {
                         border: '0px',
                         padding: '0px'
                     }}>
-                        {/*<span className='node-id'>{node.uid}</span>*/}
+                        <span className='node-id'>{node.uid}</span>
                     </div>
                     <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                        <p style={{color: labelColor, margin: 0}}>{labelMap[node.relativeToParent]}</p>
+                        <select className="node-contention-type-header" name="contentionType"
+                                style={{color: labelColor, textIndent: (parseInt(node.relativeToParent)===1? '0px': '14px')}}
+                                value={this.state.contentionType? parseInt(this.state.contentionType): parseInt(node.relativeToParent)}
+                                onChange={this.handleContentionTypeChange.bind(this)}>
+                            <option value={-1}>but</option>
+                            <option value={1}>because</option>
+                        </select>
                     </div>
                     <div style={{
                         display: 'flex',
@@ -1165,10 +1196,16 @@ class Node extends Component {
                             border: '0px',
                             padding: '0px'
                         }}>
-                            {/*<span className='node-id'>{node.uid}</span>*/}
+                            <span className='node-id'>{node.uid}</span>
                         </div>
                         <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                            <p style={{color: labelColor, margin: 0}}>{labelMap[node.relativeToParent]}</p>
+                            <select className="node-contention-type-header" name="contentionType"
+                                    style={{color: labelColor, textIndent: (parseInt(node.relativeToParent)===1? '0px': '14px')}}
+                                    value={this.state.contentionType? parseInt(this.state.contentionType): parseInt(node.relativeToParent)}
+                                    onChange={this.handleContentionTypeChange.bind(this)}>
+                                <option value={-1}>but</option>
+                                <option value={1}>because</option>
+                            </select>
                         </div>
                         <div style={{
                             display: 'flex',
@@ -1566,6 +1603,12 @@ class Fragment extends Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
+
+
+        if(!this.props.premiseRelativeValue !== nextProps.premiseRelativeValue) {
+            return true;
+        }
+
         if(!this.shallowEqual(this.state.hideChildren, nextState.hideChildren)) {
             return true;
         }
