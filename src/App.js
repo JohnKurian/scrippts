@@ -192,7 +192,7 @@ var db = firebase.firestore();
 export const auth = firebase.auth;
 
 
-function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComplete: false, numScripts: 0, isScriptCreation: false, highlightedNode: '', hotkeysEnabled: true, copiedNode: {}}, action) {
+function mainReducer(state = {activeScriptId: null, value: null, scriptFetchComplete: false, numScripts: 0, isScriptCreation: false, highlightedNode: '', hotkeysEnabled: true, copiedNode: null}, action) {
     switch (action.type) {
 
         case 'SET_ACTIVE_SCRIPT_ID':
@@ -1050,19 +1050,51 @@ class Node extends Component {
 
     cutSubtree(node) {
         store.dispatch({type: 'SET_COPIED_NODE', copiedNode: node});
+
+
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node.parentUid).get().then(function(doc) {
+            if (doc.exists) {
+                let children = doc.data()['children'];
+                delete children[node.uid];
+
+                db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node.parentUid).update({
+                    children: children
+                }).then(function (result) {
+                }).catch(function (err) {
+                    console.log(err);
+                });
+
+
+            } else {
+                console.log("No such document");
+            }
+        }.bind(this)).catch(function(error) {
+            console.log("Error getting document:", error);
+        });
+
+
     }
 
-    pasteSubtree(node) {
+    attachSubtree(node) {
         let copiedNode = store.getState().copiedNode;
-        copiedNode['parentUid'] = node.parentUid;
+        copiedNode['parentUid'] = node.uid;
         copiedNode['relativeToParent'] = node.relativeToParent;
 
         let childObj = {};
         childObj['children.' + copiedNode.uid] = true;
-        console.log('copied:', copiedNode.uid);
-        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node.parentUid).update(childObj).then(function (result) {
-            store.dispatch({type: 'SET_COPIED_NODE', copiedNode: null});
-        }).catch(function (err) {
+
+
+        store.dispatch({type: 'SET_COPIED_NODE', copiedNode: null});
+
+        db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(node.uid).update(childObj).then(function (result) {
+
+            db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(copiedNode.uid).update({parentUid: node.uid}).then(function (result) {
+            }.bind(this)).catch(function (err) {
+                console.log(err);
+            });
+
+
+        }.bind(this)).catch(function (err) {
             console.log(err);
         });
     }
@@ -1214,20 +1246,25 @@ class Node extends Component {
                             border: '0px',
                             padding: '0px'
                         }}>
-                            {/*<i data-tip data-for='copy' className="material-icons" onClick={this.copySubtree.bind(this, node)} style={{*/}
-                                {/*cursor: 'pointer',*/}
-                                {/*textDecoration: 'none',*/}
-                                {/*color: 'rgb(117, 117, 117)',*/}
-                                {/*fontSize: '18px'*/}
-                            {/*}}>content_copy</i>*/}
-                            {/*<ReactTooltip id="copy" effect='solid'>Copy subtree</ReactTooltip>*/}
-                            {/*<i data-tip data-for='paste' className="material-icons" onClick={this.pasteSubtree.bind(this, node)} style={{*/}
-                                {/*cursor: 'pointer',*/}
-                                {/*textDecoration: 'none',*/}
-                                {/*color: 'rgb(117, 117, 117)',*/}
-                                {/*fontSize: '18px'*/}
-                            {/*}}>content_paste</i>*/}
-                            {/*<ReactTooltip id="paste" effect='solid'>Paste subtree</ReactTooltip>*/}
+                            { !store.getState().copiedNode &&
+                            <i data-tip data-for='cut' className="material-icons" onClick={this.cutSubtree.bind(this, node)} style={{
+                                cursor: 'pointer',
+                                textDecoration: 'none',
+                                color: 'rgb(117, 117, 117)',
+                                fontSize: '18px'
+                            }}>content_cut</i>
+                            }
+                            <ReactTooltip id="cut" effect='solid'>Cut subtree</ReactTooltip>
+                            { store.getState().copiedNode &&
+                            <i data-tip data-for='attach' className="material-icons"
+                               onClick={this.attachSubtree.bind(this, node)} style={{
+                                cursor: 'pointer',
+                                textDecoration: 'none',
+                                color: 'rgb(117, 117, 117)',
+                                fontSize: '18px'
+                            }}>attach_file</i>
+                            }
+                            <ReactTooltip id="attach" effect='solid'>Attach the copied subtree to this node</ReactTooltip>
                         </div>
                     </div>
                 );
@@ -1242,7 +1279,7 @@ class Node extends Component {
                             border: '0px',
                             padding: '0px'
                         }}>
-                            {/*<span className='node-id'>{node.uid}</span>*/}
+                            <span className='node-id'>{node.uid}</span>
                         </div>
                         <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '18px'}}>
                         </div>
@@ -1253,20 +1290,25 @@ class Node extends Component {
                             border: '0px',
                             padding: '0px',
                         }}>
-                            {/*<i data-tip data-for='copy' className="material-icons" onClick={this.copySubtree.bind(this, node)} style={{*/}
-                                {/*cursor: 'pointer',*/}
-                                {/*textDecoration: 'none',*/}
-                                {/*color: 'rgb(117, 117, 117)',*/}
-                                {/*fontSize: '18px'*/}
-                            {/*}}>content_copy</i>*/}
-                            {/*<ReactTooltip id="copy" effect='solid'>Copy subtree</ReactTooltip>*/}
-                            {/*<i data-tip data-for='paste' className="material-icons" onClick={this.pasteSubtree.bind(this, node)} style={{*/}
-                                {/*cursor: 'pointer',*/}
-                                {/*textDecoration: 'none',*/}
-                                {/*color: 'rgb(117, 117, 117)',*/}
-                                {/*fontSize: '18px'*/}
-                            {/*}}>content_paste</i>*/}
-                            {/*<ReactTooltip id="paste" effect='solid'>Paste subtree</ReactTooltip>*/}
+                            { !store.getState().copiedNode &&
+                            <i data-tip data-for='cut' className="material-icons" onClick={this.cutSubtree.bind(this, node)} style={{
+                                cursor: 'pointer',
+                                textDecoration: 'none',
+                                color: 'rgb(117, 117, 117)',
+                                fontSize: '18px'
+                            }}>content_cut</i>
+                            }
+                            <ReactTooltip id="cut" effect='solid'>Cut subtree</ReactTooltip>
+                            { store.getState().copiedNode &&
+                                <i data-tip data-for='attach' className="material-icons"
+                                   onClick={this.attachSubtree.bind(this, node)} style={{
+                                    cursor: 'pointer',
+                                    textDecoration: 'none',
+                                    color: 'rgb(117, 117, 117)',
+                                    fontSize: '18px'
+                                }}>attach_file</i>
+                            }
+                            <ReactTooltip id="attach" effect='solid'>Attach the copied subtree to this node</ReactTooltip>
                         </div>
                     </div>
                 )
