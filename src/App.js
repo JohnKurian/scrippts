@@ -656,6 +656,51 @@ class NodeImage extends Component {
         });
     }
 
+     uuidv4() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+
+    onImageUploadChange(evt) {
+
+        let file = evt.target.files[0];
+        let metadata = {
+            contentType: 'image/jpeg',
+            filename: file.name
+        };
+        let storageRef = firebase.storage().ref('images').child(this.props.scriptId).child(this.uuidv4());
+        let task = storageRef.put(file, metadata);
+        task.on('state_changed', function progress(snapshot) {
+            let percentage = (snapshot.bytesTransferred/snapshot.totalBytes)*100;
+
+        }.bind(this), function error(err) {
+
+
+        },function complete() {
+
+            storageRef.getDownloadURL().then(function(url) {
+
+                db.collection("scripts").doc(this.props.scriptId).collection('nodes').doc(this.props.node['uid']).update({
+                    image: url,
+                    updatedTime: Date.now()
+                });
+
+                db.collection('users').doc(this.props.user.uid).collection('scripts').doc(this.props.scriptId).update({
+                    updatedTime: Date.now()
+                });
+
+                db.collection('scripts').doc(this.props.scriptId).update({
+                    updatedTime: Date.now()
+                });
+            }.bind(this)).catch(function(error) {
+
+            });
+        }.bind(this));
+    }
+
 
     render() {
         return (
@@ -673,6 +718,7 @@ class NodeImage extends Component {
                     onChange={this.onChange.bind(this, {})}
                     onClick={this.onTextAreaClick.bind(this, {})}
                 />
+                <input type="file" id="fileInput" name="fileInput" accept="image/*" onChange={this.onImageUploadChange.bind(this)}/>
             </div>
         )
     }
