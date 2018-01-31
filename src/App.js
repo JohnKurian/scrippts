@@ -514,7 +514,7 @@ class Note extends Component {
             <div style={{display: 'flex', flexDirection: 'column', padding: '20px'}}>
                 <h3 style={{display: 'flex', paddingBottom: '10px', margin: '0px'}}>
                     <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>note</i>
-                    Add note
+                     Note
                 </h3>
                 <Textarea
                     style={{resize: 'none', width: '500px', border: 'solid 1px rgb(117, 117, 117)', outline: 'none', borderRadius: '0px'}}
@@ -524,6 +524,7 @@ class Note extends Component {
                     defaultValue={this.props.script.note}
                     onFocus={this.onFocus.bind(this, {})}
                     onBlur={this.onBlur.bind(this, {})}
+                    readOnly={!this.props.canEdit}
                     onChange={this.onChange.bind(this, {})}
                     onClick={this.onTextAreaClick.bind(this, {})}
                 />
@@ -1196,7 +1197,7 @@ class Node extends Component {
                         <span className='node-id'>{node.uid}</span>
                     </div>
                     <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                        <select className="node-contention-type-header" name="contentionType"
+                        <select disabled={!this.props.canEdit} className="node-contention-type-header" name="contentionType"
                                 style={{color: labelColor, textIndent: (parseInt(node.relativeToParent)===1? '0px': '14px')}}
                                 value={this.state.contentionType? parseInt(this.state.contentionType): parseInt(node.relativeToParent)}
                                 onChange={this.handleContentionTypeChange.bind(this)}>
@@ -1459,7 +1460,7 @@ class Node extends Component {
                         isOpen={this.state.nodeImageModalIsOpen}
                         onAfterOpen={this.afterOpenNodeImageModal.bind(this)}
                         onRequestClose={this.closeNodeImageModal.bind(this)}
-                        style={fallacyModalStyles}
+                        style={signupModalStyles}
                         contentLabel="Node image Modal"
                     >
                         <NodeImage imgUrl={this.props.node.image}
@@ -3037,6 +3038,7 @@ class Header extends Component{
                             <Note note={this.props.scriptHeaders[this.state.activeScriptId]['note']}
                                   script={this.props.scriptHeaders[this.state.activeScriptId]}
                                   scriptId={this.state.activeScriptId}
+                                  canEdit={this.state.collaborators[this.props.user.uid]['isOwner']}
                                   user={this.props.user}/>
                         </Modal>
                         }
