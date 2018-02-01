@@ -902,12 +902,14 @@ class Node extends Component {
 
 
     onFocus(node, evt) {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: false});
         this.props.setHighlightedNode(node.uid);
         this.props.setHotkeysEnabledFlag(false);
         this.setState({showTools: true, selectedNode: node.uid});
     }
 
     onBlur(node, evt) {
+        store.dispatch({type: 'SET_HOTKEYS_ENABLED_FLAG', hotkeysEnabled: true});
         this.props.setHotkeysEnabledFlag(true);
         this.setState({showTools: true,  selectedNode: null})
     }
@@ -1163,6 +1165,11 @@ class Node extends Component {
             updatedTime: Date.now()
         });
 
+    }
+
+    onNodeBodyClick(node, evt) {
+        this.setState({selectedNode: node.uid});
+        this.props.setHighlightedNode(node.uid);
     }
 
 
@@ -1518,16 +1525,19 @@ class Node extends Component {
                 }
 
                 {/*<div className="circle"></div>*/}
-                <div onMouseEnter={this.onNodeEnter.bind(this, this.props.node)} onMouseLeave={this.onNodeLeave.bind(this, this.props.node)} style={{
-                    background: color,
-                    paddingLeft: '10px',
-                    paddingRight: '10px',
-                    paddingTop: '10px',
-                    paddingBottom: '3px',
-                    borderRadius: '6px',
-                    boxShadow: (this.state.highlighted? '#1565c0 2px 2px 15px': '1px 1px 4px rgba(0,0,0,.3)'),
-                    zIndex: '100'
-                }}>
+                <div onMouseEnter={this.onNodeEnter.bind(this, this.props.node)}
+                     onMouseLeave={this.onNodeLeave.bind(this, this.props.node)}
+                     onClick={this.onNodeBodyClick.bind(this, this.props.node)}
+                     style={{
+                        background: color,
+                        paddingLeft: '10px',
+                        paddingRight: '10px',
+                        paddingTop: '10px',
+                        paddingBottom: '3px',
+                        borderRadius: '6px',
+                        boxShadow: (this.state.highlighted? '#1565c0 2px 2px 15px': '1px 1px 4px rgba(0,0,0,.3)'),
+                        zIndex: '100'
+                     }}>
                     <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
                         <div style={{flex: 1}}>
                             {nodeHeader}
@@ -3068,7 +3078,7 @@ class Header extends Component{
                         }} href="javascript:;" onClick={this.onAddNoteClick.bind(this)}>
                             <i className="material-icons"
                                style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px'}}>note</i>
-                            <ReactTooltip id="note" effect='solid'>Add note</ReactTooltip>
+                            <ReactTooltip id="note" effect='solid'>Note</ReactTooltip>
                         </a>
 
                         }
