@@ -1171,8 +1171,8 @@ class Node extends Component {
 
 
         let colorMap = {
-            '1': '#e8f5e9',
-            '-1': '#ffebee',
+            '1': '#c8e6c9',
+            '-1': '#ffcdd2',
             '0': '#fff8e1'
         };
 
@@ -1183,8 +1183,8 @@ class Node extends Component {
         };
 
         let labelColorMap = {
-            '1': '#66BB6A',
-            '-1': '#EF5350',
+            '1': '#4caf50',
+            '-1': '#f44336',
             '0': '#FFCA28'
         };
 
@@ -1215,7 +1215,7 @@ class Node extends Component {
                     border: '0px',
                     padding: '0px'
                 }}>
-                    <span className='node-id'>{node.uid}</span>
+                    <span className='node-id' style={{ background: color }}>{node.uid}</span>
                 </div>
                 <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                 </div>
@@ -1240,11 +1240,11 @@ class Node extends Component {
                         border: '0px',
                         padding: '0px'
                     }}>
-                        <span className='node-id'>{node.uid}</span>
+                        <span className='node-id' style={{ background: color }}>{node.uid}</span>
                     </div>
                     <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                         <select disabled={!this.props.canEdit} className="node-contention-type-header" name="contentionType"
-                                style={{color: labelColor, textIndent: (parseInt(node.relativeToParent)===1? '0px': '14px')}}
+                                style={{color: labelColor, background: color, textIndent: (parseInt(node.relativeToParent)===1? '0px': '14px')}}
                                 value={this.state.contentionType? parseInt(this.state.contentionType): parseInt(node.relativeToParent)}
                                 onChange={this.handleContentionTypeChange.bind(this)}>
                             <option value={-1}>but</option>
@@ -1275,11 +1275,11 @@ class Node extends Component {
                             border: '0px',
                             padding: '0px'
                         }}>
-                            <span className='node-id'>{node.uid}</span>
+                            <span className='node-id' style={{ background: color }}>{node.uid}</span>
                         </div>
                         <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                             <select className="node-contention-type-header" name="contentionType"
-                                    style={{color: labelColor, textIndent: (parseInt(node.relativeToParent)===1? '0px': '14px')}}
+                                    style={{color: labelColor, background: color, textIndent: (parseInt(node.relativeToParent)===1? '0px': '14px')}}
                                     value={this.state.contentionType? parseInt(this.state.contentionType): parseInt(node.relativeToParent)}
                                     onChange={this.handleContentionTypeChange.bind(this)}>
                                 <option value={-1}>but</option>
@@ -1326,7 +1326,7 @@ class Node extends Component {
                             border: '0px',
                             padding: '0px'
                         }}>
-                            <span className='node-id'>{node.uid}</span>
+                            <span className='node-id' style={{ background: color }}>{node.uid}</span>
                         </div>
                         <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '18px'}}>
                         </div>
@@ -1519,7 +1519,7 @@ class Node extends Component {
 
                 {/*<div className="circle"></div>*/}
                 <div onMouseEnter={this.onNodeEnter.bind(this, this.props.node)} onMouseLeave={this.onNodeLeave.bind(this, this.props.node)} style={{
-                    background: 'white',
+                    background: color,
                     paddingLeft: '10px',
                     paddingRight: '10px',
                     paddingTop: '10px',
@@ -1540,7 +1540,7 @@ class Node extends Component {
                         id={this.props.node.uid}
                         key={this.props.node.uid}
                         placeholder={textAreaPlaceholder}
-                        style={{resize: 'none', width: '300px', background: color}}
+                        style={{resize: 'none', width: '300px', background: color, outline: 'none'}}
                         autoFocus={this.props.node.uid === this.state.selectedNode}
                         defaultValue={this.props.node.text}
                         value={this.state.lastUpdated < this.props.node.updatedTime? this.props.node.text: this.defaultValue}
