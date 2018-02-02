@@ -926,6 +926,7 @@ class Node extends Component {
 
         let relativeToParent = {
             'because': 1,
+            'therefore': 2,
             'and': 1,
             'however': 0,
             'but': -1
@@ -1179,19 +1180,24 @@ class Node extends Component {
 
         let colorMap = {
             '1': '#c8e6c9',
+            '2': '#c8e6c9',
             '-1': '#ffcdd2',
+            '-2': '#ffcdd2',
             '0': '#fff8e1'
         };
 
         let labelMap = {
             '1': 'because',
+            '2': 'therefore',
             '-1': 'but',
             '0': 'however'
         };
 
         let labelColorMap = {
             '1': '#4caf50',
+            '2': '#4caf50',
             '-1': '#f44336',
+            '-2': '#f44336',
             '0': '#FFCA28'
         };
 
@@ -1205,9 +1211,15 @@ class Node extends Component {
         let nodeHeader = null;
         let saveButton = null;
 
+        let relativeToParent = parseInt(node['relativeToParent']);
         if(this.props.premiseRelativeValue) {
+            if(relativeToParent > 1){
+                relativeToParent = 1;
+            } else if( relativeToParent < -1) {
+                relativeToParent = -1;
+            }
 
-            currentNodeValue = parseInt(this.props.premiseRelativeValue) * parseInt(node['relativeToParent']);
+            currentNodeValue = parseInt(this.props.premiseRelativeValue) * relativeToParent;
             color = colorMap[currentNodeValue];
             labelColor = labelColorMap[currentNodeValue];
 
@@ -1251,11 +1263,12 @@ class Node extends Component {
                     </div>
                     <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                         <select disabled={!this.props.canEdit} className="node-contention-type-header" name="contentionType"
-                                style={{color: labelColor, background: color, textIndent: (parseInt(node.relativeToParent)===1? '0px': '14px')}}
+                                style={{color: labelColor, background: color, textIndent: (parseInt(node.relativeToParent)>=1? '0px': '14px')}}
                                 value={this.state.contentionType? parseInt(this.state.contentionType): parseInt(node.relativeToParent)}
                                 onChange={this.handleContentionTypeChange.bind(this)}>
                             <option value={-1}>but</option>
                             <option value={1}>because</option>
+                            <option value={2}>therefore</option>
                         </select>
                     </div>
                     <div style={{
@@ -1285,12 +1298,13 @@ class Node extends Component {
                             <span className='node-id' style={{ background: color }}>{node.uid}</span>
                         </div>
                         <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                            <select className="node-contention-type-header" name="contentionType"
-                                    style={{color: labelColor, background: color, textIndent: (parseInt(node.relativeToParent)===1? '0px': '14px')}}
+                            <select disabled={!this.props.canEdit} className="node-contention-type-header" name="contentionType"
+                                    style={{color: labelColor, background: color, textIndent: (parseInt(node.relativeToParent)>=1? '0px': '14px')}}
                                     value={this.state.contentionType? parseInt(this.state.contentionType): parseInt(node.relativeToParent)}
                                     onChange={this.handleContentionTypeChange.bind(this)}>
                                 <option value={-1}>but</option>
                                 <option value={1}>because</option>
+                                <option value={2}>therefore</option>
                             </select>
                         </div>
                         <div style={{
@@ -1410,7 +1424,9 @@ class Node extends Component {
                         <button data-tip data-for='but' style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
                         <ReactTooltip id="but"  effect='solid'>Add a statement that opposes this claim</ReactTooltip>
                         <button data-tip data-for='because' style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "because")} type="button">because</button>
-                        <ReactTooltip id="because"  effect='solid'>Add a statement that supports this claim</ReactTooltip>
+                        <ReactTooltip id="because"  effect='solid'>Add a reason why this claim is true</ReactTooltip>
+                        <button data-tip data-for='therefore' style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "therefore")} type="button">therefore</button>
+                        <ReactTooltip id="therefore"  effect='solid'>Add a logical consequence of this claim</ReactTooltip>
                     </div>
                     <div style={{display: 'flex', width: '50px', justifyContent: 'flex-end', border: '0px', padding: '0px' }}>
 
@@ -1773,17 +1789,14 @@ class Fragment extends Component {
 
                         let currentNodeValue = 0;
 
-
-                        if(this.props.premiseRelativeValue!==null||this.props.premiseRelativeValue!==undefined) {
-
-                            currentNodeValue = this.props.premiseRelativeValue * node['relativeToParent'];
-
-                            if(currentNodeValue===0 && this.props.premiseRelativeValue===1) {
-                                currentNodeValue = -1;
+                        let relativeToParent = parseInt(node['relativeToParent']);
+                        if(this.props.premiseRelativeValue) {
+                            if(relativeToParent > 1){
+                                relativeToParent = 1;
+                            } else if(relativeToParent < -1) {
+                                relativeToParent = -1;
                             }
-                            else if(currentNodeValue===0 && this.props.premiseRelativeValue===-1) {
-                                currentNodeValue = 1;
-                            }
+                            currentNodeValue = parseInt(this.props.premiseRelativeValue) * relativeToParent;
                         }
 
                         let user = this.props.user || {uid: 0};
