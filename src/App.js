@@ -517,7 +517,7 @@ class Note extends Component {
                      Note
                 </h3>
                 <Textarea
-                    style={{resize: 'none', width: '500px', border: 'solid 1px rgb(117, 117, 117)', outline: 'none', borderRadius: '0px'}}
+                    style={{resize: 'none', width: '500px', minHeight: '450px', border: 'solid 1px rgb(117, 117, 117)', outline: 'none', borderRadius: '0px'}}
                     autoFocus={true}
                     minRows={6}
                     maxRows={20}
@@ -1744,7 +1744,7 @@ class Fragment extends Component {
                         offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
 
 
-                    window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'smooth'});
+                    window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'auto'});
                 }
             }
         }
@@ -3825,7 +3825,7 @@ class Editor extends Component{
                         offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
 
 
-                    window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'smooth'});
+                    window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'auto'});
 
 
                     store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
@@ -3852,7 +3852,7 @@ class Editor extends Component{
                     offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
 
 
-                window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'smooth'});
+                window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'auto'});
                 // window.scrollTo({top: offsetTop, left: offsetLeft, behavior: 'smooth'});
 
 
@@ -3894,7 +3894,7 @@ class Editor extends Component{
                         offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
 
 
-                    window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'smooth'});
+                    window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'auto'});
 
                     store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
                     this.setState({highlightedNode: this.state.premiseNode});
@@ -3921,7 +3921,7 @@ class Editor extends Component{
                     offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
 
 
-                window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'smooth'});
+                window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'auto'});
 
                 //
                 // console.log(Object.keys(this.state.flatTree[this.state.highlightedNode].children)[0])
@@ -3955,7 +3955,7 @@ class Editor extends Component{
                         offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
 
 
-                    window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'smooth'});
+                    window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'auto'});
 
                     store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
                     this.setState({highlightedNode: this.state.premiseNode});
@@ -3996,7 +3996,7 @@ class Editor extends Component{
                     offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
 
 
-                window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'smooth'});
+                window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'auto'});
 
                 // document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition - 1] ).scrollIntoView(false);
 
@@ -4028,7 +4028,7 @@ class Editor extends Component{
                         offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
 
 
-                    window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'smooth'});
+                    window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'auto'});
 
 
                     store.dispatch({type: 'SET_HIGHLIGHTED_NODE', highlightedNode: this.state.premiseNode});
@@ -4069,7 +4069,7 @@ class Editor extends Component{
                     offsetLeft = elemRect.left + window.scrollX - Math.max(viewportWidth / 2) + 150;
 
 
-                window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'smooth'});
+                window.scrollTo({left: offsetLeft, top: offsetTop, behavior: 'auto'});
 
 
                 // document.getElementById(Object.keys(this.state.flatTree[this.state.flatTree[this.state.highlightedNode].parentUid].children)[this.state.childPosition + 1] ).scrollIntoView(false);
