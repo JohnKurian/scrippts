@@ -3240,7 +3240,7 @@ class Header extends Component{
 
         return (
             <div>
-            <div className='header' style={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+            <div className='header' style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', backgroundColor: (this.state.activeScriptId? 'white': '#f9f9f9')}}>
                 <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignContent: 'center'}}>
                 { this.props.user ?
                     (
