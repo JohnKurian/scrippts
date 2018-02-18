@@ -1,0 +1,114 @@
+.share-header-container {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    margin-bottom: 40px;
+}
+
+
+.share-header {
+    flex: 1;
+    margin: 0;
+    color: black;
+}
+
+
+
+
+.share-close-button {
+    text-decoration: none;
+    color: rgb(117, 117, 117);
+    font-size: 20px;
+}
+
+
+
+
+.link-sharing-container {
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.link-sharing-header {
+    margin: 0;
+    color: black;
+}
+
+
+.link-sharing-label {
+    display: flex;
+    margin-top: 8px;
+    color: grey;
+}
+
+
+.link-sharing-text {
+    margin-left: 5px;
+}
+
+
+.share-collaborators-container {
+    margin-bottom: 30px;
+}
+
+
+.share-collaborators-header {
+    margin: 0;
+    color: black;
+    margin-bottom: 5px;
+}
+
+.share-collaborator-user-container {
+    display: flex;
+    flex-direction: column;
+}
+
+
+.share-collaborator-user-container {
+    display: flex;
+    flex-direction: row;
+    justify-content:space-between;
+    align-items: center;
+}
+
+.share-collaborator-divider {
+    margin-top: 5px;
+}
+
+
+
+
+.share-collaborator-username {
+    flex: 1;
+    font-size: 15px;
+}
+
+
+.share-collaborator-permission {
+    flex: 1;
+}
+
+
+.share-add-collaborator-input {
+    margin-right: 5px;
+    height: 20px;
+    width: 230px;
+}
+
+.share-modal-message {
+    font-size: 14px;
+}
+
+.add-collab-button {
+    margin-left: 5px;
+    height: 22px;
+    width: 55px;
+    background-color: #1565c0;
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+}
+

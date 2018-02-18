@@ -56,7 +56,7 @@ const customStyles = {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(255, 255, 255, 0.75)",
+        backgroundColor: "rgba(0, 0, 0, 0.20)",
         zIndex: 10000
     }
 };
@@ -79,7 +79,7 @@ const loginModalStyles = {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(255, 255, 255, 0.75)",
+        backgroundColor: "rgba(0, 0, 0, 0.20)",
         zIndex: 10000
     }
 };
@@ -102,7 +102,7 @@ const signupModalStyles = {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(255, 255, 255, 0.75)",
+        backgroundColor: "rgba(0, 0, 0, 0.20)",
         zIndex: 10000
     }
 };
@@ -124,7 +124,7 @@ const noteModalStyles = {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(255, 255, 255, 0.75)",
+        backgroundColor: "rgba(0, 0, 0, 0.20)",
         zIndex: 10000
     }
 };
@@ -147,7 +147,7 @@ const fallacyModalStyles = {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(255, 255, 255, 0.75)",
+        backgroundColor: "rgba(0, 0, 0, 0.20)",
         zIndex: 10000,
     }
 };
@@ -170,7 +170,7 @@ const shareModalStyles = {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(255, 255, 255, 0.75)",
+        backgroundColor: "rgba(0, 0, 0, 0.20)",
         zIndex: 10000
     }
 };
@@ -338,11 +338,11 @@ class Source extends Component {
         return (
             <div style={{margin: '20px', display: 'flex', flexDirection: 'column'}}>
                 <div style={{display: 'flex', paddingBottom: '10px', fontWeight: 'bold'}}>
-                    <i className="material-icons" style={{textDecoration: 'none', color: '#1565c0', fontSize: '24px', marginRight: '3px'}}>link</i>
-                Add source
+                    <i className="material-icons" style={{textDecoration: 'none', color: '#1565c0', fontSize: '24px', marginRight: '3px'}}>link</i>Source
                 </div>
                 <Textarea
-                    style={{resize: 'none', width: '400px', border: 'solid 1px #1565c0', outline: 'none', borderRadius: '0px'}}
+                    placeholder="add source url here"
+                    style={{resize: 'none', width: '400px', outline: 'none', borderRadius: '2px', boxShadow: '1px 1px 5px rgba(0,0,0,.3)', marginBottom: '10px', height: '22px'}}
                     autoFocus={true}
                     defaultValue={this.props.node.source}
                     onFocus={this.onFocus.bind(this, {})}
@@ -518,7 +518,7 @@ class Note extends Component {
                      Note
                 </h3>
                 <Textarea
-                    style={{resize: 'none', width: '500px', minHeight: '450px', border: 'solid 1px rgb(117, 117, 117)', outline: 'none', borderRadius: '0px'}}
+                    style={{resize: 'none', width: '500px', minHeight: '450px', border: 'solid 1px #bdbdbd', outline: 'none', borderRadius: '5px'}}
                     autoFocus={true}
                     minRows={6}
                     maxRows={20}
@@ -708,10 +708,11 @@ class NodeImage extends Component {
             <div style={{margin: '20px', display: 'flex', flexDirection: 'column'}}>
                 <div style={{display: 'flex', paddingBottom: '10px', fontWeight: 'bold'}}>
                     <i className="material-icons" style={{textDecoration: 'none', color: '#1565c0', fontSize: '24px', marginRight: '3px'}}>image</i>
-                    Add image URL
+                    Image
                 </div>
                 <Textarea
-                    style={{resize: 'none', width: '400px', border: 'solid 1px #1565c0', outline: 'none', borderRadius: '0px'}}
+                    placeholder="add image url here"
+                    style={{resize: 'none', width: '400px', outline: 'none', borderRadius: '2px', boxShadow: '1px 1px 5px rgba(0,0,0,.3)', marginBottom: '10px', height: '22px'}}
                     autoFocus={true}
                     defaultValue={this.props.node.image}
                     onFocus={this.onFocus.bind(this, {})}
@@ -719,7 +720,7 @@ class NodeImage extends Component {
                     onChange={this.onChange.bind(this, {})}
                     onClick={this.onTextAreaClick.bind(this, {})}
                 />
-                <input type="file" id="fileInput" name="fileInput" accept="image/*" onChange={this.onImageUploadChange.bind(this)}/>
+                {/*<input type="file" id="fileInput" name="fileInput" accept="image/*" onChange={this.onImageUploadChange.bind(this)}/>*/}
             </div>
         )
     }
@@ -2601,7 +2602,8 @@ class Header extends Component{
             timer: null,
             forgotPasswordModalIsOpen: false,
             isConnected: true,
-            collabListenerSet: false
+            collabListenerSet: false,
+            collabAddPending: false
         };
 
         this.openModal = this.openModal.bind(this);
@@ -2775,6 +2777,7 @@ class Header extends Component{
     onShareFormSubmit(evt) {
         evt.preventDefault();
         if(this.validateUsername(this.state.shareUsernameField)) {
+            this.setState({collabAddPending: true});
             this.share(this.state.shareUsernameField, this.state.permissionValue, this.state.activeScriptId);
         }
         else {
@@ -2807,9 +2810,10 @@ class Header extends Component{
         firebase.auth().currentUser.getToken().then(function(token) {
             var req = new XMLHttpRequest();
             req.onload = function() {
-                this.setState({shareModalMessage: JSON.parse(req.responseText).msg})
+                this.setState({shareModalMessage: JSON.parse(req.responseText).msg, collabAddPending: false, shareModalMessageColor: 'grey'})
             }.bind(this);
             req.onerror = function() {
+                this.setState({collabAddPending: false, shareModalMessageColor: 'red'});
                 console.log('onerror;', 'error');
             }.bind(this);
             req.open('GET', helloUserUrl + "?" + params, true);
@@ -2915,10 +2919,11 @@ class Header extends Component{
                     this.setState({collaborators: newCollabObj});
 
                 }
-                this.setState({shareModalMessage: JSON.parse(req.responseText).msg})
+                this.setState({shareModalMessage: JSON.parse(req.responseText).msg, collabAddPending: false})
             }.bind(this);
             req.onerror = function() {
                 console.log('onerror;', 'error');
+                this.setState({collabAddPending: false});
             }.bind(this);
             req.open('GET', helloUserUrl + "?" + params, true);
             req.setRequestHeader('Authorization', 'Bearer ' + token);
@@ -2929,6 +2934,7 @@ class Header extends Component{
     }
 
     removeCollaborator(key, isOwner) {
+        this.setState({collabAddPending: true});
         this.removePartner(key, this.state.activeScriptId, isOwner);
     }
 
@@ -2987,8 +2993,8 @@ class Header extends Component{
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: "rgba(255, 255, 255, 0.75)",
-                background: "rgba(255, 255, 255, 0.75)",
+                backgroundColor: "rgba(0, 0, 0, 0.20)",
+                background: "rgba(0, 0, 0, 0.20)",
                 border: '0px',
                 zIndex: 20000
             }
@@ -3174,10 +3180,10 @@ class Header extends Component{
                                             <option value="write">can edit</option>
                                         </select>
                                 <ReactTooltip id="add-collab-permission" effect='solid'>Set permission for the user</ReactTooltip>
-                                        <button style={{margin: '5px'}}>add</button>
+                                        <button className="add-collab-button">add</button>
 
                                     </form>
-                                    <div>{shareModalMessage}</div>
+                                    <div style={{color: this.state.shareModalMessageColor}} className="share-modal-message">{shareModalMessage}</div>
                                 </div> : ''
 
                             }
@@ -3189,6 +3195,15 @@ class Header extends Component{
 
 
                             }
+
+                            { this.state.collabAddPending &&
+                            <div style={{ display: 'flex', justifyContent: 'center'}}>
+                                <svg className="spinner" width="20px" height="20px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle className="path" fill="none" strokeWidth="6" strokeLinecap="round" cx="33" cy="33" r="30"/>
+                                </svg>
+                            </div>
+                            }
+
                         </Modal>
 
                         { Object.keys(this.state.collaborators).length>0 &&

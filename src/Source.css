@@ -1,0 +1,30 @@
+
+.source-container {
+    margin: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.source-inner-container {
+    display: flex;
+    padding-bottom: 10px;
+    font-weight: bold;
+}
+
+
+.source-header {
+    text-decoration: none;
+    color: #1565c0;
+    font-size: 24px;
+    margin-right: 3px;
+}
+
+
+.source-textarea {
+    resize: none;
+    width: 400px;
+    border: solid 1px #1565c0;
+    outline: none;
+    border-radius: 0px;
+}
