@@ -3,6 +3,7 @@ import "./App.css";
 import "./Node.css";
 import "./Layout.css";
 import "./Fallacy.css";
+import "./Share.css";
 
 import createBrowserHistory from "history/createBrowserHistory";
 
@@ -1419,7 +1420,7 @@ class Node extends Component {
                         <ReactTooltip id="image"  effect='solid'>Add an image</ReactTooltip>
                     </div>
 
-                    <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                    <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: '20px'}}>
 
                         <button data-tip data-for='but' style={{  background: labelColorMap[-1*currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[-1*currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "but")} type="button">but</button>
                         <ReactTooltip id="but"  effect='solid'>Add a statement that opposes this claim</ReactTooltip>
@@ -1428,7 +1429,7 @@ class Node extends Component {
                         <button data-tip data-for='therefore' style={{  background: labelColorMap[currentNodeValue], cursor: 'pointer', borderColor: labelColorMap[currentNodeValue], color: '#fff', borderRadius: '10px', outline: '0', margin: '2px'}} onClick={this.onAddClick.bind(this, node, "therefore")} type="button">therefore</button>
                         <ReactTooltip id="therefore"  effect='solid'>Add a logical consequence of this claim</ReactTooltip>
                     </div>
-                    <div style={{display: 'flex', width: '50px', justifyContent: 'flex-end', border: '0px', padding: '0px' }}>
+                    <div style={{display: 'flex', width: '40px', justifyContent: 'flex-end', border: '0px', padding: '0px' }}>
 
                         { node.children && <div>
                             {(Object.keys(node.children).length > 0 && node.hideChildren[this.props.user.uid]) &&
@@ -1460,7 +1461,7 @@ class Node extends Component {
                         }
 
                         { !(node.uid === this.props.parentNodeId) &&
-                        <a data-tip data-for='remove' style={{padding: 0, border: 'none', marginLeft: '5px'}} href="javascript:;" onClick={this.openDeleteNodeModal.bind(this, node)}>
+                        <a data-tip data-for='remove' style={{padding: 0, border: 'none'}} href="javascript:;" onClick={this.openDeleteNodeModal.bind(this, node)}>
                             <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '21px'}}>delete_forever</i>
                             <ReactTooltip id="remove"  effect='solid'><span style={{fontSize: '12px'}}>Remove node</span></ReactTooltip>
                         </a>
@@ -1566,7 +1567,7 @@ class Node extends Component {
                         id={this.props.node.uid}
                         key={this.props.node.uid}
                         placeholder={textAreaPlaceholder}
-                        style={{resize: 'none', width: '300px', background: color, outline: 'none'}}
+                        style={{resize: 'none', width: '280px', background: color, outline: 'none'}}
                         autoFocus={this.props.node.uid === this.state.selectedNode}
                         defaultValue={this.props.node.text}
                         value={this.state.lastUpdated < this.props.node.updatedTime? this.props.node.text: this.defaultValue}
@@ -3011,25 +3012,27 @@ class Header extends Component{
 
             collaborators = (Object.keys(this.state.collaborators).map(function(key) {
                 return (
-                    <div key={key} style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <div style={{flex: 1, fontSize: '15px'}}>
-                            {this.state.collaborators[key]['username']}
+                    <div key={key} className="share-collaborator-user-supercontainer">
+                    <div key={key} className="share-collaborator-user-container">
+                        <div className="share-collaborator-username">
+                            {this.state.collaborators[key]['username']} {this.props.user.uid === key ? "(You)": ''}
                         </div>
 
 
                         {    (this.state.collaborators && this.state.collaborators[this.props.user.uid]) &&
-                        <div style={{flex: 1}}>
+                        <div className="share-collaborator-permission">
                             {
                                 this.state.collaborators[key]['isOwner'] ?
                                     'is owner' :
                                     this.state.collaborators[this.props.user.uid]['isOwner'] ?
-                                        (<select style={{margin: '5px'}} name="permission"
+                                        (<select data-tip data-for="change-collab-permission" style={{marginBottom: '5px'}} name="permission"
                                                  value={this.state.collaborators[key]['permission']}
                                                  onChange={this.handleShareSettingsPermissionChange.bind(this, key)}>
                                             <option value="read-only">can view</option>
                                             <option value="write">can edit</option>
                                         </select>) : permissionObj[this.state.collaborators[key]['permission']]
                             }
+                            <ReactTooltip id="change-collab-permission" effect='solid'>Edit permission for the user</ReactTooltip>
                         </div>
                         }
 
@@ -3047,6 +3050,8 @@ class Header extends Component{
                         }
 
 
+                    </div>
+                        <hr className="share-collaborator-divider"/>
                     </div>
                 );
             }.bind(this)));
@@ -3124,30 +3129,30 @@ class Header extends Component{
                             contentLabel="Example Modal"
                         >
                             { !this.props.user.isAnonymous && <div>
-                            <div style={{display: 'flex', flex: 1, flexDirection: 'row', marginBottom: '40px'}}>
-                                <h3 ref={subtitle => this.subtitle = subtitle} style={{flex: 1, margin: 0, color: 'black'}}>Share settings</h3>
+                            <div className="share-header-container">
+                                <h3 ref={subtitle => this.subtitle = subtitle} className="share-header">Share settings</h3>
                                 <a href="javascript:;" onClick={this.closeModal}>
-                                    <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>close</i>
+                                    <i className="material-icons share-close-button">close</i>
                                 </a>
                             </div>
 
-                            <div style={{marginBottom: '30px', display: 'flex', flexDirection: 'row'}}>
-                                <h4 style={{margin: 0, color: 'black'}}>Link Sharing</h4>
-                                <label style={{display: 'flex', marginLeft: '10px'}}>
+                            <div className="link-sharing-container">
+                                <h4 className="link-sharing-header">Link Sharing</h4>
+                                <label className="link-sharing-label">
                                     { (this.props.user && this.state.collaborators && this.state.collaborators[this.props.user.uid]) &&
                                     <Toggle style={{width: '2px'}}
                                             defaultChecked={this.state.scope === 'public'}
                                             disabled={!this.state.collaborators[this.props.user.uid]['isOwner']}
                                             onChange={this.handleScopeChange.bind(this)}/>
                                     }
-                                    <span style={{marginLeft: '5px'}}>
+                                    <span className="link-sharing-text">
                                     {this.state.scope === 'public'? ' anyone with the link can view' : 'only specific people can view'}
                                 </span>
                                 </label>
                             </div>
 
-                            <div style={{marginBottom: '30px'}}>
-                                <h4 style={{margin: 0, color: 'black', marginBottom: '5px'}}>Collaborators</h4>
+                            <div className="share-collaborators-container">
+                                <h4 className="share-collaborators-header">Collaborators</h4>
                                 <div>
                                     {collaborators}
                                 </div>
@@ -3159,15 +3164,16 @@ class Header extends Component{
                                 <div >
                                     <div>Add a collaborator</div>
                                     <form onSubmit={this.onShareFormSubmit.bind(this)}>
-                                        <input style={{margin: '5px', width: '200px'}} type="text"
+                                        <input className="share-add-collaborator-input" type="text"
                                                value={this.state.shareUsernameField}
                                                placeholder="enter username"
                                                onChange={this.handleShareModalUsernameInputChange.bind(this)}/>
-                                        <select style={{margin: '5px'}} name="permission" value={this.state.permissionValue}
+                                        <select data-tip data-for='add-collab-permission' style={{margin: '5px'}} name="permission" value={this.state.permissionValue}
                                                 onChange={this.handlePermissionChange.bind(this)}>
                                             <option value="read-only">can view</option>
                                             <option value="write">can edit</option>
                                         </select>
+                                <ReactTooltip id="add-collab-permission" effect='solid'>Set permission for the user</ReactTooltip>
                                         <button style={{margin: '5px'}}>add</button>
 
                                     </form>
