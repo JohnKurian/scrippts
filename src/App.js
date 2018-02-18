@@ -4,6 +4,8 @@ import "./Node.css";
 import "./Layout.css";
 import "./Fallacy.css";
 import "./Share.css";
+import "./Source.css";
+import "./Landing.css";
 
 import createBrowserHistory from "history/createBrowserHistory";
 
@@ -4168,6 +4170,9 @@ class Editor extends Component{
     }
 
 
+    componentWillUnmount() {
+        document.onkeydown = function () {};
+    }
 
     componentWillMount() {
 
@@ -4786,27 +4791,29 @@ class Landing extends Component {
 
     render() {
         return (
-            <div style={{display: 'flex', flex: 1, height: '100vh', flexDirection: 'column'}}>
-                <div style={{ flex: 1, marginTop: '100px'}}>
+            <div className="landing-outer-container">
+                <div className="landing-inner-container">
 
-                    <div style={{height: '400px', display: 'flex'}}>
+                    <div className="landing-section-one-container">
                     <div style={{flex: 2, display: 'flex', flexDirection: 'column', paddingTop: '75px', paddingLeft: '100px'}}>
-                        <img style={{width: 100, height: 100}} src={landingSectionOne}></img>
-                        <div style={{paddingTop: '20px', fontSize: '20px', width: '400px'}}>
+                        <img className="landing-header-image" src={landingSectionOne}></img>
+                        <div style={{paddingTop: '20px', fontSize: '23px', width: '400px', color: '#2b2d38'}}>
                             A better way to structure and process your thoughts.
                         </div>
                     </div>
-                        <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', marginRight: '50px', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
+                        <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', marginRight: '50px'}}>
+                            <div style={{width: '350px', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
                             <Signup/>
-                            <div style={{paddingLeft: '50px', paddingRight: '50px'}}>
-                                <input onClick={this.onAnonymousLoginSubmit.bind(this)} style={{width: '100%', fontSize: '14px', height: '30px', background: 'black', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="submit" value="Login Anonymously"/>
+                                <div style={{display: 'flex', justifyContent: 'center', paddingLeft: '50px', paddingRight: '50px', width: '250px'}}>
+                                    <input onClick={this.onAnonymousLoginSubmit.bind(this)} style={{width: '200px', fontSize: '14px', height: '30px', marginBottom: '20px', background: '#424242', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="submit" value="Login Anonymously"/>
+                                </div>
                             </div>
                         </div>
                     </div>
 
 
                     <div style={{height: '300px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-                        <img style={{width: 100, height: 100}} src={landingSectionTwo}></img>
+                        <img className="landing-header-image" src={landingSectionTwo}></img>
                         <div style={{paddingTop: '20px', fontSize: '20px', width: '400px'}}>
                             Focused on streamlining critical thinking
                         </div>
@@ -4819,46 +4826,46 @@ class Landing extends Component {
 
                     <div style={{height: '600px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
 
-                        <img style={{width: 100, height: 100}} src={landingSectionThree}></img>
+                        <img className="landing-header-image" src={landingSectionThree}></img>
                         <div style={{display: 'flex', justifyContent: 'center', paddingTop: '20px', fontSize: '20px', width: '400px'}}>
                             Create
                         </div>
                         <div style={{display: 'flex', flexDirection: 'row'}}>
-                            <div style={{margin: '50px'}}>
-                                <img style={{width: 100, height: 100}} src={landingSectionArgumentMap}></img>
+                            <div className="landing-script-item-container">
+                                <img className="landing-script-item" src={landingSectionArgumentMap}></img>
                                 <div>
-                                    argument maps
+                                    Argument maps
                                 </div>
 
                             </div>
-                            <div style={{margin: '50px'}}>
-                                <img style={{width: 100, height: 100}} src={landingSectionDecisionTree}></img>
+                            <div className="landing-script-item-container">
+                                <img className="landing-script-item" src={landingSectionDecisionTree}></img>
                                 <div>
-                                    decision trees*
+                                    Decision trees<span style={{color: 'grey'}}>*</span>
                                 </div>
 
                             </div>
-                            <div style={{margin: '50px'}}>
-                                <img style={{width: 100, height: 100}} src={landingSectionNestedList}></img>
+                            <div className="landing-script-item-container">
+                                <img className="landing-script-item" src={landingSectionNestedList}></img>
                                 <div>
-                                    nested lists*
+                                    Nested lists<span style={{color: 'grey'}}>*</span>
                                 </div>
 
                             </div>
                             <div style={{margin: '50px', alignSelf: 'center'}}>
                                 <div>
-                                    and more*
+                                    and more<span style={{color: 'grey'}}>*</span>
                                 </div>
 
                             </div>
                         </div>
 
-                        <div>*coming soon</div>
+                        <div style={{color: 'grey'}}>*coming soon</div>
                     </div>
 
                     <div style={{height: '400px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
 
-                        <img style={{width: 100, height: 100}} src={landingSectionFive}></img>
+                        <img className="landing-header-image" src={landingSectionFive}></img>
                         <div style={{paddingTop: '20px', fontSize: '20px', width: '400px', textAlign: 'center'}}>
                             Collaborate with others
                         </div>
@@ -4871,11 +4878,11 @@ class Landing extends Component {
                     </div>
                 </div>
 
-                <div style={{ flex: 0, alignSelf: 'center', marginBottom: '20px'}}>
-                    <div style={{display: 'flex',  flexDirection: 'row'}}>
-                        <div style={{margin: '10px', fontSize: '14px'}}><Link to='/privacy'>Privacy</Link></div>
-                        <div style={{margin: '10px', fontSize: '14px'}}><Link to='/terms'>Terms</Link></div>
-                        <div style={{margin: '10px', fontSize: '14px'}}>contact: <a href="mailto:scripptapp@gmail.com">scripptapp@gmail.com</a> </div>
+                <div className="footer-container">
+                    <div className="footer-inner-container">
+                        <div className="footer-element"><Link to='/privacy'>Privacy</Link></div>
+                        <div className="footer-element"><Link to='/terms'>Terms</Link></div>
+                        <div className="footer-element">contact: <a href="mailto:scripptapp@gmail.com">scripptapp@gmail.com</a> </div>
                     </div>
                 </div>
             </div>
@@ -4902,12 +4909,12 @@ class Privacy extends Component {
 
     componentWillMount() {
         window.scrollTo(0,0);
-        document.body.style.backgroundColor = "#e9ebee";
+        document.body.style.backgroundColor = "white";
     }
 
     render() {
         return (
-            <div style={{margin: '30px'}}>
+            <div style={{margin: '30px', paddingLeft: '200px', paddingRight: '200px'}}>
                 <div >
                     <br/><br/>
                     <h2>Privacy Policy</h2>
@@ -5015,12 +5022,12 @@ class Terms extends Component {
 
     componentWillMount() {
         window.scrollTo(0,0);
-        document.body.style.backgroundColor = "#e9ebee";
+        document.body.style.backgroundColor = "white";
     }
 
     render() {
         return (
-            <div style={{margin: '30px'}}>
+            <div style={{margin: '30px', paddingLeft: '200px', paddingRight: '200px'}}>
                 <div>
                     <br/><br/>
                     <h2>Terms and Conditions</h2>
