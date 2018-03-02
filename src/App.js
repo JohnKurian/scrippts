@@ -4797,8 +4797,8 @@ class Landing extends Component {
                     <div className="landing-section-one-container">
                     <div style={{flex: 2, display: 'flex', flexDirection: 'column', paddingTop: '75px', paddingLeft: '100px'}}>
                         <img className="landing-header-image" src={landingSectionOne}></img>
-                        <div style={{paddingTop: '20px', fontSize: '23px', width: '400px', color: '#2b2d38'}}>
-                            A better way to structure and process your thoughts.
+                        <div style={{paddingTop: '20px', fontSize: '30px', width: '400px', color: 'black', fontWeight: '300'}}>
+                            A better way to structure and analyze your ideas.
                         </div>
                     </div>
                         <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', marginRight: '50px'}}>
@@ -4814,11 +4814,11 @@ class Landing extends Component {
 
                     <div style={{height: '300px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
                         <img className="landing-header-image" src={landingSectionTwo}></img>
-                        <div style={{paddingTop: '20px', fontSize: '20px', width: '400px'}}>
+                        <div style={{paddingTop: '20px', fontSize: '28px', fontWeight: '300', width: '600px', textAlign: 'center'}}>
                             Focused on streamlining critical thinking
                         </div>
-                        <div style={{width: '600px', textAlign: 'center', marginTop: '20px'}}>
-                            Offers various formats that are much more efficient
+                        <div style={{width: '800px', fontSize: '21px', fontWeight: '100', textAlign: 'center', marginTop: '30px'}}>
+                            Offers various formats that are more efficient
                             at structuring and processing information
                             than traditional document formats
                         </div>
@@ -4827,7 +4827,7 @@ class Landing extends Component {
                     <div style={{height: '600px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
 
                         <img className="landing-header-image" src={landingSectionThree}></img>
-                        <div style={{display: 'flex', justifyContent: 'center', paddingTop: '20px', fontSize: '20px', width: '400px'}}>
+                        <div style={{display: 'flex', justifyContent: 'center', paddingTop: '20px', fontSize: '28px', fontWeight: '300', width: '400px'}}>
                             Create
                         </div>
                         <div style={{display: 'flex', flexDirection: 'row'}}>
@@ -4853,23 +4853,23 @@ class Landing extends Component {
 
                             </div>
                             <div style={{margin: '50px', alignSelf: 'center'}}>
-                                <div>
+                                <div className="landing-script-item-container" style={{flexDirection: 'row'}}>
                                     and more<span style={{color: 'grey'}}>*</span>
                                 </div>
 
                             </div>
                         </div>
 
-                        <div style={{color: 'grey'}}>*coming soon</div>
+                        <div style={{color: 'grey', fontWeight: '100'}}>*coming soon</div>
                     </div>
 
                     <div style={{height: '400px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
 
                         <img className="landing-header-image" src={landingSectionFive}></img>
-                        <div style={{paddingTop: '20px', fontSize: '20px', width: '400px', textAlign: 'center'}}>
+                        <div style={{paddingTop: '20px', fontSize: '28px', fontWeight: '300', width: '400px', textAlign: 'center'}}>
                             Collaborate with others
                         </div>
-                        <div style={{width: '600px', textAlign: 'center', marginTop: '20px'}}>
+                        <div style={{width: '800px', fontSize: '21px', fontWeight: '100', textAlign: 'center', marginTop: '30px'}}>
                             Share your scripts with the public or other users and invite them to work on your scripts in a real-time editor.
                         </div>
 
