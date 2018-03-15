@@ -6,6 +6,7 @@ import "./Fallacy.css";
 import "./Share.css";
 import "./Source.css";
 import "./Landing.css";
+import "./GetStarted.css"
 
 import createBrowserHistory from "history/createBrowserHistory";
 
@@ -20,6 +21,30 @@ import landingSectionArgumentMap from "./landing_section_four_argument_map.png";
 import landingSectionDecisionTree from "./landing_section_four_decision_tree.png";
 import landingSectionNestedList from "./landing_section_four_nested_list.png";
 import landingSectionFive from "./landing_section_five.png";
+
+import addBecause from './add_because.png';
+import addBut from './add_but.png';
+import addCollaborator from './add_collaborator.png';
+import addImage from './add_image.png';
+import addNode from './add_node.png'
+import addNote from './add_note.png';
+import addSource from './add_source.png';
+import addTherefore from './add_therefore.png';
+import attachSubtree from './attach_subtree.png';
+import collapsee from './collapse.png';
+import colorScheme from './color_scheme.png';
+import createScript1 from './create_script_1.png';
+import createScript2 from './create_script_2.png';
+import cutSubtreee from './cut_subtree.png';
+import editCollaboratorSettings from './edit_collaborator_settings.png';
+import linkSharing from './link_sharing.png';
+import removeNode from './remove_node.png';
+import reportFallacy from './report_fallacy.png';
+import navigation from './navigation.png'
+
+import changeNodeType from './change_node_type.gif'
+
+import welcome from './welcome.png';
 
 import ReactDOM from "react-dom";
 
@@ -2373,7 +2398,7 @@ class Home extends Component {
 
                                 <div style={{display: 'flex', flex: 1, flexDirection: 'row', width: '100%'}}>
                                     <div style={{display: 'flex', flexDirection: 'column', flex: 5, marginLeft: '15px'}}>
-                                        <div style={{marginBottom: '4px', width: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '15px', fontWeight: '600', color: '#373737'}}>
+                                        <div style={{marginBottom: '4px', width: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '15px', fontWeight: '400', color: '#373737'}}>
                                         {timeIndexedScriptList[key].title}
                                         </div>
                                         <div style={{display: 'flex', flexDirection: 'row'}}>
@@ -2423,15 +2448,290 @@ class Home extends Component {
                 </Modal>
 
                 <div style={{marginTop: '100px', paddingLeft: '100px', paddingRight: '100px'}}>
-                    <Grid fluid>
+                    {!initFragment && <Grid fluid>
                         <Row start="xs">
                             {initFragment}{scriptHeaderFragment}
                         </Row>
-                    </Grid>
+                    </Grid>}
+                    {initFragment &&
+                    <div style={{display: 'flex', flexDirection: 'column', alignItems:"center", marginLeft: '300px', marginRight: '300px', background: 'white', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
+                        <div>
+                            <img style={{paddingTop: '20px'}} src={welcome} />
+                        </div>
+
+                        <div style={{fontSize: '24px', marginTop: '20px', fontWeight: '300'}}>
+                            Welcome to Scrippt
+                        </div>
+
+                        <div style={{fontSize: '17px', marginTop: '30px', fontWeight: '300', marginBottom: '15px'}}>
+                            You can start creating scripts by clicking below
+                        </div>
+                        <div onClick={this.openCreateScriptModal.bind(this)} style={{padding: '5px', borderRadius: '3px', borderColor: '#1565c0', display: 'flex', alignItems: 'center', background: '#1565c0', color: 'white',  cursor: 'pointer', flexDirection: 'row', alignSelf: 'center'}}>
+                            <i className="material-icons" style={{color: 'white'}}>add</i>
+                            <div style={{flex: 1, paddingLeft: '5px', paddingRight: '5px', fontSize: '13px', fontWeight: '300'}}>Create new script</div>
+                        </div>
+                        <div style={{fontSize: '17px', marginTop: '20px', fontWeight: '300', marginBottom: '30px'}}>
+                            or read the <Link to="/docs/get-started/argumentmap" style={{ color: '#1565C0', fontSize: '17px'}}>getting started guide</Link>
+                        </div>
+
+                    </div>
+
+                    }
                 </div>
             </div>
         )
     }
+}
+
+
+class GetStarted extends Component {
+
+    componentWillMount() {
+        window.scrollTo(0,0);
+        document.body.style.backgroundColor = "white";
+    }
+
+    render() {
+        return (
+            <div className="get-started-outer-container">
+
+                <div className="get-started-main-heading">
+                    Getting started with argument maps
+                </div>
+
+                <div className="get-started-section-container">
+                    <div className="get-started-section-heading">
+                        Create argument map
+                    </div>
+
+                    <div style={{paddingBottom: '20px'}}>
+                    You can create argument maps right from the navigation bar.
+                    </div>
+
+                    <div>
+                        <div className="get-started-content-container" style={{paddingBottom: '40px'}}>
+                            <div style={{flex: 1, paddingRight: '30px'}}>
+                                1. Click on the <strong>create new script</strong> button on the navigation bar.
+                            </div>
+                            <div style={{flex: 1}}>
+                                <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={createScript1}/>
+                            </div>
+                        </div>
+
+                        <div className="get-started-content-container" style={{paddingBottom: '15px'}}>
+                            <div style={{flex: 1, paddingRight: '30px'}}>
+                                2. Select argument map from the menu.
+                            </div>
+                            <div style={{flex: 1}}>
+                                <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={createScript2}/>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div className="get-started-section-container">
+                    <div className="get-started-section-heading">
+                        Color scheme
+                    </div>
+                    <div className="get-started-content-container" style={{display: 'flex', flexDirection: 'column'}}>
+                        <div>
+                            The <strong>base premise</strong> and all the nodes supporting it are <strong>labeled green</strong>, and all the opposing nodes are labeled red.
+                        </div>
+                        <div style={{textAlign: 'center', paddingTop: '20px'}}>
+                            <img style={{ maxWidth:'600px', maxHeight:'500px', width: 'auto', height: 'auto'}} src={colorScheme}/>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div className="get-started-section-container">
+                    <div className="get-started-section-heading">
+                        Navigation
+                    </div>
+
+                    <div className="get-started-content-container">
+                        <div style={{flex: 1, paddingRight: '30px'}}>
+                            Use the <strong>arrow keys</strong> to navigate though the argument map. The currently selected node is indicated by a blue outline around the node.
+                        </div>
+                        <div style={{flex: 1}}>
+                            <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={navigation}/>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div className="get-started-section-container">
+                    <div className="get-started-section-heading">
+                        Add node
+                    </div>
+
+                    <div className="get-started-content-container">
+                        <div style={{width: '100%'}}>
+                            <div style={{display: 'flex', flexDirection: 'row', paddingBottom: '30px'}}>
+                                <div style={{flex: 1, paddingRight: '30px'}}>
+                                    <div><strong>But</strong></div>
+                                    <div style={{paddingBottom: '10px'}}>Adds a statement that opposes the current claim.</div>
+
+                                    <div><strong>Because</strong></div>
+                                    <div style={{paddingBottom: '10px'}}>Adds a statement that supports the current claim.</div>
+
+                                    <div><strong>Therefore</strong></div>
+                                    <div style={{paddingBottom: '10px'}}>Draws a logical conclusion from the current claim.</div>
+                                </div>
+                                <div style={{flex: 1}}>
+                                    <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={addNode}/>
+                                </div>
+                            </div>
+
+                            <div style={{display: 'flex', flexDirection: 'row', paddingBottom: '30px'}}>
+                                <div style={{flex: 1, paddingRight: '30px'}}>
+                                    You can also change the contention type of the node after it's created.
+                                </div>
+                                <div style={{flex: 1}}>
+                                    <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={changeNodeType}/>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div className="get-started-section-container">
+                    <div className="get-started-section-heading">
+                        Add source
+                    </div>
+
+                    <div className="get-started-content-container">
+                        <div style={{flex: 1, paddingRight: '30px'}}>
+                            You can add text or link a document or article from which the claim is sourced. Note that <strong>only URLs are accepted as valid input</strong> at the moment.
+                        </div>
+                        <div style={{flex: 1}}>
+                            <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={addSource}/>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="get-started-section-container">
+                    <div className="get-started-section-heading">
+                        Add image
+                    </div>
+
+                    <div className="get-started-content-container">
+                        <div style={{flex: 1, paddingRight: '30px'}}>
+                            You can add an image to a node. Note that <strong>only URLs are accepted as valid input</strong> at the moment.
+                        </div>
+                        <div style={{flex: 1}}>
+                            <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={addImage}/>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div className="get-started-section-container">
+                    <div className="get-started-section-heading">
+                        Report fallacy
+                    </div>
+                    <div className="get-started-content-container">
+                        <div style={{flex: 1, paddingRight: '30px'}}>
+                            Fallacies are basic errors in reasoning.  You can report a fallacy on a node.
+                        </div>
+                        <div style={{flex: 1}}>
+                            <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={reportFallacy}/>
+                        </div>
+                    </div>
+
+
+
+                </div>
+
+
+                <div className="get-started-section-container">
+                    <div className="get-started-section-heading">
+                        Add note
+                    </div>
+                    <div className="get-started-content-container">
+                        <div style={{flex: 1, paddingRight: '30px'}}>
+                            Secondary information related to the argument map and other references can be added by clicking on the <strong>note</strong> icon in the title bar.
+                        </div>
+                        <div style={{flex: 1}}>
+                            <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={addNote}/>
+                        </div>
+                    </div>
+
+                </div>
+
+
+
+                <div className="get-started-section-container">
+                    <div className="get-started-section-heading">
+                        Share
+                    </div>
+
+                    <div className="get-started-content-container">
+                        <div>
+                            <div style={{display: 'flex', flexDirection: 'row', paddingBottom: '40px'}}>
+                                <div style={{flex: 1, paddingRight: '40px'}}>
+                                    <div style={{paddingBottom: '10px'}}><strong>Link sharing</strong></div>
+                                    <div>
+                                        Make the argument map publicly viewable by toggling the link sharing button on.
+                                    </div>
+                                </div>
+                                <div style={{flex: 1}}>
+                                    <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={linkSharing}/>
+                                </div>
+                            </div>
+
+                            <div style={{display: 'flex', flexDirection: 'row', paddingBottom: '40px'}}>
+                                <div style={{flex: 1, paddingRight: '40px'}}>
+                                    <div style={{paddingBottom: '10px'}}>
+                                        <strong>Add/remove contributors</strong> and set various permission levels for them.
+                                    </div>
+                                    <div>
+                                        <strong>Can view</strong> - Shares a read-only argument map to the user
+                                    </div>
+                                    <div>
+                                        <strong>Can edit</strong> - has permission to edit the argument map
+                                    </div>
+                                </div>
+                                <div style={{flex: 1}}>
+                                    <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={addCollaborator}/>
+                                </div>
+                            </div>
+
+                            <div style={{display: 'flex', flexDirection: 'row', paddingBottom: '40px'}}>
+                                <div style={{flex: 1, paddingRight: '40px'}}>
+                                    <div style={{paddingBottom: '10px'}}><strong>Edit collaborator settings</strong></div>
+                                    <div>You can also edit the privileges or remove the user as a collaborator after adding them.</div>
+                                </div>
+                                <div style={{flex: 1}}>
+                                    <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={editCollaboratorSettings}/>
+                                </div>
+
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div className="get-started-section-container">
+
+                </div>
+
+            </div>
+        )
+    }
+
 }
 
 
@@ -2473,6 +2773,7 @@ class Parent extends Component {
                     <Route exact path="/profile" render={(props) => ( this.props.user ? <Profile {...props} user={this.props.user} /> : <Redirect to="/" />)}/>
                     <Route exact path="/terms" render={(props) => (<Terms/>)}/>
                     <Route exact path="/privacy" render={(props) => (<Privacy/>)}/>
+                    <Route exact path="/docs/get-started/argumentmap" render={(props) => (<GetStarted/>)}/>
                     <Route component={NoMatch}/>
                 </Switch>
             </div>
@@ -4820,7 +5121,7 @@ class Landing extends Component {
                         <div style={{width: '800px', fontSize: '21px', fontWeight: '100', textAlign: 'center', marginTop: '30px'}}>
                             Offers various formats that are more efficient
                             at structuring and processing information
-                            than traditional document formats
+                            than traditional document formats.
                         </div>
                     </div>
 
