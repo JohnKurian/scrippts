@@ -364,7 +364,7 @@ class Source extends Component {
     render() {
         return (
             <div style={{margin: '20px', display: 'flex', flexDirection: 'column'}}>
-                <div style={{display: 'flex', paddingBottom: '10px', fontWeight: 'bold'}}>
+                <div style={{display: 'flex', paddingBottom: '10px', fontWeight: 'bold', alignItems: 'center'}}>
                     <i className="material-icons" style={{textDecoration: 'none', color: '#1565c0', fontSize: '24px', marginRight: '3px'}}>link</i>Source
                 </div>
                 <Textarea
@@ -456,9 +456,9 @@ class Fallacy extends Component {
 
         return (
             <div style={{width: '500px', padding: '20px'}}>
-                <div style={{display: 'flex', paddingBottom: '20px'}}>
+                <div style={{display: 'flex', paddingBottom: '20px', alignItems: 'center'}}>
                     <i className="material-icons" style={{textDecoration: 'none', color: 'orange', fontSize: '24px', marginRight: '3px'}}>warning</i>
-                    <div style={{fontWeight: 'bold', fontSize: '18px'}}>report fallacy</div>
+                    <div style={{fontWeight: 'bold', fontSize: '18px'}}>Report fallacy</div>
                 </div>
                 {
                     this.state.selectedFallacy &&
@@ -540,7 +540,7 @@ class Note extends Component {
     render() {
         return (
             <div style={{display: 'flex', flexDirection: 'column', padding: '20px'}}>
-                <h3 style={{display: 'flex', paddingBottom: '10px', margin: '0px'}}>
+                <h3 style={{display: 'flex', paddingBottom: '10px', margin: '0px', alignItems: 'center'}}>
                     <i className="material-icons" style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '24px', marginRight: '3px'}}>note</i>
                      Note
                 </h3>
@@ -611,9 +611,9 @@ class DeleteNode extends Component {
     render() {
         return (
             <div style={{width: '350px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px'}}>
-                <div style={{margin: '15px'}}>Are you sure you want to delete this node?
-                    <br/>
-                    Warning: will also delete all the nodes underneath it
+                <div style={{margin: '15px'}}>
+                    <div>Are you sure you want to delete this node?</div>
+                    <div style={{color: '#e65100', display: 'flex', marginTop: '10px'}}><i className="material-icons" style={{textDecoration: 'none', color: 'orange', fontSize: '24px', marginRight: '3px'}}>warning</i>Warning: will also delete all the nodes underneath it</div>
                 </div>
 
                 <div style={{display: 'flex', flexDirection: 'row'}}>
@@ -733,7 +733,7 @@ class NodeImage extends Component {
     render() {
         return (
             <div style={{margin: '20px', display: 'flex', flexDirection: 'column'}}>
-                <div style={{display: 'flex', paddingBottom: '10px', fontWeight: 'bold'}}>
+                <div style={{display: 'flex', paddingBottom: '10px', fontWeight: 'bold', alignItems: 'center'}}>
                     <i className="material-icons" style={{textDecoration: 'none', color: '#1565c0', fontSize: '24px', marginRight: '3px'}}>image</i>
                     Image
                 </div>
@@ -3350,15 +3350,14 @@ class Header extends Component{
                         (key === this.props.user.uid && !this.state.collaborators[this.props.user.uid]['isOwner'])
                             ?
                             <div style={{}}>
-                                <a href="javascript:;" onClick={this.removeCollaborator.bind(this, key, this.state.collaborators[this.props.user.uid]['isOwner']  )}
-                                   title="remove collaborator">
+                                <a data-tip data-for="remove-collaborator" href="javascript:;" onClick={this.removeCollaborator.bind(this, key, this.state.collaborators[this.props.user.uid]['isOwner']  )}>
                                     <i className="material-icons"
                                        style={{textDecoration: 'none', color: 'rgb(117, 117, 117)', fontSize: '20px'}}>remove_circle</i>
                                 </a>
                             </div> : <div style={{width: '20px'}}></div>
                         }
 
-
+                        <ReactTooltip id="remove-collaborator" effect='solid'>Remove collaborator</ReactTooltip>
                     </div>
                         <hr className="share-collaborator-divider"/>
                     </div>
@@ -3429,7 +3428,7 @@ class Header extends Component{
 
                     </div>
 
-                    <div style={{flex: 0, marginRight: '32px'}}>
+                    <div style={{flex: 0, marginRight: '32px', flexDirection: 'row'}}>
                         <Modal
                             isOpen={this.state.modalIsOpen}
                             onAfterOpen={this.afterOpenModal}
@@ -3509,6 +3508,16 @@ class Header extends Component{
 
                         </Modal>
 
+                        <div style={{display: 'flex', flexDirection: 'row'}}>
+                        <div>
+                            <Link to="/docs/get-started/argumentmap">
+                                <i data-tip data-for='get-started'
+                                   className="material-icons"
+                                   style={{textDecoration: 'none', marginRight: '10px', color: 'rgb(117, 117, 117)', fontSize: '28px'}}>help</i>
+                                <ReactTooltip id="get-started" effect='solid'>Help</ReactTooltip>
+                            </Link>
+                        </div>
+
                         { Object.keys(this.state.collaborators).length>0 &&
                             <div data-tip data-for='share' onClick={this.openModal} style={{
                                 padding: '8px',
@@ -3529,6 +3538,7 @@ class Header extends Component{
                                 <ReactTooltip id="share" effect='solid'>Share settings</ReactTooltip>
                             </div>
                         }
+                        </div>
 
                     </div>
 
