@@ -3609,6 +3609,7 @@ class Header extends Component{
                 <Modal
                     isOpen={this.state.loginModalIsOpen}
                     onRequestClose={this.closeLoginModal.bind(this)}
+                    shouldCloseOnOverlayClick={false}
                     style={loginModalStyles}
                     contentLabel="Loader Modal"
                 >
@@ -3618,15 +3619,17 @@ class Header extends Component{
                 <Modal
                     isOpen={this.state.signupModalIsOpen}
                     onRequestClose={this.closeSignupModal.bind(this)}
+                    shouldCloseOnOverlayClick={false}
                     style={signupModalStyles}
                     contentLabel="Loader Modal"
                 >
-                    <Signup closeSignupModal={this.closeSignupModal.bind(this)}/>
+                    <Signup landing={false} closeSignupModal={this.closeSignupModal.bind(this)}/>
                 </Modal>
 
                 <Modal
                     isOpen={this.state.forgotPasswordModalIsOpen}
                     onRequestClose={this.closeForgotPasswordModal.bind(this)}
+                    shouldCloseOnOverlayClick={false}
                     style={signupModalStyles}
                     contentLabel="Loader Modal"
                 >
@@ -4709,7 +4712,8 @@ class Signup extends Component {
             signupError: '',
             isAuthChecked: false,
             scriptIds: [],
-            signupInProgress: false
+            signupInProgress: false,
+            landing: false
         };
     }
 
@@ -4866,7 +4870,20 @@ class Signup extends Component {
     render() {
         return <div style={{width: '350px', marginBottom: '20px'}}>
 
-            <div style={{background: 'white', color: '#1565c0', textAlign: 'center', padding: '10px', fontSize: '19px', marginTop: '15px'}}>Signup</div>
+            { !this.props.landing &&
+                <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+                    <i onClick={this.props.closeSignupModal} className="material-icons" style={{
+                        textDecoration: 'none',
+                        paddingTop: '5px',
+                        paddingRight: '5px',
+                        color: 'grey',
+                        fontSize: '24px',
+                        cursor: 'pointer'
+                    }}>close</i>
+                </div>
+            }
+
+            <div style={{background: 'white', color: '#1565c0', textAlign: 'center', padding: this.props.landing? '15px': '0px', fontSize: '19px', marginTop: this.props.landing? '10px': '0px'}}>Signup</div>
             <form style={{width: '100%'}} id="signup" onSubmit={this.handleSignupSubmit.bind(this)}>
 
                 <div style={{paddingTop: '30px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '10px'}}>
@@ -5021,7 +5038,10 @@ class Login extends Component {
 
     render() {
         return <div style={{width: '350px'}}>
-            <div style={{background: 'white', color: '#1565c0', textAlign: 'center', padding: '10px', fontSize: '19px', marginTop: '15px'}}>Login</div>
+            <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+            <i onClick={this.props.closeLoginModal} className="material-icons" style={{textDecoration: 'none', paddingTop: '5px', paddingRight: '5px', color: 'grey', fontSize: '24px', cursor: 'pointer'}}>close</i>
+            </div>
+            <div style={{background: 'white', color: '#1565c0', textAlign: 'center', padding: '0px', fontSize: '19px', marginTop: '0px'}}>Login</div>
             <form style={{width: '100%'}} id="login" onSubmit={this.handleLoginSubmit.bind(this)}>
                 <div style={{paddingTop: '20px', paddingLeft: '50px', paddingRight: '50px', paddingBottom: '10px'}}>
                     <input style={{width: '100%', height: '25px', fontSize: '14px'}} type="text" placeholder='enter email or username' required value={this.state.loginValue}
@@ -5114,7 +5134,7 @@ class Landing extends Component {
                     </div>
                         <div style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', marginRight: '50px'}}>
                             <div style={{width: '350px', boxShadow: '1px 1px 4px rgba(0,0,0,.3)'}}>
-                            <Signup/>
+                            <Signup landing={true}/>
                                 <div style={{display: 'flex', justifyContent: 'center', paddingLeft: '50px', paddingRight: '50px', width: '250px'}}>
                                     <input onClick={this.onAnonymousLoginSubmit.bind(this)} style={{width: '200px', fontSize: '14px', height: '30px', marginBottom: '20px', background: '#424242', borderColor: 'transparent', color: '#fff',cursor: 'pointer' }} type="submit" value="Login Anonymously"/>
                                 </div>
@@ -5233,10 +5253,10 @@ class Privacy extends Component {
 
                     Last updated: January 2, 2018
 
-                    Scrippt ("us", "we", or "our") operates the scripptapp.com website (the "Service").
+                    Scrippt ("us", "we", or "our") operates the scrippt.co website (the "Service").
                     This page informs you of our policies regarding the collection, use and disclosure of Personal Information when you use our Service.
                     We will not use or share your information with anyone except as described in this Privacy Policy.
-                    We use your personal Information for providing and improving the Service. By using the Service, you agree to the collection and use of information in accordance with this policy. Unless otherwise defined in this Privacy Policy, terms used in this Privacy Policy have the same meanings as in our Terms and Conditions, accessible at scripptapp.com.
+                    We use your personal Information for providing and improving the Service. By using the Service, you agree to the collection and use of information in accordance with this policy. Unless otherwise defined in this Privacy Policy, terms used in this Privacy Policy have the same meanings as in our Terms and Conditions, accessible at scrippt.co.
 
                     <br/><br/>
 
@@ -5346,7 +5366,7 @@ class Terms extends Component {
 
                     Last updated: January 2, 2018
 
-                    Please read these Terms and Conditions ("Terms", "Terms and Conditions") carefully before using the scripptapp.com website (the "Service") operated by Scrippt ("us", "we", or "our").
+                    Please read these Terms and Conditions ("Terms", "Terms and Conditions") carefully before using the scrippt.co website (the "Service") operated by Scrippt ("us", "we", or "our").
                     Your access to and use of the Service is conditioned on your acceptance of and compliance with these Terms. These Terms apply to all visitors, users and others who access or use the Service.
 
                     By accessing or using the Service you agree to be bound by these Terms. If you disagree with any part of the terms then you may not access the Service.
