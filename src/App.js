@@ -2640,7 +2640,7 @@ class GetStarted extends Component {
                     </div>
                     <div className="get-started-content-container">
                         <div style={{flex: 1, paddingRight: '30px'}}>
-                            Fallacies are basic errors in reasoning.  You can report a fallacy on a node.
+                            Fallacies are basic errors in reasoning. You can report a fallacy on a node.
                         </div>
                         <div style={{flex: 1}}>
                             <img style={{display: 'block', maxWidth:'350px', maxHeight:'350px', width: 'auto', height: 'auto'}} src={reportFallacy}/>
