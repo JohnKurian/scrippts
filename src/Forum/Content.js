@@ -4,10 +4,19 @@ import comment from"./comment.png";
 import likes from "./heart.png";
 import views from "./views.png";
 import scrolable from './Scrollable';
+import HoverMe from "./HoverMe.js"
 
 
 class ContentCard extends React.Component {
-
+    state={
+        count:0
+    }
+    incrementMe = () => {
+        let newCount = this.state.count + 1
+        this.setState({
+          count: newCount
+        })
+      }
     render() {
         return (
          
@@ -28,11 +37,13 @@ class ContentCard extends React.Component {
                      "padding":"10px", "border":"10px"}}> 
                         <div>
                             <h4> <img style={{"height":"15px","width":"15px"}}  src={comment}></img> 100       </h4>
+                            <HoverMe/>
                         </div>
            
 
                         <div>
-                        <h4> <img style={{"height":"15px","width":"15px"}}  src={likes}></img> 370       </h4>
+                        <h4> <button className="button-none"><img style={{"height":"15px","width":"15px"}} onClick={this.incrementMe} src={likes}></img> Likes:{this.state.count}  </button>
+                                 </h4>
                         </div>
                         
                         <div>
